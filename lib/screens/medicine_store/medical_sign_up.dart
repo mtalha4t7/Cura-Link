@@ -1,16 +1,17 @@
-import 'package:cura_link/screens/patient/sign_up.dart';
+import 'package:cura_link/screens/medicine_store/medical_sign_in.dart';
+import 'package:cura_link/screens/patient/patient_sign_in.dart';
 import 'package:flutter/material.dart';
 
 import '../../widget/widget_support.dart';
 
-class Login extends StatefulWidget {
-  const Login({super.key});
+class medSignUp extends StatefulWidget {
+  const medSignUp({super.key});
 
   @override
-  State<Login> createState() => _LoginState();
+  State<medSignUp> createState() => _LoginState();
 }
 
-class _LoginState extends State<Login> {
+class _LoginState extends State<medSignUp> {
   final TextEditingController useremailcontroller = TextEditingController();
   final TextEditingController userpasswordcontroller = TextEditingController();
 
@@ -32,21 +33,36 @@ class _LoginState extends State<Login> {
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Material(
                 elevation: 5.0,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(10),
                 color: Colors.white.withOpacity(0.1), // Adjust transparency here
                 child: Container(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(10.0),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.8), // Adjust transparency here
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Form(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          "Login",
+                          "Create Account",
                           style: AppWidget.headlineTextFieldStyle(),
+                        ),
+                        const SizedBox(height: 30),
+                        TextFormField(
+                          controller: useremailcontroller,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your name';
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            hintText: 'Name',
+                            hintStyle: AppWidget.semiBoldTextFieldStyle(),
+                            prefixIcon: const Icon(Icons.person),
+                          ),
                         ),
                         const SizedBox(height: 30),
                         TextFormField(
@@ -84,14 +100,13 @@ class _LoginState extends State<Login> {
                             // Handle forgot password
                           },
                           child: Container(
-
                             padding: const EdgeInsets.only(top: 20),
                             alignment: Alignment.topRight,
                             child: const Text('Forgot Password'),
                           ),
                         ),
                         Container(
-                        alignment: Alignment.topLeft,
+                          alignment: Alignment.topLeft,
                           child: ElevatedButton(
                             onPressed: () {
                               // Handle login
@@ -105,9 +120,9 @@ class _LoginState extends State<Login> {
                               elevation: 8,
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.only(left:8.0,right:8.0),
+                              padding: const EdgeInsets.only(left:8.0,right: 8.0),
                               child: const Text(
-                                'Login',
+                                'Create account',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 14.0,
@@ -122,13 +137,13 @@ class _LoginState extends State<Login> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text("Don't have an account?"),
+                            const Text("Already have an account?"),
                             const SizedBox(width: 10),
                             ElevatedButton(
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => SignUp()), // Make sure to import the SignUp class
+                                  MaterialPageRoute(builder: (context) => medLogin()), // Make sure to import the SignUp class
                                 ); // Handle sign up
                               },
                               style: ElevatedButton.styleFrom(
@@ -140,9 +155,9 @@ class _LoginState extends State<Login> {
                                 elevation: 8,
                               ),
                               child: Padding(
-                                padding: const EdgeInsets.only(right:8.0,left:8.0),
+                                padding: const EdgeInsets.only(left:8.0,right:8.0),
                                 child: const Text(
-                                  'Sign Up',
+                                  'Sign in',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 14.0,

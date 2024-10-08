@@ -1,16 +1,16 @@
-import 'package:cura_link/screens/patient/sign_in.dart';
+import 'package:cura_link/screens/patient/patient_sign_in.dart';
 import 'package:flutter/material.dart';
 
 import '../../widget/widget_support.dart';
 
-class SignUp extends StatefulWidget {
-  const SignUp({super.key});
+class labSignUp extends StatefulWidget {
+  const labSignUp({super.key});
 
   @override
-  State<SignUp> createState() => _LoginState();
+  State<labSignUp> createState() => _LoginState();
 }
 
-class _LoginState extends State<SignUp> {
+class _LoginState extends State<labSignUp> {
   final TextEditingController useremailcontroller = TextEditingController();
   final TextEditingController userpasswordcontroller = TextEditingController();
 
@@ -142,7 +142,7 @@ class _LoginState extends State<SignUp> {
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => Login()), // Make sure to import the SignUp class
+                                  MaterialPageRoute(builder: (context) => patientLogin()), // Make sure to import the SignUp class
                                 ); // Handle sign up
                               },
                               style: ElevatedButton.styleFrom(

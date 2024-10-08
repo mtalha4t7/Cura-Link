@@ -1,4 +1,4 @@
-import 'package:cura_link/screens/patient/sign_in.dart';
+import 'package:cura_link/screens/patient/patient_sign_in.dart';
 import 'package:flutter/material.dart';
 
 import '../../widget/content_model.dart';
@@ -83,7 +83,7 @@ class _PatientOnboardState extends State<PatientOnboard> {
             onTap: () {
               if (currentIndex == patientContents.length - 1) {
                 Navigator.pushReplacement(
-                    context, MaterialPageRoute(builder: (context) => const Login()));
+                    context, MaterialPageRoute(builder: (context) => const patientLogin()));
               } else {
                 _controller.nextPage(
                     duration: const Duration(milliseconds: 100),
