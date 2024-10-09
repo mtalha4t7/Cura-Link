@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "346007822005",
+    "project_id": "cura-link",
+    "storage_bucket": "cura-link.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:346007822005:android:40b5f5183c8da0e42568fc",
+        "android_client_info": {
+          "package_name": "com.example.cura_link"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC19ZR2Dkmc-FVVNICESMpIimGdt0HoTyw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
