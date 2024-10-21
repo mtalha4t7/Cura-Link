@@ -83,7 +83,7 @@ class _PatientOnboardState extends State<PatientOnboard> {
             onTap: () {
               if (currentIndex == patientContents.length - 1) {
                 Navigator.pushReplacement(
-                    context, MaterialPageRoute(builder: (context) => const patientLogin()));
+                    context, MaterialPageRoute(builder: (context) => const PatientLogin()));
               } else {
                 _controller.nextPage(
                     duration: const Duration(milliseconds: 100),

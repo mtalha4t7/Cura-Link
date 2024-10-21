@@ -1,18 +1,39 @@
+import 'package:cura_link/common/toast.dart';
+import 'package:cura_link/firebaseImplemetations/firebase_authentication_services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cura_link/screens/patient/patient_main.dart';
 import 'package:cura_link/screens/patient/patient_sign_in.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/user_service.dart';
 import '../../widget/widget_support.dart';
 
-class patientSignUp extends StatefulWidget {
-  const patientSignUp({super.key});
+class PatientSignUp extends StatefulWidget {
+  const PatientSignUp({super.key});
 
   @override
-  State<patientSignUp> createState() => _LoginState();
+  State<PatientSignUp> createState() => _PatientSignUpState();
 }
 
-class _LoginState extends State<patientSignUp> {
-  final TextEditingController useremailcontroller = TextEditingController();
-  final TextEditingController userpasswordcontroller = TextEditingController();
+class _PatientSignUpState extends State<PatientSignUp> {
+  final FirebaseAuthService _auth = FirebaseAuthService();
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final UserService _userService = UserService();
+
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  bool _isSigningUp = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,25 +53,25 @@ class _LoginState extends State<patientSignUp> {
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Material(
                 elevation: 5.0,
-                borderRadius: BorderRadius.circular(10),
-                color: Colors.white.withOpacity(0.1), // Adjust transparency here
+                borderRadius: BorderRadius.circular(20),
+                color: Colors.white.withOpacity(0.1),
                 child: Container(
-                  padding: const EdgeInsets.all(10.0),
+                  padding: const EdgeInsets.all(20.0),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.8), // Adjust transparency here
-                    borderRadius: BorderRadius.circular(10),
+                    color: Colors.white.withOpacity(0.8),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Form(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          "Create Account",
+                          "Sign Up",
                           style: AppWidget.headlineTextFieldStyle(),
                         ),
                         const SizedBox(height: 30),
                         TextFormField(
-                          controller: useremailcontroller,
+                          controller: _nameController,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Please enter your name';
@@ -65,10 +86,12 @@ class _LoginState extends State<patientSignUp> {
                         ),
                         const SizedBox(height: 30),
                         TextFormField(
-                          controller: useremailcontroller,
+                          controller: _emailController,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter email';
+                              return 'Please enter your email';
+                            } else if (!RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").hasMatch(value)) {
+                              return 'Please enter a valid email address';
                             }
                             return null;
                           },
@@ -80,10 +103,12 @@ class _LoginState extends State<patientSignUp> {
                         ),
                         const SizedBox(height: 30),
                         TextFormField(
-                          controller: userpasswordcontroller,
+                          controller: _passwordController,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter password';
+                              return 'Please enter a password';
+                            } else if (value.length < 6) {
+                              return 'Password must be at least 6 characters';
                             }
                             return null;
                           },
@@ -91,59 +116,48 @@ class _LoginState extends State<patientSignUp> {
                           decoration: InputDecoration(
                             hintText: 'Password',
                             hintStyle: AppWidget.semiBoldTextFieldStyle(),
-                            prefixIcon: const Icon(Icons.password_outlined),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            // Handle forgot password
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.only(top: 20),
-                            alignment: Alignment.topRight,
-                            child: const Text('Forgot Password'),
-                          ),
-                        ),
-                        Container(
-                          alignment: Alignment.topLeft,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              // Handle login
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF00838F),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 10.0),
-                              elevation: 8,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.only(left:8.0,right: 8.0),
-                              child: const Text(
-                                'Create account',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  fontFamily: 'Roboto',
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
+                            prefixIcon: const Icon(Icons.lock),
                           ),
                         ),
                         const SizedBox(height: 30),
+                        _isSigningUp
+                            ? CircularProgressIndicator()
+                            : ElevatedButton(
+                          onPressed: _signUp,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF00838F),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 10.0),
+                            elevation: 8,
+                          ),
+                          child: const Text(
+                            'Sign Up',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14.0,
+                              fontFamily: 'Roboto',
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text("Already have an account?"),
+                            const Text(
+                              "Already have an account?",
+                              style: TextStyle(fontSize: 11),
+                            ),
                             const SizedBox(width: 10),
                             ElevatedButton(
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => patientLogin()), // Make sure to import the SignUp class
-                                ); // Handle sign up
+                                  MaterialPageRoute(
+                                      builder: (context) => PatientLogin()),
+                                );
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF00838F),
@@ -153,23 +167,19 @@ class _LoginState extends State<patientSignUp> {
                                 padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
                                 elevation: 8,
                               ),
-                              child: Padding(
-                                padding: const EdgeInsets.only(left:8.0,right:8.0),
-                                child: const Text(
-                                  'Sign in',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14.0,
-                                    fontFamily: 'Roboto',
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              child: const Text(
+                                'Login',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 8.0,
+                                  fontFamily: 'Roboto',
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 20),
-
                       ],
                     ),
                   ),
@@ -181,4 +191,41 @@ class _LoginState extends State<patientSignUp> {
       ),
     );
   }
-}
+
+  void _signUp() async {
+    setState(() {
+      _isSigningUp = true;
+    });
+
+    String name = _nameController.text;
+    String email = _emailController.text;
+    String password = _passwordController.text;
+
+    try {
+      UserCredential userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      User? user = userCredential.user;
+
+      if (user != null) {
+        await _userService.saveUserData(user, name, email); // Email is now passed correctly
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('userEmail', email);
+        await prefs.setString('userName', name);
+
+        showToast(message: "User is successfully signed up");
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => PatientMain()), // Assuming PatientMain is the destination widget
+        );
+      }
+    } catch (e) {
+      showToast(message: "Some error occurred: $e");
+    } finally {
+      setState(() {
+        _isSigningUp = false;
+      });
+    }
+  }}
