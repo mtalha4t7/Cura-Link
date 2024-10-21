@@ -142,7 +142,7 @@ class _LoginState extends State<labSignUp> {
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => patientLogin()), // Make sure to import the SignUp class
+                                  MaterialPageRoute(builder: (context) => labSignUp()), // Make sure to import the SignUp class
                                 ); // Handle sign up
                               },
                               style: ElevatedButton.styleFrom(

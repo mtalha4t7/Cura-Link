@@ -105,7 +105,7 @@ class RoleButton extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               label,
-              style: const TextStyle(fontSize: 16, color: AppColors.buttonTextColor), // Use button text color from AppColors
+              style: const TextStyle(fontSize: 14, color: AppColors.buttonTextColor), // Use button text color from AppColors
               textAlign: TextAlign.center,
             ),
           ],

@@ -1,9 +1,13 @@
+import 'package:cura_link/screens/patient/patient_profile.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import '../../widget/widget_support.dart';
 
 class PatientMain extends StatelessWidget {
+  const PatientMain({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,7 +24,8 @@ class PatientMain extends StatelessWidget {
             children: <Widget>[
               // Logo at the top
               Container(
-                margin: const EdgeInsets.only(top: 20), // Adjust top margin as needed
+                margin: const EdgeInsets.only(
+                    top: 20), // Adjust top margin as needed
                 child: Image.asset(
                   'images/appLogo.png', // Path to your logo asset
                   height: 192,
@@ -39,12 +44,16 @@ class PatientMain extends StatelessWidget {
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
-                      scalingFactor: 1.2, // Reduced scale factor for less bounce
-                      duration: const Duration(milliseconds: 500), // Duration for each bounce
+                      scalingFactor:
+                      1.2, // Reduced scale factor for less bounce
+                      duration: const Duration(
+                          milliseconds: 500), // Duration for each bounce
                     ),
                   ],
-                  totalRepeatCount: 120, // Total duration of 1 minute (120 * 0.5s = 60s)
-                  pause: const Duration(milliseconds: 500), // Pause between bounces
+                  totalRepeatCount:
+                  120, // Total duration of 1 minute (120 * 0.5s = 60s)
+                  pause: const Duration(
+                      milliseconds: 500), // Pause between bounces
                   displayFullTextOnTap: true,
                   stopPauseOnTap: true,
                 ),
@@ -113,7 +122,11 @@ class PatientMain extends StatelessWidget {
             // Navigate to home screen
               break;
             case 1:
-            // Navigate to edit profile screen
+            // Navigate to profile screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) =>  ProfileScreen(userId: FirebaseAuth.instance.currentUser!.uid)),
+              );
               break;
             case 2:
             // Navigate to cart details screen
@@ -127,7 +140,10 @@ class PatientMain extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureButton(BuildContext context, {required IconData icon, required String label, required VoidCallback onPressed}) {
+  Widget _buildFeatureButton(BuildContext context,
+      {required IconData icon,
+        required String label,
+        required VoidCallback onPressed}) {
     return SizedBox(
       width: 140, // Fixed width
       height: 140, // Fixed height

@@ -1,3 +1,4 @@
+import 'package:cura_link/screens/nurse/nurse_sign_up.dart';
 import 'package:cura_link/screens/patient/patient_sign_up.dart';
 import 'package:flutter/material.dart';
 
@@ -128,7 +129,7 @@ class _nurseLoginState extends State<nurseLogin> {
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => patientSignUp()), // Make sure to import the SignUp class
+                                  MaterialPageRoute(builder: (context) => nurseSignUp()), // Make sure to import the SignUp class
                                 ); // Handle sign up
                               },
                               style: ElevatedButton.styleFrom(
