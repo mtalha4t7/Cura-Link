@@ -54,7 +54,7 @@ class _LoginState extends State<Login> {
                           controller: useremailcontroller,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter email';
+                              return 'Please enter your email';
                             }
                             return null;
                           },
@@ -69,7 +69,7 @@ class _LoginState extends State<Login> {
                           controller: userpasswordcontroller,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter password';
+                              return 'Please enter your password';
                             }
                             return null;
                           },
