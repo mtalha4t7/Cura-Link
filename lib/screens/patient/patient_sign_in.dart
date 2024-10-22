@@ -15,10 +15,10 @@ class PatientLogin extends StatefulWidget {
   const PatientLogin({super.key});
 
   @override
-  State<PatientLogin> createState() => _LoginState();
+  State<PatientLogin> createState() => _PatientLoginState();
 }
 
-class _LoginState extends State<PatientLogin> {
+class _PatientLoginState extends State<PatientLogin> {
   bool _isSigning = false;
   final FirebaseAuthService _auth = FirebaseAuthService();
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -100,7 +100,7 @@ class _LoginState extends State<PatientLogin> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            // Handle forgot password
+                            // Handle forgot password logic
                           },
                           child: Container(
                             padding: const EdgeInsets.only(top: 20),
@@ -112,65 +112,65 @@ class _LoginState extends State<PatientLogin> {
                         _isSigning
                             ? CircularProgressIndicator()
                             : Column(
-                          children: [
-                            Container(
-                              alignment: Alignment.topLeft,
-                              child: ElevatedButton(
-                                onPressed: _signIn,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                  const Color(0xFF00838F),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                    BorderRadius.circular(10),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 10.0),
-                                  elevation: 8,
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 8.0, right: 8.0),
-                                  child: const Text(
-                                    'Login',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14.0,
-                                      fontFamily: 'Roboto',
-                                      fontWeight: FontWeight.bold,
+                                children: [
+                                  Container(
+                                    alignment: Alignment.topLeft,
+                                    child: ElevatedButton(
+                                      onPressed: _signIn,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            const Color(0xFF00838F),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 10.0),
+                                        elevation: 8,
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 8.0, right: 8.0),
+                                        child: const Text(
+                                          'Login',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14.0,
+                                            fontFamily: 'Roboto',
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
+                                  const SizedBox(height: 20),
+                                  ElevatedButton.icon(
+                                    onPressed: _signInWithGoogle,
+                                    icon: FaIcon(
+                                      FontAwesomeIcons.google,
+                                      color: Colors.white,
+                                    ),
+                                    label: Text(
+                                      'Sign in with Google',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14.0,
+                                        fontFamily: 'Roboto',
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Color(0xFF00838F),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 10.0, horizontal: 10),
+                                      elevation: 8,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(height: 20),
-                            ElevatedButton.icon(
-                              onPressed: _signInWithGoogle,
-                              icon: FaIcon(
-                                FontAwesomeIcons.google,
-                                color: Colors.white,
-                              ),
-                              label: Text(
-                                'Sign in with Google',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14.0,
-                                  fontFamily: 'Roboto',
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFF00838F),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 10.0, horizontal: 10),
-                                elevation: 8,
-                              ),
-                            ),
-                          ],
-                        ),
                         const SizedBox(height: 30),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -235,7 +235,8 @@ class _LoginState extends State<PatientLogin> {
     String password = _passwordController.text;
 
     try {
-      UserCredential userCredential = await _firebaseAuth.signInWithEmailAndPassword(
+      UserCredential userCredential =
+          await _firebaseAuth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -243,7 +244,8 @@ class _LoginState extends State<PatientLogin> {
       User? user = userCredential.user;
 
       if (user != null) {
-        DocumentSnapshot? userDoc = await _userService.getUserDocument(user.uid);
+        DocumentSnapshot? userDoc =
+            await _userService.getUserDocument(user.uid);
 
         if (userDoc != null && userDoc.exists) {
           SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -258,8 +260,7 @@ class _LoginState extends State<PatientLogin> {
           );
         } else {
           showToast(message: "User data not found, creating new document...");
-          // Create new document for the user
-          await _userService.saveUserData(user, user.displayName ?? "",'');
+          await _userService.saveUserData(user, user.displayName ?? "", '');
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setString('userEmail', user.email ?? "");
           await prefs.setString('userName', user.displayName ?? "");
@@ -286,29 +287,29 @@ class _LoginState extends State<PatientLogin> {
     final GoogleSignIn _googleSignIn = GoogleSignIn();
 
     try {
-      final GoogleSignInAccount? googleSignInAccount = await _googleSignIn.signIn();
+      final GoogleSignInAccount? googleSignInAccount =
+          await _googleSignIn.signIn();
 
       if (googleSignInAccount != null) {
         final GoogleSignInAuthentication googleSignInAuthentication =
-        await googleSignInAccount.authentication;
+            await googleSignInAccount.authentication;
 
         final AuthCredential credential = GoogleAuthProvider.credential(
           idToken: googleSignInAuthentication.idToken,
           accessToken: googleSignInAuthentication.accessToken,
         );
 
-        UserCredential userCredential = await _firebaseAuth.signInWithCredential(credential);
+        UserCredential userCredential =
+            await _firebaseAuth.signInWithCredential(credential);
         User? user = userCredential.user;
 
         if (user != null) {
-          // Check if the user already exists in Firestore
-          DocumentSnapshot? userDoc = await _userService.getUserDocument(user.uid);
+          DocumentSnapshot? userDoc =
+              await _userService.getUserDocument(user.uid);
 
           if (userDoc == null || !userDoc.exists) {
-            // If user does not exist, create a new document
-            await _userService.saveUserData(user, user.displayName ?? "",'');
+            await _userService.saveUserData(user, user.displayName ?? "", '');
           } else {
-            // If user exists, update their data if necessary (optional)
             await _userService.updateUserData(
               user.uid,
               user.displayName ?? "",
@@ -317,13 +318,12 @@ class _LoginState extends State<PatientLogin> {
             );
           }
 
-          // Save user data to shared preferences
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setString('userEmail', user.email ?? "");
           await prefs.setString('userName', user.displayName ?? "");
           await prefs.setString('userProfilePic', user.photoURL ?? "");
 
-          Navigator.push(
+          await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => PatientMain()),
           );
@@ -337,5 +337,4 @@ class _LoginState extends State<PatientLogin> {
       showToast(message: 'Some error occurred: $e');
     }
   }
-
 }
