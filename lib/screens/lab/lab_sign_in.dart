@@ -1,5 +1,4 @@
 import 'package:cura_link/screens/lab/lab_sign_up.dart';
-import 'package:cura_link/screens/patient/patient_sign_up.dart';
 import 'package:flutter/material.dart';
 
 import '../../widget/widget_support.dart';
@@ -34,11 +33,13 @@ class _LoginState extends State<Login> {
               child: Material(
                 elevation: 5.0,
                 borderRadius: BorderRadius.circular(20),
-                color: Colors.white.withOpacity(0.1), // Adjust transparency here
+                color:
+                    Colors.white.withOpacity(0.1), // Adjust transparency here
                 child: Container(
                   padding: const EdgeInsets.all(20.0),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.8), // Adjust transparency here
+                    color: Colors.white
+                        .withOpacity(0.8), // Adjust transparency here
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Form(
@@ -54,7 +55,7 @@ class _LoginState extends State<Login> {
                           controller: useremailcontroller,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter your email';
+                              return 'Pleasee enter your email';
                             }
                             return null;
                           },
@@ -69,7 +70,7 @@ class _LoginState extends State<Login> {
                           controller: userpasswordcontroller,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter your password';
+                              return 'Pleasee enter your password';
                             }
                             return null;
                           },
@@ -85,14 +86,13 @@ class _LoginState extends State<Login> {
                             // Handle forgot password
                           },
                           child: Container(
-
                             padding: const EdgeInsets.only(top: 20),
                             alignment: Alignment.topRight,
                             child: const Text('Forgot Password'),
                           ),
                         ),
                         Container(
-                        alignment: Alignment.topLeft,
+                          alignment: Alignment.topLeft,
                           child: ElevatedButton(
                             onPressed: () {
                               // Handle login
@@ -102,11 +102,13 @@ class _LoginState extends State<Login> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              padding: const EdgeInsets.symmetric(vertical: 10.0),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 10.0),
                               elevation: 8,
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.only(left:8.0,right:8.0),
+                              padding:
+                                  const EdgeInsets.only(left: 8.0, right: 8.0),
                               child: const Text(
                                 'Login',
                                 style: TextStyle(
@@ -129,7 +131,9 @@ class _LoginState extends State<Login> {
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => labSignUp()), // Make sure to import the SignUp class
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          labSignUp()), // Make sure to import the SignUp class
                                 ); // Handle sign up
                               },
                               style: ElevatedButton.styleFrom(
@@ -137,11 +141,13 @@ class _LoginState extends State<Login> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10.0, horizontal: 10.0),
                                 elevation: 8,
                               ),
                               child: Padding(
-                                padding: const EdgeInsets.only(right:8.0,left:8.0),
+                                padding: const EdgeInsets.only(
+                                    right: 8.0, left: 8.0),
                                 child: const Text(
                                   'Sign Up',
                                   style: TextStyle(
@@ -156,7 +162,6 @@ class _LoginState extends State<Login> {
                           ],
                         ),
                         const SizedBox(height: 20),
-
                       ],
                     ),
                   ),
