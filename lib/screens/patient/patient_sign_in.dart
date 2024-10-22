@@ -1,36 +1,76 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cura_link/common/toast.dart';
-import 'package:cura_link/firebaseImplemetations/firebase_authentication_services.dart';
+
 import 'package:cura_link/screens/patient/patient_main.dart';
 import 'package:cura_link/screens/patient/patient_sign_up.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../services/user_service.dart';
+
+import '../../services/user_autentication.dart';
+
 import '../../widget/widget_support.dart';
+import 'forgot_password.dart';
 
 class PatientLogin extends StatefulWidget {
   const PatientLogin({super.key});
 
   @override
-  State<PatientLogin> createState() => _LoginState();
+  State<PatientLogin> createState() => _PatientLoginState();
 }
 
-class _LoginState extends State<PatientLogin> {
+class _PatientLoginState extends State<PatientLogin> {
+  final UserAuthentication _authService = UserAuthentication();
   bool _isSigning = false;
-  final FirebaseAuthService _auth = FirebaseAuthService();
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final UserService _userService = UserService();
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _signIn() async {
+    setState(() {
+      _isSigning = true;
+    });
+
+    String result = await _authService.signIn(_emailController.text, _passwordController.text);
+
+    setState(() {
+      _isSigning = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
+
+    if (result == "User is successfully signed in") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => PatientMain()),
+      );
+    }
+  }
+
+  void _signInWithGoogle() async {
+    setState(() {
+      _isSigning = true;
+    });
+
+    String result = await _authService.signInWithGoogle();
+
+    setState(() {
+      _isSigning = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
+
+    if (result == "User is successfully signed in") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => PatientMain()),
+      );
+    }
   }
 
   @override
@@ -100,7 +140,7 @@ class _LoginState extends State<PatientLogin> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            // Handle forgot password
+                            Navigator.push(context, MaterialPageRoute(builder: (context)=> Forgotpassword()));
                           },
                           child: Container(
                             padding: const EdgeInsets.only(top: 20),
@@ -225,117 +265,4 @@ class _LoginState extends State<PatientLogin> {
       ),
     );
   }
-
-  void _signIn() async {
-    setState(() {
-      _isSigning = true;
-    });
-
-    String email = _emailController.text;
-    String password = _passwordController.text;
-
-    try {
-      UserCredential userCredential = await _firebaseAuth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      User? user = userCredential.user;
-
-      if (user != null) {
-        DocumentSnapshot? userDoc = await _userService.getUserDocument(user.uid);
-
-        if (userDoc != null && userDoc.exists) {
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.setString('userEmail', userDoc['email'] ?? "");
-          await prefs.setString('userName', userDoc['name'] ?? "");
-          await prefs.setString('userProfilePic', userDoc['profilePic'] ?? "");
-
-          showToast(message: "User is successfully signed in");
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => PatientMain()),
-          );
-        } else {
-          showToast(message: "User data not found, creating new document...");
-          // Create new document for the user
-          await _userService.saveUserData(user, user.displayName ?? "",'');
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.setString('userEmail', user.email ?? "");
-          await prefs.setString('userName', user.displayName ?? "");
-          await prefs.setString('userProfilePic', user.photoURL ?? "");
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => PatientMain()),
-          );
-        }
-      } else {
-        showToast(message: "Failed to retrieve user");
-      }
-    } catch (e) {
-      showToast(message: "Some error occurred: $e");
-    } finally {
-      setState(() {
-        _isSigning = false;
-      });
-    }
-  }
-
-  void _signInWithGoogle() async {
-    final GoogleSignIn _googleSignIn = GoogleSignIn();
-
-    try {
-      final GoogleSignInAccount? googleSignInAccount = await _googleSignIn.signIn();
-
-      if (googleSignInAccount != null) {
-        final GoogleSignInAuthentication googleSignInAuthentication =
-        await googleSignInAccount.authentication;
-
-        final AuthCredential credential = GoogleAuthProvider.credential(
-          idToken: googleSignInAuthentication.idToken,
-          accessToken: googleSignInAuthentication.accessToken,
-        );
-
-        UserCredential userCredential = await _firebaseAuth.signInWithCredential(credential);
-        User? user = userCredential.user;
-
-        if (user != null) {
-          // Check if the user already exists in Firestore
-          DocumentSnapshot? userDoc = await _userService.getUserDocument(user.uid);
-
-          if (userDoc == null || !userDoc.exists) {
-            // If user does not exist, create a new document
-            await _userService.saveUserData(user, user.displayName ?? "",'');
-          } else {
-            // If user exists, update their data if necessary (optional)
-            await _userService.updateUserData(
-              user.uid,
-              user.displayName ?? "",
-              user.email ?? "",
-              user.photoURL ?? "",
-            );
-          }
-
-          // Save user data to shared preferences
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.setString('userEmail', user.email ?? "");
-          await prefs.setString('userName', user.displayName ?? "");
-          await prefs.setString('userProfilePic', user.photoURL ?? "");
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => PatientMain()),
-          );
-        } else {
-          showToast(message: "Failed to sign in with Google");
-        }
-      } else {
-        showToast(message: "Google Sign In canceled");
-      }
-    } catch (e) {
-      showToast(message: 'Some error occurred: $e');
-    }
-  }
-
 }

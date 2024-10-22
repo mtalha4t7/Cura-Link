@@ -1,3 +1,4 @@
+import 'package:cura_link/screens/patient/forgot_password.dart';
 import 'package:cura_link/screens/patient/patient_sign_in.dart';
 import 'package:flutter/material.dart';
 
@@ -96,7 +97,7 @@ class _LoginState extends State<labSignUp> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            // Handle forgot password
+                              Navigator.push(context, MaterialPageRoute(builder: (context)=> Forgotpassword()));
                           },
                           child: Container(
                             padding: const EdgeInsets.only(top: 20),
