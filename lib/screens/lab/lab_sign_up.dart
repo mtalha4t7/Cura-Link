@@ -1,3 +1,4 @@
+import 'package:cura_link/screens/patient/forgot_password.dart';
 import 'package:cura_link/screens/patient/patient_sign_in.dart';
 import 'package:flutter/material.dart';
 
@@ -19,6 +20,7 @@ class _LoginState extends State<labSignUp> {
     return Scaffold(
       body: Stack(
         children: [
+          //container added
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
@@ -33,11 +35,13 @@ class _LoginState extends State<labSignUp> {
               child: Material(
                 elevation: 5.0,
                 borderRadius: BorderRadius.circular(10),
-                color: Colors.white.withOpacity(0.1), // Adjust transparency here
+                color:
+                    Colors.white.withOpacity(0.1), // Adjust transparency here
                 child: Container(
                   padding: const EdgeInsets.all(10.0),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.8), // Adjust transparency here
+                    color: Colors.white
+                        .withOpacity(0.8), // Adjust transparency here
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Form(
@@ -96,7 +100,10 @@ class _LoginState extends State<labSignUp> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            // Handle forgot password
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => Forgotpassword()));
                           },
                           child: Container(
                             padding: const EdgeInsets.only(top: 20),
@@ -115,11 +122,13 @@ class _LoginState extends State<labSignUp> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              padding: const EdgeInsets.symmetric(vertical: 10.0),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 10.0),
                               elevation: 8,
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.only(left:8.0,right: 8.0),
+                              padding:
+                                  const EdgeInsets.only(left: 8.0, right: 8.0),
                               child: const Text(
                                 'Create account',
                                 style: TextStyle(
@@ -142,7 +151,9 @@ class _LoginState extends State<labSignUp> {
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => labSignUp()), // Make sure to import the SignUp class
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          labSignUp()), // Make sure to import the SignUp class
                                 ); // Handle sign up
                               },
                               style: ElevatedButton.styleFrom(
@@ -150,11 +161,13 @@ class _LoginState extends State<labSignUp> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10.0, horizontal: 10.0),
                                 elevation: 8,
                               ),
                               child: Padding(
-                                padding: const EdgeInsets.only(left:8.0,right:8.0),
+                                padding: const EdgeInsets.only(
+                                    left: 8.0, right: 8.0),
                                 child: const Text(
                                   'Sign in',
                                   style: TextStyle(
@@ -169,7 +182,6 @@ class _LoginState extends State<labSignUp> {
                           ],
                         ),
                         const SizedBox(height: 20),
-
                       ],
                     ),
                   ),
