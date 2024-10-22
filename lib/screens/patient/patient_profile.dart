@@ -51,6 +51,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     await user?.updatePassword(passwordController.text);
                     Navigator.of(context).pop(); // Close the dialog
                     showToast(message: 'Password changed successfully!');
+
                   } catch (e) {
                     showToast(message: 'Error: ${e.toString()}');
                   }
