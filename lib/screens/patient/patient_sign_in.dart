@@ -105,7 +105,7 @@ class _PatientLoginState extends State<PatientLogin> {
                           child: Container(
                             padding: const EdgeInsets.only(top: 20),
                             alignment: Alignment.topRight,
-                            child: const Text('Forgot Password'),
+                            child: const Text('Forgot Password?'),
                           ),
                         ),
                         const SizedBox(height: 30),

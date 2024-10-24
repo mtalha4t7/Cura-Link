@@ -34,12 +34,11 @@ class _LoginState extends State<Login> {
                 elevation: 5.0,
                 borderRadius: BorderRadius.circular(20),
                 color:
-                    Colors.white.withOpacity(0.1), // Adjust transparency here
+                    Colors.white.withOpacity(0.1), //for   transparency Adjust
                 child: Container(
                   padding: const EdgeInsets.all(20.0),
                   decoration: BoxDecoration(
-                    color: Colors.white
-                        .withOpacity(0.8), // Adjust transparency here
+                    color: Colors.white.withOpacity(0.8), // Adjust transparency
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Form(
@@ -55,7 +54,7 @@ class _LoginState extends State<Login> {
                           controller: useremailcontroller,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Pleasee enter your email';
+                              return 'Please enter email';
                             }
                             return null;
                           },
@@ -70,7 +69,7 @@ class _LoginState extends State<Login> {
                           controller: userpasswordcontroller,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Pleasee enter your password';
+                              return 'Please enter your password';
                             }
                             return null;
                           },
@@ -88,7 +87,7 @@ class _LoginState extends State<Login> {
                           child: Container(
                             padding: const EdgeInsets.only(top: 20),
                             alignment: Alignment.topRight,
-                            child: const Text('Forgot Password'),
+                            child: const Text('Forgot Password?'),
                           ),
                         ),
                         Container(
@@ -132,8 +131,7 @@ class _LoginState extends State<Login> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) =>
-                                          labSignUp()), // Make sure to import the SignUp class
+                                      builder: (context) => labSignUp()),
                                 ); // Handle sign up
                               },
                               style: ElevatedButton.styleFrom(
