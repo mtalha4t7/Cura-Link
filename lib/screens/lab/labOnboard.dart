@@ -19,6 +19,7 @@ class _LabOnboardState extends State<LabOnboard> {
     super.initState();
   }
 
+  //ovetriding
   @override
   void dispose() {
     _controller.dispose();
@@ -41,7 +42,8 @@ class _LabOnboardState extends State<LabOnboard> {
               },
               itemBuilder: (_, i) {
                 return Padding(
-                  padding: const EdgeInsets.only(top: 40.0, left: 20.0, right: 20.0),
+                  padding:
+                      const EdgeInsets.only(top: 40.0, left: 20.0, right: 20.0),
                   child: Column(
                     children: [
                       Image.asset(
@@ -74,7 +76,7 @@ class _LabOnboardState extends State<LabOnboard> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(
               labTestsContents.length,
-                  (index) => buildDot(index, context),
+              (index) => buildDot(index, context),
             ),
           ),
           GestureDetector(
@@ -101,7 +103,9 @@ class _LabOnboardState extends State<LabOnboard> {
               width: double.infinity,
               child: Center(
                 child: Text(
-                  currentIndex == labTestsContents.length - 1 ? "Start" : "Next",
+                  currentIndex == labTestsContents.length - 1
+                      ? "Start"
+                      : "Next",
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20.0,
@@ -123,9 +127,10 @@ class _LabOnboardState extends State<LabOnboard> {
       margin: const EdgeInsets.only(right: 5),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(6),
-        color: currentIndex == index ? AppColors.primaryColor : AppColors.secondaryColor,
+        color: currentIndex == index
+            ? AppColors.primaryColor
+            : AppColors.secondaryColor,
       ),
     );
   }
 }
-
