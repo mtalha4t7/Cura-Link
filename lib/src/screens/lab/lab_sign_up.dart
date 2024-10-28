@@ -1,16 +1,15 @@
-import 'package:cura_link/screens/medicine_store/medical_sign_in.dart';
 import 'package:flutter/material.dart';
 
 import '../../widget/widget_support.dart';
 
-class medSignUp extends StatefulWidget {
-  const medSignUp({super.key});
+class labSignUp extends StatefulWidget {
+  const labSignUp({super.key});
 
   @override
-  State<medSignUp> createState() => _LoginState();
+  State<labSignUp> createState() => _LoginState();
 }
 
-class _LoginState extends State<medSignUp> {
+class _LoginState extends State<labSignUp> {
   final TextEditingController useremailcontroller = TextEditingController();
   final TextEditingController userpasswordcontroller = TextEditingController();
 
@@ -19,6 +18,7 @@ class _LoginState extends State<medSignUp> {
     return Scaffold(
       body: Stack(
         children: [
+          //container added
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
@@ -33,11 +33,13 @@ class _LoginState extends State<medSignUp> {
               child: Material(
                 elevation: 5.0,
                 borderRadius: BorderRadius.circular(10),
-                color: Colors.white.withOpacity(0.1), // Adjust transparency here
+                color:
+                    Colors.white.withOpacity(0.1), // Adjust transparency here
                 child: Container(
                   padding: const EdgeInsets.all(10.0),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.8), // Adjust transparency here
+                    color: Colors.white
+                        .withOpacity(0.8), // Adjust transparency here
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Form(
@@ -96,7 +98,8 @@ class _LoginState extends State<medSignUp> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            // Handle forgot password
+                            Navigator.push(context,
+                                MaterialPageRoute(builder: (context) => ()));
                           },
                           child: Container(
                             padding: const EdgeInsets.only(top: 20),
@@ -115,11 +118,13 @@ class _LoginState extends State<medSignUp> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              padding: const EdgeInsets.symmetric(vertical: 10.0),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 10.0),
                               elevation: 8,
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.only(left:8.0,right: 8.0),
+                              padding:
+                                  const EdgeInsets.only(left: 8.0, right: 8.0),
                               child: const Text(
                                 'Create account',
                                 style: TextStyle(
@@ -142,7 +147,9 @@ class _LoginState extends State<medSignUp> {
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => medLogin()), // Make sure to import the SignUp class
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          labSignUp()), // Make sure to import the SignUp class
                                 ); // Handle sign up
                               },
                               style: ElevatedButton.styleFrom(
@@ -150,11 +157,13 @@ class _LoginState extends State<medSignUp> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10.0, horizontal: 10.0),
                                 elevation: 8,
                               ),
                               child: Padding(
-                                padding: const EdgeInsets.only(left:8.0,right:8.0),
+                                padding: const EdgeInsets.only(
+                                    left: 8.0, right: 8.0),
                                 child: const Text(
                                   'Sign in',
                                   style: TextStyle(
@@ -169,7 +178,6 @@ class _LoginState extends State<medSignUp> {
                           ],
                         ),
                         const SizedBox(height: 20),
-
                       ],
                     ),
                   ),

@@ -5,10 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../common/toast.dart';
 
 class ProfileScreen extends StatefulWidget {
-  final String userId;
-
-  const ProfileScreen({required this.userId, super.key});
-
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
 }
@@ -23,7 +19,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> fetchUserData() async {
-    userData = await getUserData(widget.userId);
     setState(() {});
   }
 
@@ -114,7 +109,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 Future<Map<String, dynamic>?> getUserData(String uid) async {
-  DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+  DocumentSnapshot userDoc =
+      await FirebaseFirestore.instance.collection('users').doc(uid).get();
   if (userDoc.exists) {
     return userDoc.data() as Map<String, dynamic>?;
   }

@@ -1,4 +1,4 @@
-import 'package:cura_link/screens/patient/patient_sign_in.dart';
+import 'package:cura_link/src/screens/patient/patient_sign_in.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
@@ -31,7 +31,12 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: PatientLogin(),
+      themeMode: ThemeMode.system,
+      home: getInitialScreen(),
     );
+  }
+
+  getInitialScreen() {
+    return PatientLogin();
   }
 }

@@ -1,5 +1,7 @@
-import 'package:cura_link/common/toast.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
+
+import '../common/toast.dart';
 
 class FirebaseAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;

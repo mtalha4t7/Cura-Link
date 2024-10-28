@@ -1,16 +1,16 @@
-import 'package:cura_link/screens/medicine_store/medical_sign_up.dart';
+import 'package:cura_link/src/screens/nurse/nurse_sign_up.dart';
 import 'package:flutter/material.dart';
 
 import '../../widget/widget_support.dart';
 
-class medLogin extends StatefulWidget {
-  const medLogin({super.key});
+class nurseLogin extends StatefulWidget {
+  const nurseLogin({super.key});
 
   @override
-  State<medLogin> createState() => _medLoginState();
+  State<nurseLogin> createState() => _nurseLoginState();
 }
 
-class _medLoginState extends State<medLogin> {
+class _nurseLoginState extends State<nurseLogin> {
   final TextEditingController useremailcontroller = TextEditingController();
   final TextEditingController userpasswordcontroller = TextEditingController();
 
@@ -88,7 +88,7 @@ class _medLoginState extends State<medLogin> {
                           child: Container(
                             padding: const EdgeInsets.only(top: 20),
                             alignment: Alignment.topRight,
-                            child: const Text('Forgot Password'),
+                            child: const Text('Forgot Password?'),
                           ),
                         ),
                         Container(
@@ -133,7 +133,7 @@ class _medLoginState extends State<medLogin> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          medSignUp()), // Make sure to import the SignUp class
+                                          nurseSignUp()), // Make sure to import the SignUp class
                                 ); // Handle sign up
                               },
                               style: ElevatedButton.styleFrom(

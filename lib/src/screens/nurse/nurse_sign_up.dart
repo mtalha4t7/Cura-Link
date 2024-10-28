@@ -1,16 +1,16 @@
-import 'package:cura_link/screens/nurse/nurse_sign_up.dart';
+import 'package:cura_link/src/screens/nurse/nurse_sign_in.dart';
 import 'package:flutter/material.dart';
 
 import '../../widget/widget_support.dart';
 
-class nurseLogin extends StatefulWidget {
-  const nurseLogin({super.key});
+class nurseSignUp extends StatefulWidget {
+  const nurseSignUp({super.key});
 
   @override
-  State<nurseLogin> createState() => _nurseLoginState();
+  State<nurseSignUp> createState() => _LoginState();
 }
 
-class _nurseLoginState extends State<nurseLogin> {
+class _LoginState extends State<nurseSignUp> {
   final TextEditingController useremailcontroller = TextEditingController();
   final TextEditingController userpasswordcontroller = TextEditingController();
 
@@ -32,23 +32,38 @@ class _nurseLoginState extends State<nurseLogin> {
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Material(
                 elevation: 5.0,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(10),
                 color:
                     Colors.white.withOpacity(0.1), // Adjust transparency here
                 child: Container(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(10.0),
                   decoration: BoxDecoration(
                     color: Colors.white
                         .withOpacity(0.8), // Adjust transparency here
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Form(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          "Login",
+                          "Create Account",
                           style: AppWidget.headlineTextFieldStyle(),
+                        ),
+                        const SizedBox(height: 30),
+                        TextFormField(
+                          controller: useremailcontroller,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your name';
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            hintText: 'Name',
+                            hintStyle: AppWidget.semiBoldTextFieldStyle(),
+                            prefixIcon: const Icon(Icons.person),
+                          ),
                         ),
                         const SizedBox(height: 30),
                         TextFormField(
@@ -88,7 +103,7 @@ class _nurseLoginState extends State<nurseLogin> {
                           child: Container(
                             padding: const EdgeInsets.only(top: 20),
                             alignment: Alignment.topRight,
-                            child: const Text('Forgot Password?'),
+                            child: const Text('Forgot Password'),
                           ),
                         ),
                         Container(
@@ -110,7 +125,7 @@ class _nurseLoginState extends State<nurseLogin> {
                               padding:
                                   const EdgeInsets.only(left: 8.0, right: 8.0),
                               child: const Text(
-                                'Login',
+                                'Create account',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 14.0,
@@ -125,7 +140,7 @@ class _nurseLoginState extends State<nurseLogin> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text("Don't have an account?"),
+                            const Text("Already have an account?"),
                             const SizedBox(width: 10),
                             ElevatedButton(
                               onPressed: () {
@@ -133,7 +148,7 @@ class _nurseLoginState extends State<nurseLogin> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          nurseSignUp()), // Make sure to import the SignUp class
+                                          nurseLogin()), // Make sure to import the SignUp class
                                 ); // Handle sign up
                               },
                               style: ElevatedButton.styleFrom(
@@ -147,9 +162,9 @@ class _nurseLoginState extends State<nurseLogin> {
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.only(
-                                    right: 8.0, left: 8.0),
+                                    left: 8.0, right: 8.0),
                                 child: const Text(
-                                  'Sign Up',
+                                  'Sign in',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 14.0,
