@@ -34,11 +34,13 @@ class _nurseLoginState extends State<nurseLogin> {
               child: Material(
                 elevation: 5.0,
                 borderRadius: BorderRadius.circular(20),
-                color: Colors.white.withOpacity(0.1), // Adjust transparency here
+                color:
+                    Colors.white.withOpacity(0.1), // Adjust transparency here
                 child: Container(
                   padding: const EdgeInsets.all(20.0),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.8), // Adjust transparency here
+                    color: Colors.white
+                        .withOpacity(0.8), // Adjust transparency here
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Form(
@@ -85,14 +87,13 @@ class _nurseLoginState extends State<nurseLogin> {
                             // Handle forgot password
                           },
                           child: Container(
-
                             padding: const EdgeInsets.only(top: 20),
                             alignment: Alignment.topRight,
-                            child: const Text('Forgot Password'),
+                            child: const Text('Forgot Password?'),
                           ),
                         ),
                         Container(
-                        alignment: Alignment.topLeft,
+                          alignment: Alignment.topLeft,
                           child: ElevatedButton(
                             onPressed: () {
                               // Handle login
@@ -102,11 +103,13 @@ class _nurseLoginState extends State<nurseLogin> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              padding: const EdgeInsets.symmetric(vertical: 10.0),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 10.0),
                               elevation: 8,
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.only(left:8.0,right:8.0),
+                              padding:
+                                  const EdgeInsets.only(left: 8.0, right: 8.0),
                               child: const Text(
                                 'Login',
                                 style: TextStyle(
@@ -129,7 +132,9 @@ class _nurseLoginState extends State<nurseLogin> {
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => nurseSignUp()), // Make sure to import the SignUp class
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          nurseSignUp()), // Make sure to import the SignUp class
                                 ); // Handle sign up
                               },
                               style: ElevatedButton.styleFrom(
@@ -137,11 +142,13 @@ class _nurseLoginState extends State<nurseLogin> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10.0, horizontal: 10.0),
                                 elevation: 8,
                               ),
                               child: Padding(
-                                padding: const EdgeInsets.only(right:8.0,left:8.0),
+                                padding: const EdgeInsets.only(
+                                    right: 8.0, left: 8.0),
                                 child: const Text(
                                   'Sign Up',
                                   style: TextStyle(
@@ -156,7 +163,6 @@ class _nurseLoginState extends State<nurseLogin> {
                           ],
                         ),
                         const SizedBox(height: 20),
-
                       ],
                     ),
                   ),

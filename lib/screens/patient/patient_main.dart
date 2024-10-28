@@ -92,7 +92,7 @@ class PatientMain extends StatelessWidget {
                         _buildFeatureButton(
                           context,
                           icon: Icons.science,
-                          label: 'Book Lab Seat',
+                          label: 'Book Laboratory Appointment',
                           onPressed: () {
                             // Navigate to book lab seat screen
                           },
