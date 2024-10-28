@@ -1,7 +1,7 @@
-import 'package:cura_link/screens/lab/lab_sign_up.dart';
 import 'package:flutter/material.dart';
 
 import '../../widget/widget_support.dart';
+import 'lab_sign_up.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});

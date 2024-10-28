@@ -5,9 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../common/toast.dart';
 
 class ProfileScreen extends StatefulWidget {
-  final String userId;
-
-  const ProfileScreen({required this.userId, Key? key}) : super(key: key);
 
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
@@ -23,7 +20,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> fetchUserData() async {
-    userData = await getUserData(widget.userId);
+
     setState(() {});
   }
 

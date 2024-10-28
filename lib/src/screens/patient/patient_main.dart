@@ -1,4 +1,5 @@
-import 'package:cura_link/screens/patient/patient_profile.dart';
+
+import 'package:cura_link/src/screens/patient/patient_profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
@@ -125,7 +126,7 @@ class PatientMain extends StatelessWidget {
             // Navigate to profile screen
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) =>  ProfileScreen(userId: FirebaseAuth.instance.currentUser!.uid)),
+                MaterialPageRoute(builder: (context) =>  ProfileScreen()),
               );
               break;
             case 2:

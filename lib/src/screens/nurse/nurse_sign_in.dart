@@ -1,17 +1,17 @@
-import 'package:cura_link/screens/patient/forgot_password.dart';
-import 'package:cura_link/screens/patient/patient_sign_in.dart';
+
+import 'package:cura_link/src/screens/nurse/nurse_sign_up.dart';
 import 'package:flutter/material.dart';
 
 import '../../widget/widget_support.dart';
 
-class labSignUp extends StatefulWidget {
-  const labSignUp({super.key});
+class nurseLogin extends StatefulWidget {
+  const nurseLogin({super.key});
 
   @override
-  State<labSignUp> createState() => _LoginState();
+  State<nurseLogin> createState() => _nurseLoginState();
 }
 
-class _LoginState extends State<labSignUp> {
+class _nurseLoginState extends State<nurseLogin> {
   final TextEditingController useremailcontroller = TextEditingController();
   final TextEditingController userpasswordcontroller = TextEditingController();
 
@@ -20,7 +20,6 @@ class _LoginState extends State<labSignUp> {
     return Scaffold(
       body: Stack(
         children: [
-          //container added
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
@@ -34,38 +33,23 @@ class _LoginState extends State<labSignUp> {
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Material(
                 elevation: 5.0,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(20),
                 color:
                     Colors.white.withOpacity(0.1), // Adjust transparency here
                 child: Container(
-                  padding: const EdgeInsets.all(10.0),
+                  padding: const EdgeInsets.all(20.0),
                   decoration: BoxDecoration(
                     color: Colors.white
                         .withOpacity(0.8), // Adjust transparency here
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Form(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          "Create Account",
+                          "Login",
                           style: AppWidget.headlineTextFieldStyle(),
-                        ),
-                        const SizedBox(height: 30),
-                        TextFormField(
-                          controller: useremailcontroller,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your name';
-                            }
-                            return null;
-                          },
-                          decoration: InputDecoration(
-                            hintText: 'Name',
-                            hintStyle: AppWidget.semiBoldTextFieldStyle(),
-                            prefixIcon: const Icon(Icons.person),
-                          ),
                         ),
                         const SizedBox(height: 30),
                         TextFormField(
@@ -100,15 +84,12 @@ class _LoginState extends State<labSignUp> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => Forgotpassword()));
+                            // Handle forgot password
                           },
                           child: Container(
                             padding: const EdgeInsets.only(top: 20),
                             alignment: Alignment.topRight,
-                            child: const Text('Forgot Password'),
+                            child: const Text('Forgot Password?'),
                           ),
                         ),
                         Container(
@@ -130,7 +111,7 @@ class _LoginState extends State<labSignUp> {
                               padding:
                                   const EdgeInsets.only(left: 8.0, right: 8.0),
                               child: const Text(
-                                'Create account',
+                                'Login',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 14.0,
@@ -145,7 +126,7 @@ class _LoginState extends State<labSignUp> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text("Already have an account?"),
+                            const Text("Don't have an account?"),
                             const SizedBox(width: 10),
                             ElevatedButton(
                               onPressed: () {
@@ -153,7 +134,7 @@ class _LoginState extends State<labSignUp> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          labSignUp()), // Make sure to import the SignUp class
+                                          nurseSignUp()), // Make sure to import the SignUp class
                                 ); // Handle sign up
                               },
                               style: ElevatedButton.styleFrom(
@@ -167,9 +148,9 @@ class _LoginState extends State<labSignUp> {
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.only(
-                                    left: 8.0, right: 8.0),
+                                    right: 8.0, left: 8.0),
                                 child: const Text(
-                                  'Sign in',
+                                  'Sign Up',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 14.0,

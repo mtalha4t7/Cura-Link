@@ -1,11 +1,11 @@
-import 'package:cura_link/common/toast.dart';
-import 'package:cura_link/firebaseImplemetations/firebase_authentication_services.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cura_link/screens/patient/patient_main.dart';
-import 'package:cura_link/screens/patient/patient_sign_in.dart';
+
+import 'package:cura_link/src/screens/patient/patient_main.dart';
+import 'package:cura_link/src/screens/patient/patient_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../common/toast.dart';
+import '../../firebaseImplemetations/firebase_authentication_services.dart';
 import '../../services/user_service.dart';
 import '../../widget/widget_support.dart';
 

@@ -1,10 +1,11 @@
-import 'package:cura_link/screens/nurse/nurse_onboard.dart';
-import 'package:cura_link/screens/patient/patient_onboard.dart';
+
+import 'package:cura_link/src/screens/patient/patient_onboard.dart';
 import 'package:flutter/material.dart';
 
 import '../widget/widget_support.dart';
 import 'lab/labOnboard.dart';
 import 'medicine_store/medicine_storeOnboard.dart';
+import 'nurse/nurse_onboard.dart';
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
