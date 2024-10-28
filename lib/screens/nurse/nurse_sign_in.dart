@@ -1,5 +1,4 @@
 import 'package:cura_link/screens/nurse/nurse_sign_up.dart';
-import 'package:cura_link/screens/patient/patient_sign_up.dart';
 import 'package:flutter/material.dart';
 
 import '../../widget/widget_support.dart';

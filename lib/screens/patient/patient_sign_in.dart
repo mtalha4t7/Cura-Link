@@ -284,11 +284,11 @@ class _PatientLoginState extends State<PatientLogin> {
   }
 
   void _signInWithGoogle() async {
-    final GoogleSignIn _googleSignIn = GoogleSignIn();
+    final GoogleSignIn googleSignIn = GoogleSignIn();
 
     try {
       final GoogleSignInAccount? googleSignInAccount =
-          await _googleSignIn.signIn();
+          await googleSignIn.signIn();
 
       if (googleSignInAccount != null) {
         final GoogleSignInAuthentication googleSignInAuthentication =

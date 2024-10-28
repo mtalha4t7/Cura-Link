@@ -7,7 +7,7 @@ import '../../common/toast.dart';
 class ProfileScreen extends StatefulWidget {
   final String userId;
 
-  const ProfileScreen({required this.userId, Key? key}) : super(key: key);
+  const ProfileScreen({required this.userId, super.key});
 
   @override
   _ProfileScreenState createState() => _ProfileScreenState();

@@ -1,5 +1,4 @@
 import 'package:cura_link/screens/patient/forgot_password.dart';
-import 'package:cura_link/screens/patient/patient_sign_in.dart';
 import 'package:flutter/material.dart';
 
 import '../../widget/widget_support.dart';

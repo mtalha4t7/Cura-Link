@@ -1,5 +1,4 @@
 import 'package:cura_link/screens/patient/patient_sign_in.dart';
-import 'package:cura_link/splashScreen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';

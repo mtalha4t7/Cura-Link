@@ -1,6 +1,5 @@
 import 'package:cura_link/common/toast.dart';
 import 'package:cura_link/firebaseImplemetations/firebase_authentication_services.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cura_link/screens/patient/patient_main.dart';
 import 'package:cura_link/screens/patient/patient_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
