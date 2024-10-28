@@ -6,7 +6,7 @@ class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
   get splash => null;
-
+//override
   @override
   Widget build(BuildContext context) {
     return Scaffold(
