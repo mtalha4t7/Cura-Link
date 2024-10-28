@@ -8,7 +8,8 @@ class UserService {
   // Fetch user document by UID
   Future<DocumentSnapshot?> getUserDocument(String uid) async {
     try {
-      DocumentSnapshot userDoc = await _firestore.collection('users').doc(uid).get();
+      DocumentSnapshot userDoc =
+          await _firestore.collection('users').doc(uid).get();
       return userDoc.exists ? userDoc : null;
     } catch (e) {
       print("Error fetching user document: $e");
@@ -25,14 +26,15 @@ class UserService {
         'profilePic': user.photoURL ?? "", // Default to empty string if null
         'createdAt': FieldValue.serverTimestamp(), // Timestamp for creation
         'updatedAt': FieldValue.serverTimestamp(), // Timestamp for update
-      }, SetOptions(merge: true)); // Use merge to update existing fields
+      }, SetOptions(merge: true)); //  merge to update existing fields
     } catch (e) {
       print("Error saving user data: $e");
     }
   }
 
   // Update user data
-  Future<void> updateUserData(String uid, String name, String email, String profilePic) async {
+  Future<void> updateUserData(
+      String uid, String name, String email, String profilePic) async {
     try {
       await _firestore.collection('users').doc(uid).update({
         'name': name,
