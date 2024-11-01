@@ -23,10 +23,10 @@ class UserService {
       await _firestore.collection('users').doc(user.uid).set({
         'email': email, // Save email passed as parameter
         'name': name, // Ensure name is passed in
-        'profilePic': user.photoURL ?? "", // Default to empty string if null
+        'profilePic': user.photoURL ?? "", // change frm Default to empty string if null
         'createdAt': FieldValue.serverTimestamp(), // Timestamp for creation
         'updatedAt': FieldValue.serverTimestamp(), // Timestamp for update
-      }, SetOptions(merge: true)); //  merge to update existing fields
+      }, SetOptions(merge: true)); //  merge to update existing  fields
     } catch (e) {
       print("Error saving user data: $e");
     }

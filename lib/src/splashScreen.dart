@@ -21,7 +21,7 @@ class SplashScreen extends StatelessWidget {
         ),
         nextScreen: const MainScreen(),
         backgroundColor: const Color.fromARGB(255, 107, 159, 248),
-        splashIconSize: double.infinity, // This ensures the image takes the whole screen
+        splashIconSize: double.infinity, //  ensures the image takes the whole screen
       ),
     );
   }
