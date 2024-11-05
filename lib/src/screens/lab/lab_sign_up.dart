@@ -102,7 +102,7 @@ class _LoginState extends State<labSignUp> {
                             Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => ()));
+                                    builder: (context) => labSignUp()));
                           },
                           child: Container(
                             padding: const EdgeInsets.only(top: 20),
