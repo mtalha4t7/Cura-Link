@@ -1,4 +1,3 @@
-
 import 'package:cura_link/src/screens/patient/patient_profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -25,13 +24,13 @@ class PatientMain extends StatelessWidget {
             children: <Widget>[
               // Logo at the top
               Container(
-                margin: const EdgeInsets.only(
-                    top: 20), // Adjust top margin as needed
+                margin:
+                    const EdgeInsets.only(top: 20), //  top margin adjustments
                 child: Image.asset(
-                  'images/appLogo.png', // Path to your logo asset
+                  'images/appLogo.png',
                   height: 192,
                   width: 192,
-                  color: Colors.white, // Adjust the height of the logo
+                  color: Colors.white, //for Adjusting the height of  logo
                 ),
               ),
               Padding(
@@ -46,13 +45,13 @@ class PatientMain extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                       scalingFactor:
-                      1.2, // Reduced scale factor for less bounce
+                          1.2, // Reduced scale factor for less bounce
                       duration: const Duration(
                           milliseconds: 500), // Duration for each bounce
                     ),
                   ],
                   totalRepeatCount:
-                  120, // Total duration of 1 minute (120 * 0.5s = 60s)
+                      120, // Total duration of 1 minute (120 * 0.5s = 60s)
                   pause: const Duration(
                       milliseconds: 500), // Pause between bounces
                   displayFullTextOnTap: true,
@@ -72,7 +71,7 @@ class PatientMain extends StatelessWidget {
                           icon: Icons.medical_services,
                           label: 'Order Medicine',
                           onPressed: () {
-                            // Navigate to order medicine screen
+                            // Navigate to  medicine ordering screen
                           },
                         ),
                         _buildFeatureButton(
@@ -95,7 +94,7 @@ class PatientMain extends StatelessWidget {
                           icon: Icons.science,
                           label: 'Book Laboratory Appointment',
                           onPressed: () {
-                            // Navigate to book lab seat screen
+                            // Navigate to book lab appointment screen
                           },
                         ),
                       ],
@@ -120,20 +119,20 @@ class PatientMain extends StatelessWidget {
         onTap: (int index) {
           switch (index) {
             case 0:
-            // Navigate to home screen
+              // Navigate to home screen
               break;
             case 1:
-            // Navigate to profile screen
+              // Navigate to profile screen
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) =>  ProfileScreen()),
+                MaterialPageRoute(builder: (context) => ProfileScreen()),
               );
               break;
             case 2:
-            // Navigate to cart details screen
+              // Navigate to cart details screen
               break;
             case 3:
-            // Navigate to wallet screen
+              // Navigate to wallet screen
               break;
           }
         },
@@ -143,8 +142,8 @@ class PatientMain extends StatelessWidget {
 
   Widget _buildFeatureButton(BuildContext context,
       {required IconData icon,
-        required String label,
-        required VoidCallback onPressed}) {
+      required String label,
+      required VoidCallback onPressed}) {
     return SizedBox(
       width: 140, // Fixed width
       height: 140, // Fixed height

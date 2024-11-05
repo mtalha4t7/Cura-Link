@@ -1,4 +1,3 @@
-
 import 'package:cura_link/src/screens/nurse/nurse_sign_up.dart';
 import 'package:flutter/material.dart';
 

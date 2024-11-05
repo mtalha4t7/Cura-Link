@@ -1,4 +1,3 @@
-
 import 'package:cura_link/src/screens/medicine_store/medical_sign_in.dart';
 import 'package:flutter/material.dart';
 
@@ -34,11 +33,13 @@ class _LoginState extends State<medSignUp> {
               child: Material(
                 elevation: 5.0,
                 borderRadius: BorderRadius.circular(10),
-                color: Colors.white.withOpacity(0.1), // Adjust transparency here
+                color:
+                    Colors.white.withOpacity(0.1), // Adjust transparency here
                 child: Container(
                   padding: const EdgeInsets.all(10.0),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.8), // Adjust transparency here
+                    color: Colors.white
+                        .withOpacity(0.8), // Adjust transparency here
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Form(
@@ -116,11 +117,13 @@ class _LoginState extends State<medSignUp> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              padding: const EdgeInsets.symmetric(vertical: 10.0),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 10.0),
                               elevation: 8,
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.only(left:8.0,right: 8.0),
+                              padding:
+                                  const EdgeInsets.only(left: 8.0, right: 8.0),
                               child: const Text(
                                 'Create account',
                                 style: TextStyle(
@@ -143,7 +146,9 @@ class _LoginState extends State<medSignUp> {
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => medLogin()), // Make sure to import the SignUp class
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          medLogin()), // Make sure to import the SignUp class
                                 ); // Handle sign up
                               },
                               style: ElevatedButton.styleFrom(
@@ -151,11 +156,13 @@ class _LoginState extends State<medSignUp> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10.0, horizontal: 10.0),
                                 elevation: 8,
                               ),
                               child: Padding(
-                                padding: const EdgeInsets.only(left:8.0,right:8.0),
+                                padding: const EdgeInsets.only(
+                                    left: 8.0, right: 8.0),
                                 child: const Text(
                                   'Sign in',
                                   style: TextStyle(
@@ -170,7 +177,6 @@ class _LoginState extends State<medSignUp> {
                           ],
                         ),
                         const SizedBox(height: 20),
-
                       ],
                     ),
                   ),
