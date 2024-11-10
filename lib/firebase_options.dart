@@ -4,16 +4,6 @@ import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
-/// Default [FirebaseOptions] for use with your Firebase apps.
-///
-/// Example:
-/// ```dart
-/// import 'firebase_options.dart';
-/// // ...
-/// await Firebase.initializeApp(
-///   options: DefaultFirebaseOptions.currentPlatform,
-/// );
-/// ```
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
@@ -54,8 +44,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '346007822005',
     projectId: 'cura-link',
     storageBucket: 'cura-link.firebasestorage.app',
-    androidClientId: '346007822005-hrtuccsgo8ed0odsan3afjaui0ulrd07.apps.googleusercontent.com',
-    iosClientId: '346007822005-ivup1g26oqerhtprmjs53q909tfgguct.apps.googleusercontent.com',
+    androidClientId:
+        '346007822005-hrtuccsgo8ed0odsan3afjaui0ulrd07.apps.googleusercontent.com',
+    iosClientId:
+        '346007822005-ivup1g26oqerhtprmjs53q909tfgguct.apps.googleusercontent.com',
     iosBundleId: 'com.example.curaLink',
   );
 
@@ -75,8 +67,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '346007822005',
     projectId: 'cura-link',
     storageBucket: 'cura-link.firebasestorage.app',
-    androidClientId: '346007822005-hrtuccsgo8ed0odsan3afjaui0ulrd07.apps.googleusercontent.com',
-    iosClientId: '346007822005-ivup1g26oqerhtprmjs53q909tfgguct.apps.googleusercontent.com',
+    androidClientId:
+        '346007822005-hrtuccsgo8ed0odsan3afjaui0ulrd07.apps.googleusercontent.com',
+    iosClientId:
+        '346007822005-ivup1g26oqerhtprmjs53q909tfgguct.apps.googleusercontent.com',
     iosBundleId: 'com.example.curaLink',
   );
 
@@ -89,5 +83,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'cura-link.firebasestorage.app',
     measurementId: 'G-B99WZYJDLY',
   );
-
 }
