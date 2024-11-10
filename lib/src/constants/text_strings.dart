@@ -34,25 +34,25 @@ const String tAccountCreateVerifyEmail = "Account Create Verify Email";
 
 
 // -- Splash Screen Text
-const String tAppName = "/appable:";
-const String tAppTagLine = "Learn To Code. \nFree For Everyone";
+const String tAppName = "Cura-Link";
+const String tAppTagLine = "Make your health better. \n Take services in your home";
 
 
 // -- On Boarding Text
-const String tOnBoardingTitle1 = "Build Awesome Apps";
-const String tOnBoardingTitle2 = "Learn from YouTube";
-const String tOnBoardingTitle3 = "Get Code & Resources";
-const String tOnBoardingSubTitle1 = "Let's start your journey with us on this amazing and easy platform.";
-const String tOnBoardingSubTitle2 = "Get Video Tutorials of each topic to learn things easily.";
-const String tOnBoardingSubTitle3 = "Save time by just copy pasting complete apps you learned from videos.";
+const String tOnBoardingTitle1 = "Quick delivery Service";
+const String tOnBoardingTitle2 = "Lab booking ";
+const String tOnBoardingTitle3 = "Get services from Nurses nearby";
+const String tOnBoardingSubTitle1 = "'Order medicines with the option to choose\n   between normal and priority delivery.";
+const String tOnBoardingSubTitle2 = "Book lab tests and receive your results\n   via email or WhatsApp quickly.";
+const String tOnBoardingSubTitle3 = "Book professional nurses for home visits\n   and receive quality medical care at home.";
 const String tOnBoardingCounter1 = "1/3";
 const String tOnBoardingCounter2 = "2/3";
 const String tOnBoardingCounter3 = "3/3";
 
 
 // -- Welcome Screen Text
-const String tWelcomeTitle = "Build Awesome Apps";
-const String tWelcomeSubTitle = "Let's put your creativity on the development highway.";
+const String tWelcomeTitle = "Welcome!";
+const String tWelcomeSubTitle = "Who are you? \n Please select and and get stared with Cura-Link";
 
 
 
@@ -71,8 +71,8 @@ const String tGoogle = "Google";
 
 
 // -- Sign Up Screen Text
-const String tSignUpTitle = "Get On Board!";
-const String tSignUpSubTitle = "Create your profile to start your Journey.";
+const String tSignUpTitle = "Sign-Up";
+const String tSignUpSubTitle = "Create your profile to get started with Cura-Link.";
 const String tAlreadyHaveAnAccount = "Already have an Account";
 
 

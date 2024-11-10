@@ -8,6 +8,8 @@ import '../../../../../../utils/helper/helper_controller.dart';
 import '../../../controllers/signup_controller.dart';
 
 class SignUpFormWidget extends StatelessWidget {
+
+
   const SignUpFormWidget({
     super.key,
   });
@@ -15,6 +17,9 @@ class SignUpFormWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(SignUpController());
+
+
+
     return Container(
       padding: const EdgeInsets.only(top: tFormHeight - 15, bottom: tFormHeight),
       child: Form(
@@ -25,7 +30,7 @@ class SignUpFormWidget extends StatelessWidget {
             TextFormField(
               controller: controller.fullName,
               validator: (value) {
-                if(value!.isEmpty) return 'Name cannot be empty';
+                if (value!.isEmpty) return 'Name cannot be empty';
                 return null;
               },
               decoration: const InputDecoration(label: Text(tFullName), prefixIcon: Icon(LineAwesomeIcons.user)),
@@ -39,15 +44,16 @@ class SignUpFormWidget extends StatelessWidget {
             const SizedBox(height: tFormHeight - 20),
             TextFormField(
               controller: controller.phoneNo,
+              keyboardType: TextInputType.phone,
               validator: (value) {
-                if(value!.isEmpty) return 'Phone number cannot be empty';
+                if (value!.isEmpty) return 'Phone number cannot be empty';
                 return null;
               },
               decoration: const InputDecoration(label: Text(tPhoneNo), prefixIcon: Icon(LineAwesomeIcons.phone_solid)),
             ),
             const SizedBox(height: tFormHeight - 20),
             Obx(
-              () => TextFormField(
+                  () => TextFormField(
                 controller: controller.password,
                 validator: Helper.validatePassword,
                 obscureText: controller.showPassword.value ? false : true,
@@ -65,14 +71,14 @@ class SignUpFormWidget extends StatelessWidget {
             ),
             const SizedBox(height: tFormHeight - 10),
             Obx(
-              () => TPrimaryButton(
+                  () => TPrimaryButton(
                 isLoading: controller.isLoading.value ? true : false,
                 text: tSignup.tr,
                 onPressed: controller.isFacebookLoading.value || controller.isGoogleLoading.value
                     ? () {}
                     : controller.isLoading.value
-                        ? () {}
-                        : () => controller.createUser(),
+                    ? () {}
+                    : () => controller.createUser(),
               ),
             ),
           ],

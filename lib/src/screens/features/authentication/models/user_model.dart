@@ -21,6 +21,7 @@ class UserModel {
       "FullName": fullName,
       "Email": email,
       "Phone": phoneNo,
+      "User-Type": userType,
 
     };
   }

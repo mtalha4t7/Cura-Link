@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import '../../screens/features/authentication/models/user_model.dart';
+import '../../shared prefrences/shared_prefrence.dart';
 import '../authentication_repository/exceptions/t_exceptions.dart';
 
 class UserRepository extends GetxController {
@@ -15,6 +16,12 @@ class UserRepository extends GetxController {
       // It is recommended to use Authentication Id as DocumentId of the Users Collection.
       // To store a new user you first have to authenticate and get uID (e.g: Check Authentication Repository)
       // Add user like this: await _db.collection("Users").doc(uID).set(user.toJson());
+      if (user.userType != null) {
+        await saveUserType(user.userType!);
+      } else {
+        // Handle the case where userType is null (you might want to throw an error or provide a default value)
+        throw Exception("User type is null");
+      }
       await recordExist(user.email) ? throw "Record Already Exists" : await _db.collection("Users").add(user.toJson());
     } on FirebaseAuthException catch (e) {
       final result = TExceptions.fromCode(e.code);
@@ -25,6 +32,8 @@ class UserRepository extends GetxController {
       throw e.toString().isEmpty ? 'Something went wrong. Please Try Again' : e.toString();
     }
   }
+
+
 
   /// Fetch User Specific details
   Future<UserModel> getUserDetails(String email) async {
@@ -65,6 +74,21 @@ class UserRepository extends GetxController {
       throw 'Something went wrong. Please Try Again';
     }
   }
+  Future<UserModel> getCurrentUserDetails() async {
+    try {
+      final uID = FirebaseAuth.instance.currentUser!.uid;
+      final snapshot = await _db.collection("Users").doc(uID).get();
+      if (!snapshot.exists) throw 'No such user found';
+      return UserModel.fromSnapshot(snapshot);
+    } on FirebaseAuthException catch (e) {
+      final result = TExceptions.fromCode(e.code);
+      throw result.message;
+    } on FirebaseException catch (e) {
+      throw e.message.toString();
+    } catch (e) {
+      throw e.toString().isEmpty ? 'Something went wrong. Please Try Again' : e.toString();
+    }
+  }
 
   /// Update User details
   Future<void> updateUserRecord(UserModel user) async {
@@ -98,9 +122,11 @@ class UserRepository extends GetxController {
   Future<bool> recordExist(String email) async {
     try {
       final snapshot = await _db.collection("Users").where("Email", isEqualTo: email).get();
-      return snapshot.docs.isEmpty ? false : true;
+      return snapshot.docs.isNotEmpty;
     } catch (e) {
+      print("Error fetching record: $e");
       throw "Error fetching record.";
     }
   }
+
 }
