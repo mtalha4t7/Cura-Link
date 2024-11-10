@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../../../../../constants/colors.dart';
 import '../../../../../../constants/image_strings.dart';
 import '../PatientProfile/patient_profile_screen.dart';
@@ -19,15 +18,29 @@ class PatientDashboardAppBar extends StatelessWidget
       elevation: 0,
       centerTitle: true,
       backgroundColor: Colors.transparent,
-      title: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset(
-            tLogoImage, // Assuming this is the logo image path
-            height: 45, // Adjust the height as needed
-          ),
-          const SizedBox(height: 5),
-        ],
+      title: Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ColorFiltered(
+              colorFilter: isDark
+                  ? const ColorFilter.mode(
+                      Colors.white, // Invert color for dark mode
+                      BlendMode.srcIn,
+                    )
+                  : const ColorFilter.mode(
+                      Colors.black, // invert color for light mode
+                      BlendMode.srcIn,
+                    ),
+              child: Image.asset(
+                tLogoImage, // Assuming this is the logo image path=
+                height: 55, // Adjust the height as needed
+              ),
+            ),
+            const SizedBox(height: 5),
+          ],
+        ),
       ),
       actions: [
         Container(

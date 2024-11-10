@@ -112,7 +112,7 @@ class PatientDashboard extends StatelessWidget {
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: const [
-                      HealthTipCard(title: "Stay Hydrated"),
+                      HealthTipCard(title: "Stay\nHydrated"),
                       HealthTipCard(title: "Eat Balanced Diet"),
                       HealthTipCard(title: "Regular Checkups"),
                       HealthTipCard(title: "Get Vaccinated"),
