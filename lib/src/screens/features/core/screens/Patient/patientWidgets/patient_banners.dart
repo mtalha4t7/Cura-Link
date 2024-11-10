@@ -5,7 +5,6 @@ import '../../../../../../constants/image_strings.dart';
 import '../../../../../../constants/sizes.dart';
 import '../../../../../../constants/text_strings.dart';
 
-
 class PatientDashboardBanners extends StatelessWidget {
   const PatientDashboardBanners({
     super.key,
@@ -24,7 +23,8 @@ class PatientDashboardBanners extends StatelessWidget {
         //1st banner
         Expanded(
           child: Container(
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
               //For Dark Color
               color: isDark ? tSecondaryColor : tCardBgColor,
             ),
@@ -41,8 +41,14 @@ class PatientDashboardBanners extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 25),
-                Text(tDashboardBannerTitle1, style: txtTheme.headlineMedium, maxLines: 2, overflow: TextOverflow.ellipsis),
-                Text(tDashboardBannerSubTitle, style: txtTheme.bodyMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(tDashboardBannerTitle1,
+                    style: txtTheme.headlineMedium,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis),
+                Text(tDashboardBannerSubTitle,
+                    style: txtTheme.bodyMedium,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
@@ -54,11 +60,13 @@ class PatientDashboardBanners extends StatelessWidget {
             children: [
               //Card
               Container(
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
                   //For Dark Color
                   color: isDark ? tSecondaryColor : tCardBgColor,
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -66,12 +74,18 @@ class PatientDashboardBanners extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Flexible(child: Image(image: AssetImage(tBookmarkIcon))),
-                        Flexible(child: Image(image: AssetImage(tBannerImage2))),
+                        Flexible(
+                            child: Image(image: AssetImage(tBookmarkIcon))),
+                        Flexible(
+                            child: Image(image: AssetImage(tBannerImage2))),
                       ],
                     ),
-                    Text(tDashboardBannerTitle2, style: txtTheme.headlineMedium, overflow: TextOverflow.ellipsis),
-                    Text(tDashboardBannerSubTitle, style: txtTheme.bodyMedium, overflow: TextOverflow.ellipsis),
+                    Text(tDashboardBannerTitle2,
+                        style: txtTheme.headlineMedium,
+                        overflow: TextOverflow.ellipsis),
+                    Text(tDashboardBannerSubTitle,
+                        style: txtTheme.bodyMedium,
+                        overflow: TextOverflow.ellipsis),
                   ],
                 ),
               ),
@@ -80,7 +94,8 @@ class PatientDashboardBanners extends StatelessWidget {
                 width: double.infinity,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: OutlinedButton(onPressed: () {}, child: const Text(tDashboardButton)),
+                  child: OutlinedButton(
+                      onPressed: () {}, child: const Text(tDashboardButton)),
                 ),
               )
             ],

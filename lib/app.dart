@@ -1,5 +1,3 @@
-
-
 import 'package:cura_link/src/utils/app_bindings.dart';
 import 'package:cura_link/src/utils/theme/theme.dart';
 import 'package:flutter/material.dart';
@@ -16,9 +14,7 @@ class App extends StatelessWidget {
       theme: TAppTheme.lightTheme,
       darkTheme: TAppTheme.darkTheme,
       debugShowCheckedModeBanner: false,
-
       home: const Scaffold(body: Center(child: CircularProgressIndicator())),
     );
   }
 }
-

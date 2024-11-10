@@ -1,17 +1,10 @@
-import 'package:cura_link/src/screens/features/core/screens/Patient/PatientProfile/patient_profile_screen.dart';
-import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_appbar.dart';
-import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_banners.dart';
-import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_categories.dart';
-import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_search.dart';
-import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/top_searches.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/health_tip_card.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_dashboard_sidebar.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/quick_access_button.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/service_card.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import '../../../../../../constants/image_strings.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_appbar.dart';
 import '../../../../../../constants/sizes.dart';
-import '../../../../../../constants/text_strings.dart';
-
-
-
 
 class PatientDashboard extends StatelessWidget {
   const PatientDashboard({super.key});
@@ -24,102 +17,126 @@ class PatientDashboard extends StatelessWidget {
     return SafeArea(
       child: Scaffold(
         appBar: PatientDashboardAppBar(isDark: isDark),
-
-       drawer: PatientDashboardSidebar(), // Extracted Drawer
-
+        drawer: PatientDashboardSidebar(isDark: isDark),
         body: SingleChildScrollView(
-          child: Container(
+          child: Padding(
             padding: const EdgeInsets.all(tDashboardPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Heading
-                Text(tDashboardTitle, style: txtTheme.bodyMedium),
-                Text(tDashboardHeading, style: txtTheme.displayMedium),
+                Text("Welcome to Cura Link", style: txtTheme.bodyMedium),
+                Text("How can we assist you today?",
+                    style: txtTheme.displayMedium),
                 const SizedBox(height: tDashboardPadding),
 
-                // Search Box
-                PatientDashboardSearchBox(txtTheme: txtTheme),
-                const SizedBox(height: tDashboardPadding),
-
-                // Categories
-                PatientDashboardCategories(txtTheme: txtTheme),
-                const SizedBox(height: tDashboardPadding),
-
-                // Banners
-                PatientDashboardBanners(txtTheme: txtTheme, isDark: isDark),
-                const SizedBox(height: tDashboardPadding),
-
-                // Top Courses
-                Text(
-                  tDashboardTopCourses,
-                  style: txtTheme.headlineMedium?.apply(fontSizeFactor: 1.2),
+                // Quick Access Buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    QuickAccessButton(
+                      icon: Icons.medication,
+                      label: 'Order Medicine',
+                      onTap: () {
+                        // Order Medicine action
+                      },
+                    ),
+                    QuickAccessButton(
+                      icon: Icons.local_hospital,
+                      label: 'Call Nurse',
+                      onTap: () {
+                        // Call Nurse action
+                      },
+                    ),
+                    QuickAccessButton(
+                      icon: Icons.science,
+                      label: 'Book Lab',
+                      onTap: () {
+                        // Book Lab Appointment action
+                      },
+                    ),
+                  ],
                 ),
-                PatientDashboardTopCourses(txtTheme: txtTheme, isDark: isDark)
+                const SizedBox(height: tDashboardPadding),
+
+                // Services Grid
+                const Text(
+                  "Our Services",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  children: [
+                    ServiceCard(
+                      icon: Icons.medical_services,
+                      title: 'Medicine Delivery',
+                      onTap: () {
+                        // Navigate to Medicine Delivery
+                      },
+                    ),
+                    ServiceCard(
+                      icon: Icons.medical_services_sharp,
+                      title: 'Nurse Assistance',
+                      onTap: () {
+                        // Navigate to Nurse Assistance
+                      },
+                    ),
+                    ServiceCard(
+                      icon: Icons.biotech,
+                      title: 'Lab Tests',
+                      onTap: () {
+                        // Navigate to Lab Tests
+                      },
+                    ),
+                    ServiceCard(
+                      icon: Icons.video_call,
+                      title: 'Virtual Consultations',
+                      onTap: () {
+                        // Navigate to Virtual Consultations
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: tDashboardPadding),
+
+                // Health Tips Section
+                const Text(
+                  "Health Tips",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(
+                  height: 120,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: const [
+                      HealthTipCard(title: "Stay Hydrated"),
+                      HealthTipCard(title: "Eat Balanced Diet"),
+                      HealthTipCard(title: "Regular Checkups"),
+                      HealthTipCard(title: "Get Vaccinated"),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
         ),
+        bottomNavigationBar: BottomNavigationBar(
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.shopping_cart), label: "Orders"),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.message), label: "Messages"),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+          ],
+          onTap: (index) {
+            // Handle navigation
+          },
+        ),
       ),
     );
-  }
-}
-class PatientDashboardSidebar extends StatelessWidget {
-  const PatientDashboardSidebar({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-
-
-    return Container(
-      width: 250, // Set a fixed width for the sidebar
-      color: Colors.grey.shade200, // Set a background color for the sidebar
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Sidebar Header
-          const UserAccountsDrawerHeader(
-            currentAccountPicture: Image(image: AssetImage(tLogoImage)),
-            accountName: Text('Patient Login'),
-            accountEmail: Text('support@codingwithT.com'),
-          ),
-
-          // Sidebar Items
-          ListTile(
-            leading: const Icon(Icons.home),
-            title: const Text('Home'),
-            onTap: () {
-              Get.toNamed('/home'); // Adjust the route to your Home screen path
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.verified_user),
-            title: const Text('Profile'),
-            onTap: () {
-              Navigator.pop(context);
-              passToSettingsPage(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.shopping_bag),
-            title: const Text('Shop'),
-            onTap: () {
-              Get.toNamed('/shop'); // Adjust the route to your Shop screen path
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.favorite),
-            title: const Text('Wishlist'),
-            onTap: () {
-              Get.toNamed('/wishlist'); // Adjust the route to your Wishlist screen path
-            },
-          ),
-        ],
-      ),
-    );
-  }
-  passToSettingsPage(BuildContext context) {
-    Navigator.push(
-        context, MaterialPageRoute(builder: (context) => PatientProfileScreen()));
   }
 }

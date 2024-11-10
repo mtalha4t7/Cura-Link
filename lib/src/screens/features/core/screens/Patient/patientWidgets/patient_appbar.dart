@@ -6,14 +6,12 @@ import '../../../../../../constants/image_strings.dart';
 import '../../../../../../constants/text_strings.dart';
 import '../PatientProfile/patient_profile_screen.dart';
 
-class PatientDashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
+class PatientDashboardAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
   const PatientDashboardAppBar({
     super.key,
     required this.isDark,
   });
-  void navigateToProfile() {
-    Get.to(() => const PatientProfileScreen());
-  }
   final bool isDark;
 
   @override
@@ -31,7 +29,8 @@ class PatientDashboardAppBar extends StatelessWidget implements PreferredSizeWid
             color: isDark ? tSecondaryColor : tCardBgColor,
           ),
           child: IconButton(
-            onPressed:navigateToProfile,
+            onPressed: navigateToProfile,
+
             // onPressed: () => AuthenticationRepository.instance.logout(),
             icon: const Image(image: AssetImage(tUserProfileImage)),
           ),
@@ -40,8 +39,11 @@ class PatientDashboardAppBar extends StatelessWidget implements PreferredSizeWid
     );
   }
 
-
   @override
   // TODO: implement preferredSize
   Size get preferredSize => const Size.fromHeight(55);
+
+  void navigateToProfile() {
+    Get.to(() => const PatientProfileScreen());
+  }
 }
