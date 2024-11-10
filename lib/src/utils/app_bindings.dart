@@ -14,7 +14,6 @@ class InitialBinding extends Bindings{
     Get.lazyPut(() => UserRepository(), fenix: true);
     Get.lazyPut(() => SplashScreen(), fenix: true);
     Get.lazyPut(() => OnBoardingController(), fenix: true);
-
     Get.lazyPut(() => LoginController(), fenix: true);
     Get.lazyPut(() => SignUpController(), fenix: true);
     Get.lazyPut(() => OTPController(), fenix: true);

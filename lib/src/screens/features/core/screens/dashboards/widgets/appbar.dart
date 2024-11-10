@@ -11,7 +11,9 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     required this.isDark,
   });
-
+  void navigateToProfile() {
+    Get.to(() => const ProfileScreen());
+  }
   final bool isDark;
 
   @override
@@ -29,7 +31,7 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
             color: isDark ? tSecondaryColor : tCardBgColor,
           ),
           child: IconButton(
-            onPressed: () => Get.to(() => const ProfileScreen()),
+            onPressed:navigateToProfile,
             // onPressed: () => AuthenticationRepository.instance.logout(),
             icon: const Image(image: AssetImage(tUserProfileImage)),
           ),
@@ -37,6 +39,7 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
       ],
     );
   }
+
 
   @override
   // TODO: implement preferredSize

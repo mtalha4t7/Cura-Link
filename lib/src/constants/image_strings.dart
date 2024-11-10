@@ -8,14 +8,14 @@ const String tSplashImage = "assets/images/splash_images/splash-screen-image.png
 
 
 // -- OnBoarding Screen Images
-const String tOnBoardingImage1 = "assets/images/on_boarding_images/on-boarding-image-1.png";
-const String tOnBoardingImage2 = "assets/images/on_boarding_images/on-boarding-image-2.png";
-const String tOnBoardingImage3 = "assets/images/on_boarding_images/on-boarding-image-3.png";
+const String tOnBoardingImage1 = "assets/images/mediceOnboardImage1.jpg";
+const String tOnBoardingImage2 = "assets/images/labOnboardImage1.jpg";
+const String tOnBoardingImage3 = "assets/images/nurseOnboardImage1.jpg";
 
 
 // -- Welcome Screen Image [Used in Login & SignUp]
-const String tWelcomeScreenImage = "assets/images/welcome_images/welcome-screen-image.png";
-const String tLogoImage = "assets/images/profile/logo.png";
+const String tWelcomeScreenImage = "assets/images/appLogo.png";
+const String tLogoImage = "assets/images/appLogo.png";
 
 
 // -- SOCIAL Images
