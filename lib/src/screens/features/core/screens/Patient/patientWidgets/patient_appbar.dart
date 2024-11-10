@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 
 import '../../../../../../constants/colors.dart';
 import '../../../../../../constants/image_strings.dart';
-import '../../../../../../constants/text_strings.dart';
 import '../PatientProfile/patient_profile_screen.dart';
 
 class PatientDashboardAppBar extends StatelessWidget
@@ -20,7 +19,16 @@ class PatientDashboardAppBar extends StatelessWidget
       elevation: 0,
       centerTitle: true,
       backgroundColor: Colors.transparent,
-      title: Text(tAppName, style: Theme.of(context).textTheme.headlineMedium),
+      title: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset(
+            tLogoImage, // Assuming this is the logo image path
+            height: 45, // Adjust the height as needed
+          ),
+          const SizedBox(height: 5),
+        ],
+      ),
       actions: [
         Container(
           margin: const EdgeInsets.only(right: 20, top: 7),
@@ -30,18 +38,15 @@ class PatientDashboardAppBar extends StatelessWidget
           ),
           child: IconButton(
             onPressed: navigateToProfile,
-
-            // onPressed: () => AuthenticationRepository.instance.logout(),
             icon: const Image(image: AssetImage(tUserProfileImage)),
           ),
-        )
+        ),
       ],
     );
   }
 
   @override
-  // TODO: implement preferredSize
-  Size get preferredSize => const Size.fromHeight(55);
+  Size get preferredSize => const Size.fromHeight(70);
 
   void navigateToProfile() {
     Get.to(() => const PatientProfileScreen());

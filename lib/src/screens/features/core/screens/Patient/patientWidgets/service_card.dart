@@ -1,3 +1,4 @@
+import 'package:cura_link/src/constants/colors.dart';
 import 'package:flutter/material.dart';
 
 class ServiceCard extends StatelessWidget {
@@ -17,8 +18,8 @@ class ServiceCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.blue[50],
-          borderRadius: BorderRadius.circular(8),
+          color: tDarkColor,
+          borderRadius: BorderRadius.circular(20),
         ),
         padding: const EdgeInsets.all(16),
         child: Column(
