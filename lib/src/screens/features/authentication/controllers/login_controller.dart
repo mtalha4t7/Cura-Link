@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../../../../constants/text_strings.dart';
 import '../../../../repository/authentication_repository/authentication_repository.dart';
 import '../../../../repository/user_repository/user_repository.dart';
+import '../../../../shared prefrences/shared_prefrence.dart';
 import '../../../../utils/helper/helper_controller.dart';
 import '../models/user_model.dart';
-
 
 class LoginController extends GetxController {
   static LoginController get instance => Get.find();
@@ -14,6 +15,7 @@ class LoginController extends GetxController {
   final showPassword = false.obs;
   final email = TextEditingController();
   final password = TextEditingController();
+
   GlobalKey<FormState> loginFormKey = GlobalKey<FormState>();
 
   /// Loader
@@ -29,8 +31,15 @@ class LoginController extends GetxController {
         isLoading.value = false;
         return;
       }
+
+      // Load user type from shared preferences
+      String? userType = await loadUserType();
+      if (userType == null) {
+        throw "User type is not set.";
+      }
+
       final auth = AuthenticationRepository.instance;
-      await auth.loginWithEmailAndPassword(email.text.trim(), password.text.trim());
+      await auth.loginWithEmailAndPassword(email.text.trim(), password.text.trim(), userType);
       auth.setInitialScreen(auth.firebaseUser);
     } catch (e) {
       isLoading.value = false;
@@ -43,17 +52,28 @@ class LoginController extends GetxController {
     try {
       isGoogleLoading.value = true;
       final auth = AuthenticationRepository.instance;
+
       // Sign In with Google
       await auth.signInWithGoogle();
-      // Once the user Signed In, Check if the User Data is already stored in Firestore Collection('Users')
-      // If not store the data and let the user Login.
-      // [auth.getUserEmail] will return current LoggedIn user email.
-      // If record does not exit -> Create new
-      /// --  In this case or any case do not store password in the Firestore. This is just for learning purpose.
-      if(!await UserRepository.instance.recordExist(auth.getUserEmail)) {
-        UserModel user = UserModel(email: auth.getUserEmail, password: '', fullName: auth.getDisplayName, phoneNo: auth.getPhoneNo,userType: auth.getUserType);
+
+      // Load user type from shared preferences
+      String? userType = await loadUserType();
+      if (userType == null) {
+        throw "User type is not set.";
+      }
+
+      // Check if user data already exists in Firestore
+      if (!await UserRepository.instance.recordExist(auth.getUserEmail)) {
+        UserModel user = UserModel(
+          email: auth.getUserEmail,
+          password: '',
+          fullName: auth.getDisplayName,
+          phoneNo: auth.getPhoneNo,
+          userType: userType,
+        );
         await UserRepository.instance.createUser(user);
       }
+
       isGoogleLoading.value = false;
       auth.setInitialScreen(auth.firebaseUser);
     } catch (e) {
@@ -67,13 +87,30 @@ class LoginController extends GetxController {
     try {
       isFacebookLoading.value = true;
       final auth = AuthenticationRepository.instance;
+
+      // Sign In with Facebook
       await auth.signInWithFacebook();
-      /// --  In this case or any case do not store password in the Firestore. This is just for learning purpose.
-      if(!await UserRepository.instance.recordExist(auth.getUserID)) {
-        UserModel user = UserModel(email: auth.getUserEmail, password: '', fullName: auth.getDisplayName, phoneNo: auth.getPhoneNo,userType: auth.getUserType);
+
+      // Load user type from shared preferences
+      String? userType = await loadUserType();
+      if (userType == null) {
+        throw "User type is not set.";
+      }
+
+      // Check if user data already exists in Firestore
+      if (!await UserRepository.instance.recordExist(auth.getUserID)) {
+        UserModel user = UserModel(
+          email: auth.getUserEmail,
+          password: '',
+          fullName: auth.getDisplayName,
+          phoneNo: auth.getPhoneNo,
+          userType: userType,
+        );
         await UserRepository.instance.createUser(user);
       }
+
       isFacebookLoading.value = false;
+      auth.setInitialScreen(auth.firebaseUser);
     } catch (e) {
       isFacebookLoading.value = false;
       Helper.errorSnackBar(title: tOhSnap, message: e.toString());

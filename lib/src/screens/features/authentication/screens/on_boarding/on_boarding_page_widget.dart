@@ -20,6 +20,7 @@ class OnBoardingPageWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
+          SizedBox(height: 20,),
           Image(
             image: AssetImage(model.image),
             height: size.height * 0.45,
