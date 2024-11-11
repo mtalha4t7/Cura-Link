@@ -24,8 +24,7 @@ class AdvanceButton extends StatelessWidget {
           color: isDarkTheme ? tServiceCardDarkBg : tServiceCardLightBg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color:
-                isDarkTheme ? tServiceCardDarkBorder : tServiceCardLightBorder,
+            color:isDarkTheme ? tServiceCardLightBorder : tServiceCardDarkBorder,
           ),
         ),
         padding: const EdgeInsets.all(16),
@@ -34,15 +33,15 @@ class AdvanceButton extends StatelessWidget {
           children: [
             Image.asset(
               imagePath,
-              height: 60,
-              width: 60,
+              height: 80,
+              width: 80,
             ),
             const SizedBox(height: 8),
             Text(
               title,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 18,
                 color: isDarkTheme ? tWhiteColor : tDarkColor,
               ),
             ),

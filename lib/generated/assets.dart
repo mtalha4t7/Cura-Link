@@ -39,6 +39,10 @@ class Assets {
   static const String splashImagesAppLogo = 'assets/images/splash_images/appLogo.png';
   static const String splashImagesSplashScreenImage = 'assets/images/splash_images/splash-screen-image.png';
   static const String splashImagesSplashTopIcon = 'assets/images/splash_images/splash-top-icon.png';
+  static const String welcomeImagesLaboratory = 'assets/images/welcome_images/laboratory.png';
+  static const String welcomeImagesMedicalStore = 'assets/images/welcome_images/medical_store.png';
+  static const String welcomeImagesNurse = 'assets/images/welcome_images/nurse.png';
+  static const String welcomeImagesPatient = 'assets/images/welcome_images/patient.png';
   static const String welcomeImagesWelcomeScreenImage = 'assets/images/welcome_images/welcome-screen-image.png';
 
 }

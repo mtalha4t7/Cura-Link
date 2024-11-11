@@ -28,7 +28,7 @@ class WelcomeScreen extends StatelessWidget {
 
     return SafeArea(
       child: Scaffold(
-        backgroundColor: isDarkMode ? tSecondaryColor : tPrimaryColor,
+        backgroundColor: isDarkMode ? tDarkColor : tPrimaryColor,
         body: Stack(
           children: [
             TFadeInAnimation(
@@ -45,7 +45,7 @@ class WelcomeScreen extends StatelessWidget {
                 rightBefore: 0,
               ),
               child: Container(
-                padding: const EdgeInsets.all(tDefaultSpace),
+                padding: const EdgeInsets.only(left:15,right: 15),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -59,6 +59,7 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                     Column(
                       children: [
+
                         Text(
                           tWelcomeTitle,
                           style: Theme.of(context).textTheme.displayMedium,
