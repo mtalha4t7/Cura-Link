@@ -1,11 +1,12 @@
+import 'package:cura_link/src/screens/features/authentication/screens/welcome/welcome_widgets/advance_button.dart';
+import 'package:cura_link/src/shared%20prefrences/shared_prefrence.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../constants/colors.dart';
 import '../../../../../constants/image_strings.dart';
 import '../../../../../constants/sizes.dart';
 import '../../../../../constants/text_strings.dart';
-import '../../../../../shared prefrences/shared_prefrence.dart';
+
 import '../../../../../utils/animations/fade_in_animation/animation_design.dart';
 import '../../../../../utils/animations/fade_in_animation/fade_in_animation_controller.dart';
 import '../../../../../utils/animations/fade_in_animation/fade_in_animation_model.dart';
@@ -13,7 +14,6 @@ import '../signup/signup_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
-
 
   @override
   Widget build(BuildContext context) {
@@ -50,64 +50,72 @@ class WelcomeScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     Hero(
-                        tag: 'welcome-image-tag',
-                        child: Image(
-                            image: const AssetImage(tLogoImage), width: width * 0.5, height: height * 0.2)),
+                      tag: 'welcome-image-tag',
+                      child: Image(
+                        image: const AssetImage(tLogoImage),
+                        width: width * 0.5,
+                        height: height * 0.2,
+                      ),
+                    ),
                     Column(
                       children: [
-                        Text(tWelcomeTitle, style: Theme.of(context).textTheme.displayMedium),
-                        Text(tWelcomeSubTitle,
-                            style: Theme.of(context).textTheme.bodyLarge, textAlign: TextAlign.center),
+                        Text(
+                          tWelcomeTitle,
+                          style: Theme.of(context).textTheme.displayMedium,
+                        ),
+                        Text(
+                          tWelcomeSubTitle,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                          textAlign: TextAlign.center,
+                        ),
                       ],
                     ),
-
                     Row(
                       children: [
                         Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
+                          child: AdvanceButton(
+                            imagePath: tPatientImage,
+                            title: 'Patient',
+                            onTap: () async {
                               await saveUserType("Patient");
                               Get.to(() => const SignupScreen());
                             },
-                            icon: Icon(Icons.person),
-                            label: Text("Patient"),
                           ),
                         ),
                         const SizedBox(width: 10.0),
                         Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
+                          child: AdvanceButton(
+                            imagePath: tMedicalStoreImage,
+                            title: 'Medi-Store',
+                            onTap: () async {
                               await saveUserType("Medical-Store");
                               Get.to(() => const SignupScreen());
                             },
-                            icon: Icon(Icons.local_pharmacy),
-                            label: Text("Medi-Store"),
                           ),
                         ),
                       ],
                     ),
-
                     Row(
                       children: [
                         Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
+                          child: AdvanceButton(
+                            imagePath: tNurseImage,
+                            title: 'Nurse',
+                            onTap: () async {
                               await saveUserType("Nurse");
                               Get.to(() => const SignupScreen());
                             },
-                            icon: Icon(Icons.local_hospital_sharp),
-                            label: Text("Nurse"),
                           ),
                         ),
                         const SizedBox(width: 10.0),
                         Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
+                          child: AdvanceButton(
+                            imagePath: tLabImage,
+                            title: 'Lab',
+                            onTap: () async {
                               await saveUserType("Lab");
                               Get.to(() => const SignupScreen());
                             },
-                            icon: Icon(Icons.medical_services),
-                            label: Text("Lab"),
                           ),
                         ),
                       ],
