@@ -43,11 +43,10 @@ class LoginController extends GetxController {
       auth.setInitialScreen(auth.firebaseUser);
     } catch (e) {
       isLoading.value = false;
-      Helper.errorSnackBar(title: tOhSnap, message: e.toString());
+      Helper.errorSnackBar(title: tNoRecordFound, message: e.toString());
     }
   }
 
-  /// [GoogleSignInAuthentication]
   Future<void> googleSignIn() async {
     try {
       isGoogleLoading.value = true;
@@ -58,20 +57,26 @@ class LoginController extends GetxController {
 
       // Load user type from shared preferences
       String? userType = await loadUserType();
-      if (userType == null) {
-        throw "User type is not set.";
-      }
 
       // Check if user data already exists in Firestore
       if (!await UserRepository.instance.recordExist(auth.getUserEmail)) {
+        // If the record does not exist, create a new user
         UserModel user = UserModel(
           email: auth.getUserEmail,
           password: '',
           fullName: auth.getDisplayName,
           phoneNo: auth.getPhoneNo,
-          userType: userType,
+          userType: userType ?? 'default', // or handle accordingly
         );
         await UserRepository.instance.createUser(user);
+      // Save the new user type to SharedPreferences
+      } else {
+        // If the record exists, retrieve the user type from the database
+        UserModel user = await UserRepository.instance.getUserDetails(auth.getUserEmail);
+        userType = user.userType;
+
+        // Store the user type in SharedPreferences
+        await saveUserType(userType!);
       }
 
       isGoogleLoading.value = false;
@@ -82,38 +87,38 @@ class LoginController extends GetxController {
     }
   }
 
-  /// [FacebookSignInAuthentication]
-  Future<void> facebookSignIn() async {
-    try {
-      isFacebookLoading.value = true;
-      final auth = AuthenticationRepository.instance;
-
-      // Sign In with Facebook
-      await auth.signInWithFacebook();
-
-      // Load user type from shared preferences
-      String? userType = await loadUserType();
-      if (userType == null) {
-        throw "User type is not set.";
-      }
-
-      // Check if user data already exists in Firestore
-      if (!await UserRepository.instance.recordExist(auth.getUserID)) {
-        UserModel user = UserModel(
-          email: auth.getUserEmail,
-          password: '',
-          fullName: auth.getDisplayName,
-          phoneNo: auth.getPhoneNo,
-          userType: userType,
-        );
-        await UserRepository.instance.createUser(user);
-      }
-
-      isFacebookLoading.value = false;
-      auth.setInitialScreen(auth.firebaseUser);
-    } catch (e) {
-      isFacebookLoading.value = false;
-      Helper.errorSnackBar(title: tOhSnap, message: e.toString());
-    }
-  }
+//   /// [FacebookSignInAuthentication]
+//   Future<void> facebookSignIn() async {
+//     try {
+//       isFacebookLoading.value = true;
+//       final auth = AuthenticationRepository.instance;
+//
+//       // Sign In with Facebook
+//       await auth.signInWithFacebook();
+//
+//       // Load user type from shared preferences
+//       String? userType = await loadUserType();
+//       if (userType == null) {
+//         throw "User type is not set.";
+//       }
+//
+//       // Check if user data already exists in Firestore
+//       if (!await UserRepository.instance.recordExist(auth.getUserID)) {
+//         UserModel user = UserModel(
+//           email: auth.getUserEmail,
+//           password: '',
+//           fullName: auth.getDisplayName,
+//           phoneNo: auth.getPhoneNo,
+//           userType: userType,
+//         );
+//         await UserRepository.instance.createUser(user);
+//       }
+//
+//       isFacebookLoading.value = false;
+//       auth.setInitialScreen(auth.firebaseUser);
+//     } catch (e) {
+//       isFacebookLoading.value = false;
+//       Helper.errorSnackBar(title: tOhSnap, message: e.toString());
+//     }
+//   }
 }

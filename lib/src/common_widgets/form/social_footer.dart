@@ -42,20 +42,20 @@ class SocialFooter extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          Obx(
-            () => TSocialButton(
-              image: tFacebookLogo,
-              foreground: tWhiteColor,
-              background: tFacebookBgColor,
-              text: '${tConnectWith.tr} ${tFacebook.tr}',
-              isLoading: controller.isFacebookLoading.value ? true : false,
-              onPressed: controller.isGoogleLoading.value || controller.isLoading.value
-                  ? () {}
-                  : controller.isFacebookLoading.value
-                  ? () {}
-                  : () => controller.facebookSignIn(),
-            ),
-          ),
+          // Obx(
+          //   () => TSocialButton(
+          //     image: tFacebookLogo,
+          //     foreground: tWhiteColor,
+          //     background: tFacebookBgColor,
+          //     text: '${tConnectWith.tr} ${tFacebook.tr}',
+          //     isLoading: controller.isFacebookLoading.value ? true : false,
+          //     onPressed: controller.isGoogleLoading.value || controller.isLoading.value
+          //         ? () {}
+          //         : controller.isFacebookLoading.value
+          //         ? () {}
+          //         : () => controller.isFacebookLoading(),
+          //   ),
+          // ),
           const SizedBox(height: tDefaultSpace * 2),
           ClickableRichTextWidget(
             text1: text1.tr,

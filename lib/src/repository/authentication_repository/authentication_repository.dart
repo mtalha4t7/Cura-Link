@@ -6,6 +6,7 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../../screens/features/authentication/screens/login/login_screen.dart';
 import '../../screens/features/authentication/screens/mail_verification/mail_verification.dart';
 import '../../screens/features/authentication/screens/on_boarding/on_boarding_screen.dart';
 import '../../screens/features/authentication/screens/welcome/welcome_screen.dart';
@@ -331,7 +332,7 @@ class AuthenticationRepository extends GetxController {
       }
 
       // Navigate to WelcomeScreen after successful logout
-      Get.offAll(() => const WelcomeScreen());
+      Get.offAll(() => const LoginScreen());
     } catch (e) {
       print("General logout error: $e");
       throw 'Unable to logout. Try again. Error: $e';
