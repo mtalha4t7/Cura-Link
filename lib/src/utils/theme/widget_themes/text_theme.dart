@@ -14,7 +14,7 @@ class TTextTheme {
     headlineMedium: GoogleFonts.poppins(fontSize: 18.0, fontWeight: FontWeight.w600, color: tDarkColor),
     headlineSmall: GoogleFonts.poppins(fontSize: 18.0, fontWeight: FontWeight.normal, color: tDarkColor),
     titleLarge: GoogleFonts.poppins(fontSize: 14.0, fontWeight: FontWeight.w600, color: tDarkColor),
-    bodyLarge: GoogleFonts.poppins(fontSize: 14.0, color: tDarkColor),
+    bodyLarge: GoogleFonts.poppins(fontSize: 18.0, color: tDarkColor,fontWeight: FontWeight.bold),
     bodyMedium: GoogleFonts.poppins(fontSize: 14.0, color: tDarkColor.withOpacity(0.8)),
   );
 

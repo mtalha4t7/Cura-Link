@@ -60,14 +60,22 @@ class WelcomeScreen extends StatelessWidget {
                     Column(
                       children: [
 
-                        Text(
-                          tWelcomeTitle,
-                          style: Theme.of(context).textTheme.displayMedium,
+                        Padding(
+                          padding: const EdgeInsets.only(top:1.0),
+                          child: Text(
+                            tWelcomeTitle,
+                            style: Theme.of(context).textTheme.displayMedium,
+                          ),
                         ),
-                        Text(
-                          tWelcomeSubTitle,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                          textAlign: TextAlign.center,
+                        Padding(
+                          padding: const EdgeInsets.only(top:24.0),
+                          child: Text(
+                            tWelcomeSubTitle,
+                            style: Theme.of(context).textTheme.bodyLarge
+                            ,
+                            textAlign: TextAlign.center,
+
+                          ),
                         ),
                       ],
                     ),

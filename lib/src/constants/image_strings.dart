@@ -16,7 +16,7 @@ const String tLogoImage = "assets/images/appLogo.png";
 
 const String tMedicalStoreImage =
     "assets/images/welcome_images/medical_store.png";
-const String tPatientImage = "assets/images/welcome_images/patient.png";
+const String tPatientImage = "assets/images/welcome_images/patient1.png";
 const String tNurseImage = "assets/images/welcome_images/nurse.png";
 const String tLabImage = "assets/images/welcome_images/laboratory.png";
 

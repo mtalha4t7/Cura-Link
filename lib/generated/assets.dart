@@ -43,6 +43,7 @@ class Assets {
   static const String welcomeImagesMedicalStore = 'assets/images/welcome_images/medical_store.png';
   static const String welcomeImagesNurse = 'assets/images/welcome_images/nurse.png';
   static const String welcomeImagesPatient = 'assets/images/welcome_images/patient.png';
+  static const String welcomeImagesPatient1 = 'assets/images/welcome_images/patient1.png';
   static const String welcomeImagesWelcomeScreenImage = 'assets/images/welcome_images/welcome-screen-image.png';
 
 }
