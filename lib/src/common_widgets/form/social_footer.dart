@@ -1,3 +1,4 @@
+import 'package:cura_link/src/common_widgets/form/form_divider_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../constants/colors.dart';
@@ -24,7 +25,7 @@ class SocialFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(LoginController());
     return Container(
-      padding: const EdgeInsets.only(top: tDefaultSpace * 1.5, bottom: tDefaultSpace),
+      padding: const EdgeInsets.only(top: 6, bottom: tDefaultSpace),
       child: Column(
         children: [
           Obx(
@@ -34,14 +35,15 @@ class SocialFooter extends StatelessWidget {
               foreground: tGoogleForegroundColor,
               text: '${tConnectWith.tr} ${tGoogle.tr}',
               isLoading: controller.isGoogleLoading.value ? true : false,
-              onPressed: controller.isFacebookLoading.value || controller.isLoading.value
+              onPressed: controller.isFacebookLoading.value ||
+                      controller.isLoading.value
                   ? () {}
                   : controller.isGoogleLoading.value
                       ? () {}
                       : () => controller.googleSignIn(),
             ),
           ),
-          const SizedBox(height: 10),
+          const TFormDividerWidget(),
           // Obx(
           //   () => TSocialButton(
           //     image: tFacebookLogo,
@@ -56,7 +58,7 @@ class SocialFooter extends StatelessWidget {
           //         : () => controller.isFacebookLoading(),
           //   ),
           // ),
-          const SizedBox(height: tDefaultSpace * 2),
+
           ClickableRichTextWidget(
             text1: text1.tr,
             text2: text2.tr,

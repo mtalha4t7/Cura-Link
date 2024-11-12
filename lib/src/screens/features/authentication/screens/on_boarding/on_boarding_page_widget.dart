@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../../../../../constants/sizes.dart';
 import '../../models/model_on_boarding.dart';
 
@@ -20,7 +19,9 @@ class OnBoardingPageWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          SizedBox(height: 20,),
+          SizedBox(
+            height: 20,
+          ),
           Image(
             image: AssetImage(model.image),
             height: size.height * 0.45,

@@ -30,7 +30,6 @@ class SignupScreen extends StatelessWidget {
                     subTitle: tSignUpSubTitle,
                     imageHeight: 0.15),
                 SignUpFormWidget(),
-                const TFormDividerWidget(),
                 SocialFooter(
                     text1: tAlreadyHaveAnAccount,
                     text2: tLogin,
