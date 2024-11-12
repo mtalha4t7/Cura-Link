@@ -1,4 +1,6 @@
+import 'package:cura_link/src/repository/user_repository/user_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../../../../common_widgets/form/form_header_widget.dart';
 import '../../../../../../constants/colors.dart';
@@ -6,13 +8,63 @@ import '../../../../../../constants/image_strings.dart';
 import '../../../../../../constants/sizes.dart';
 import '../../../../../../constants/text_strings.dart';
 
-
-class ForgetPasswordMailScreen extends StatelessWidget {
+class ForgetPasswordMailScreen extends StatefulWidget {
   const ForgetPasswordMailScreen({super.key});
 
   @override
+  _ForgetPasswordMailScreenState createState() =>
+      _ForgetPasswordMailScreenState();
+}
+
+class _ForgetPasswordMailScreenState extends State<ForgetPasswordMailScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _resetPassword() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      setState(() {
+        _isLoading = true;
+      });
+      try {
+        // Check if the email is associated with an existing user
+        final signInMethods = await UserRepository.instance
+            .recordExist(_emailController.text.trim());
+
+        if (signInMethods != _emailController.text.trim()) {
+          // Send password reset email
+          await FirebaseAuth.instance
+              .sendPasswordResetEmail(email: _emailController.text.trim());
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Password reset link sent to your email')),
+          );
+        } else {
+          // Email is not associated with any user
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No account found with this email')),
+          );
+        }
+      } on FirebaseAuthException catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Failed to send reset link')),
+        );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    //Just In-case if you want to replace the Image Color for Dark Theme
     final brightness = MediaQuery.of(context).platformBrightness;
     final bool isDark = brightness == Brightness.dark;
 
@@ -35,23 +87,37 @@ class ForgetPasswordMailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: tFormHeight),
                 Form(
+                  key: _formKey,
                   child: Column(
                     children: [
                       TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
-                          label: Text(tEmail),
+                          labelText: tEmail,
                           hintText: tEmail,
                           prefixIcon: Icon(Icons.mail_outline_rounded),
                         ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your email';
+                          }
+                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                            return 'Please enter a valid email';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 20.0),
                       SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                              onPressed: () {
-
-                              },
-                              child: const Text(tNext))),
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _resetPassword,
+                          child: _isLoading
+                              ? CircularProgressIndicator(color: Colors.white)
+                              : const Text(tNext),
+                        ),
+                      ),
                     ],
                   ),
                 ),
