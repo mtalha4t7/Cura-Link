@@ -8,8 +8,6 @@ import '../../../../../../utils/helper/helper_controller.dart';
 import '../../../controllers/signup_controller.dart';
 
 class SignUpFormWidget extends StatelessWidget {
-
-
   const SignUpFormWidget({
     super.key,
   });
@@ -18,10 +16,9 @@ class SignUpFormWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(SignUpController());
 
-
-
     return Container(
-      padding: const EdgeInsets.only(top: tFormHeight - 15, bottom: tFormHeight),
+      padding:
+          const EdgeInsets.only(top: tFormHeight - 15, bottom: tFormHeight),
       child: Form(
         key: controller.signupFormKey,
         child: Column(
@@ -30,30 +27,36 @@ class SignUpFormWidget extends StatelessWidget {
             TextFormField(
               controller: controller.fullName,
               validator: (value) {
-                if (value!.isEmpty) return 'Name cannot be empty';
+                if (value!.isEmpty) return 'Name cant be empty';
                 return null;
               },
-              decoration: const InputDecoration(label: Text(tFullName), prefixIcon: Icon(LineAwesomeIcons.user)),
+              decoration: const InputDecoration(
+                  label: Text(tFullName),
+                  prefixIcon: Icon(LineAwesomeIcons.user)),
             ),
             const SizedBox(height: tFormHeight - 20),
             TextFormField(
               controller: controller.email,
               validator: Helper.validateEmail,
-              decoration: const InputDecoration(label: Text(tEmail), prefixIcon: Icon(LineAwesomeIcons.envelope)),
+              decoration: const InputDecoration(
+                  label: Text(tEmail),
+                  prefixIcon: Icon(LineAwesomeIcons.envelope)),
             ),
             const SizedBox(height: tFormHeight - 20),
             TextFormField(
               controller: controller.phoneNo,
               keyboardType: TextInputType.phone,
               validator: (value) {
-                if (value!.isEmpty) return 'Phone number cannot be empty';
+                if (value!.isEmpty) return 'Phone number cant be empty';
                 return null;
               },
-              decoration: const InputDecoration(label: Text(tPhoneNo), prefixIcon: Icon(LineAwesomeIcons.phone_solid)),
+              decoration: const InputDecoration(
+                  label: Text(tPhoneNo),
+                  prefixIcon: Icon(LineAwesomeIcons.phone_solid)),
             ),
             const SizedBox(height: tFormHeight - 20),
             Obx(
-                  () => TextFormField(
+              () => TextFormField(
                 controller: controller.password,
                 validator: Helper.validatePassword,
                 obscureText: controller.showPassword.value ? false : true,
@@ -64,21 +67,24 @@ class SignUpFormWidget extends StatelessWidget {
                     icon: controller.showPassword.value
                         ? const Icon(LineAwesomeIcons.eye)
                         : const Icon(LineAwesomeIcons.eye_slash),
-                    onPressed: () => controller.showPassword.value = !controller.showPassword.value,
+                    onPressed: () => controller.showPassword.value =
+                        !controller.showPassword.value,
                   ),
                 ),
               ),
             ),
             const SizedBox(height: tFormHeight - 10),
             Obx(
-                  () => TPrimaryButton(
+              () => TPrimaryButton(
                 isLoading: controller.isLoading.value ? true : false,
                 text: tSignup.tr,
-                onPressed: controller.isFacebookLoading.value || controller.isGoogleLoading.value
+                onPressed: controller.isFacebookLoading.value ||
+                        controller.isGoogleLoading.value
                     ? () {}
                     : controller.isLoading.value
-                    ? () {}
-                    : () => controller.phoneAuthentication(controller.phoneNo.text.trim()),
+                        ? () {}
+                        : () => controller.phoneAuthentication(
+                            controller.phoneNo.text.trim()),
               ),
             ),
           ],
