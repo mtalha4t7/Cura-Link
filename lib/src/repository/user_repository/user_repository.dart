@@ -22,18 +22,20 @@ class UserRepository extends GetxController {
         // Handle the case where userType is null (you might want to throw an error or provide a default value)
         throw Exception("User type is null");
       }
-      await recordExist(user.email) ? throw "Record Already Exists" : await _db.collection("Users").add(user.toJson());
+      await recordExist(user.email)
+          ? throw "Record Already Exists"
+          : await _db.collection("Users").add(user.toJson());
     } on FirebaseAuthException catch (e) {
       final result = TExceptions.fromCode(e.code);
       throw result.message;
     } on FirebaseException catch (e) {
       throw e.message.toString();
     } catch (e) {
-      throw e.toString().isEmpty ? 'Something went wrong. Please Try Again' : e.toString();
+      throw e.toString().isEmpty
+          ? 'Something went wrong. Please Try Again'
+          : e.toString();
     }
   }
-
-
 
   /// Fetch User Specific details
   Future<UserModel> getUserDetails(String email) async {
@@ -42,12 +44,14 @@ class UserRepository extends GetxController {
       // Then when fetching the record you only have to get user authenticationID uID and query as follows.
       // final snapshot = await _db.collection("Users").doc(uID).get();
 
-      final snapshot = await _db.collection("Users").where("Email", isEqualTo: email).get();
+      final snapshot =
+          await _db.collection("Users").where("Email", isEqualTo: email).get();
       if (snapshot.docs.isEmpty) throw 'No such user found';
 
       // Single will throw exception if there are two entries when result return.
       // In case of multiple entries use .first to pick the first one without exception.
-      final userData = snapshot.docs.map((e) => UserModel.fromSnapshot(e)).single;
+      final userData =
+          snapshot.docs.map((e) => UserModel.fromSnapshot(e)).single;
       return userData;
     } on FirebaseAuthException catch (e) {
       final result = TExceptions.fromCode(e.code);
@@ -55,7 +59,9 @@ class UserRepository extends GetxController {
     } on FirebaseException catch (e) {
       throw e.message.toString();
     } catch (e) {
-      throw e.toString().isEmpty ? 'Something went wrong. Please Try Again' : e.toString();
+      throw e.toString().isEmpty
+          ? 'Something went wrong. Please Try Again'
+          : e.toString();
     }
   }
 
@@ -63,7 +69,8 @@ class UserRepository extends GetxController {
   Future<List<UserModel>> allUsers() async {
     try {
       final snapshot = await _db.collection("Users").get();
-      final users = snapshot.docs.map((e) => UserModel.fromSnapshot(e)).toList();
+      final users =
+          snapshot.docs.map((e) => UserModel.fromSnapshot(e)).toList();
       return users;
     } on FirebaseAuthException catch (e) {
       final result = TExceptions.fromCode(e.code);
@@ -74,6 +81,7 @@ class UserRepository extends GetxController {
       throw 'Something went wrong. Please Try Again';
     }
   }
+
   Future<UserModel> getCurrentUserDetails() async {
     try {
       final uID = FirebaseAuth.instance.currentUser!.uid;
@@ -86,7 +94,9 @@ class UserRepository extends GetxController {
     } on FirebaseException catch (e) {
       throw e.message.toString();
     } catch (e) {
-      throw e.toString().isEmpty ? 'Something went wrong. Please Try Again' : e.toString();
+      throw e.toString().isEmpty
+          ? 'Something went wrong. Please Try Again'
+          : e.toString();
     }
   }
 
@@ -121,7 +131,8 @@ class UserRepository extends GetxController {
   /// Check if user exists with email or phoneNo
   Future<bool> recordExist(String email) async {
     try {
-      final snapshot = await _db.collection("Users").where("Email", isEqualTo: email).get();
+      final snapshot =
+          await _db.collection("Users").where("Email", isEqualTo: email).get();
       return snapshot.docs.isNotEmpty;
     } catch (e) {
       print("Error fetching record: $e");
@@ -129,4 +140,35 @@ class UserRepository extends GetxController {
     }
   }
 
+  /// Get User's Full Name
+  Future<String> getFullNameByEmail(String email) async {
+    try {
+      // Query Firestore to find the user document by email
+      final snapshot =
+          await _db.collection("Users").where("Email", isEqualTo: email).get();
+
+      // Check if a user document exists
+      if (snapshot.docs.isNotEmpty) {
+        // Get the user document
+        final userDoc = snapshot.docs.first;
+
+        // Get the full name from the document
+        final fullName = userDoc['FullName'];
+
+        // Return the full name or a default message if it's not available
+        return fullName ?? "No full name available";
+      } else {
+        return "No user found with this email"; // If no user is found
+      }
+    } on FirebaseAuthException catch (e) {
+      final result = TExceptions.fromCode(e.code);
+      throw result.message;
+    } on FirebaseException catch (e) {
+      throw e.message.toString();
+    } catch (e) {
+      throw e.toString().isEmpty
+          ? 'Something went wrong. Please Try Again'
+          : e.toString();
+    }
+  }
 }

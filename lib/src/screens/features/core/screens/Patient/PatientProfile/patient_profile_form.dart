@@ -9,18 +9,15 @@ import '../../../../authentication/models/user_model.dart';
 
 import '../../../controllers/profile_controller.dart';
 
-
-
 class PatientProfileFormScreen extends StatelessWidget {
-  const PatientProfileFormScreen({
-    super.key,
-    required this.user,
-    required this.email,
-    required this.phoneNo,
-    required this.fullName,
-    required this.password,
-    required this.userType
-  });
+  const PatientProfileFormScreen(
+      {super.key,
+      required this.user,
+      required this.email,
+      required this.phoneNo,
+      required this.fullName,
+      required this.password,
+      required this.userType});
 
   final UserModel user;
   final TextEditingController email;
@@ -29,10 +26,8 @@ class PatientProfileFormScreen extends StatelessWidget {
   final TextEditingController password;
   final TextEditingController userType;
 
-
   @override
   Widget build(BuildContext context) {
-
     final controller = Get.put(ProfileController());
 
     return Form(
@@ -40,17 +35,23 @@ class PatientProfileFormScreen extends StatelessWidget {
         children: [
           TextFormField(
             controller: fullName,
-            decoration: const InputDecoration(label: Text(tFullName), prefixIcon: Icon(LineAwesomeIcons.user)),
+            decoration: const InputDecoration(
+                label: Text(tFullName),
+                prefixIcon: Icon(LineAwesomeIcons.user)),
           ),
           const SizedBox(height: tFormHeight - 20),
           TextFormField(
             controller: email,
-            decoration: const InputDecoration(label: Text(tEmail), prefixIcon: Icon(LineAwesomeIcons.envelope)),
+            decoration: const InputDecoration(
+                label: Text(tEmail),
+                prefixIcon: Icon(LineAwesomeIcons.envelope)),
           ),
           const SizedBox(height: tFormHeight - 20),
           TextFormField(
             controller: phoneNo,
-            decoration: const InputDecoration(label: Text(tPhoneNo), prefixIcon: Icon(LineAwesomeIcons.phone_solid)),
+            decoration: const InputDecoration(
+                label: Text(tPhoneNo),
+                prefixIcon: Icon(LineAwesomeIcons.phone_solid)),
           ),
           const SizedBox(height: tFormHeight),
 
@@ -82,7 +83,12 @@ class PatientProfileFormScreen extends StatelessWidget {
                 TextSpan(
                   text: tJoined,
                   style: TextStyle(fontSize: 12),
-                  children: [TextSpan(text: tJoinedAt, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))],
+                  children: [
+                    TextSpan(
+                        text: tJoinedAt,
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 12))
+                  ],
                 ),
               ),
               ElevatedButton(
