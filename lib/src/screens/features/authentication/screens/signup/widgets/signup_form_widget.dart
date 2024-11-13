@@ -27,7 +27,7 @@ class SignUpFormWidget extends StatelessWidget {
             TextFormField(
               controller: controller.fullName,
               validator: (value) {
-                if (value!.isEmpty) return 'Name cant be empty';
+                if (value!.isEmpty) return 'Name cannot be empty';
                 return null;
               },
               decoration: const InputDecoration(
@@ -47,7 +47,7 @@ class SignUpFormWidget extends StatelessWidget {
               controller: controller.phoneNo,
               keyboardType: TextInputType.phone,
               validator: (value) {
-                if (value!.isEmpty) return 'Phone number cant be empty';
+                if (value!.isEmpty) return 'Phone number cannot be empty';
                 return null;
               },
               decoration: const InputDecoration(
@@ -72,6 +72,7 @@ class SignUpFormWidget extends StatelessWidget {
                   ),
                 ),
               ),
+              
             ),
             const SizedBox(height: tFormHeight - 10),
             Obx(
