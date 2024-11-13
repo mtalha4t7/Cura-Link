@@ -32,14 +32,23 @@ class LoginController extends GetxController {
         return;
       }
 
-      // Load user type from shared preferences
-      String? userType = await loadUserType();
-      if (userType == null) {
-        throw "User type is not set.";
+      final auth = AuthenticationRepository.instance;
+
+      // Authenticate the user
+      await auth.loginWithEmailAndPassword(
+          email.text.trim(), password.text.trim());
+
+      // Fetch user details from Firestore using the current user's email
+      UserRepository userRepository = UserRepository.instance;
+      UserModel user = await userRepository.getUserDetails(email.text.trim());
+      await saveUserType(user.userType!);
+
+      // Check if the userType is set
+      if (user.userType == null) {
+        throw "User type is not set for this user.";
       }
 
-      final auth = AuthenticationRepository.instance;
-      await auth.loginWithEmailAndPassword(email.text.trim(), password.text.trim(), userType);
+      // Set initial screen after successful login and user type retrieval
       auth.setInitialScreen(auth.firebaseUser);
     } catch (e) {
       isLoading.value = false;
@@ -69,10 +78,11 @@ class LoginController extends GetxController {
           userType: userType ?? 'default', // or handle accordingly
         );
         await UserRepository.instance.createUser(user);
-      // Save the new user type to SharedPreferences
+        // Save the new user type to SharedPreferences
       } else {
         // If the record exists, retrieve the user type from the database
-        UserModel user = await UserRepository.instance.getUserDetails(auth.getUserEmail);
+        UserModel user =
+            await UserRepository.instance.getUserDetails(auth.getUserEmail);
         userType = user.userType;
 
         // Store the user type in SharedPreferences

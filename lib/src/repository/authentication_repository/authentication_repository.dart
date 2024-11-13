@@ -25,7 +25,8 @@ class AuthenticationRepository extends GetxController {
   late final Rx<User?> _firebaseUser;
   final _auth = FirebaseAuth.instance;
   final _phoneVerificationId = ''.obs;
-  final userStorage = GetStorage(); // Use this to store data locally (e.g. OnBoarding)
+  final userStorage =
+      GetStorage(); // Use this to store data locally (e.g. OnBoarding)
 
   /// Getters
   User? get firebaseUser => _firebaseUser.value;
@@ -98,7 +99,6 @@ class AuthenticationRepository extends GetxController {
               Get.offAll(() => MedicalStoreDashboard());
               break;
             default:
-
               Get.offAll(() => WelcomeScreen());
               break;
           }
@@ -150,12 +150,12 @@ class AuthenticationRepository extends GetxController {
   /* ---------------------------- Email & Password sign-in ---------------------------------*/
 
   /// [EmailAuthentication] - LOGIN
-  Future<void> loginWithEmailAndPassword(String email, String password, String userType) async {
+  Future<void> loginWithEmailAndPassword(String email, String password) async {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
     } on FirebaseAuthException catch (e) {
-      final result = TExceptions.fromCode(
-          e.code); // Throw custom [message] variable
+      final result =
+          TExceptions.fromCode(e.code); // Throw custom [message] variable
       throw result.message;
     } catch (_) {
       const result = TExceptions();
@@ -164,8 +164,8 @@ class AuthenticationRepository extends GetxController {
   }
 
   /// [EmailAuthentication] - REGISTER
-  Future<void> registerWithEmailAndPassword(String email,
-      String password) async {
+  Future<void> registerWithEmailAndPassword(
+      String email, String password) async {
     try {
       await _auth.createUserWithEmailAndPassword(
           email: email, password: password);
@@ -200,8 +200,8 @@ class AuthenticationRepository extends GetxController {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
 
       // Obtain the auth details from the request
-      final GoogleSignInAuthentication? googleAuth = await googleUser
-          ?.authentication;
+      final GoogleSignInAuthentication? googleAuth =
+          await googleUser?.authentication;
 
       // Create a new credential
       final credential = GoogleAuthProvider.credential(
@@ -224,13 +224,13 @@ class AuthenticationRepository extends GetxController {
   Future<UserCredential> signInWithFacebook() async {
     try {
       // Trigger the sign-in flow
-      final LoginResult loginResult = await FacebookAuth.instance.login(
-          permissions: ['email']);
+      final LoginResult loginResult =
+          await FacebookAuth.instance.login(permissions: ['email']);
 
       // Create a credential from the access token
       final AccessToken accessToken = loginResult.accessToken!;
-      final OAuthCredential facebookAuthCredential = FacebookAuthProvider
-          .credential(accessToken.tokenString);
+      final OAuthCredential facebookAuthCredential =
+          FacebookAuthProvider.credential(accessToken.tokenString);
 
       // Once signed in, return the UserCredential
       return FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
@@ -251,9 +251,9 @@ class AuthenticationRepository extends GetxController {
       final ex = TExceptions.fromCode(e.code);
       throw ex.message;
     } catch (e) {
-      throw e
-          .toString()
-          .isEmpty ? 'Unknown Error Occurred. Try again!' : e.toString();
+      throw e.toString().isEmpty
+          ? 'Unknown Error Occurred. Try again!'
+          : e.toString();
     }
   }
 
@@ -280,9 +280,9 @@ class AuthenticationRepository extends GetxController {
       final result = TExceptions.fromCode(e.code);
       throw result.message;
     } catch (e) {
-      throw e
-          .toString()
-          .isEmpty ? 'Unknown Error Occurred. Try again!' : e.toString();
+      throw e.toString().isEmpty
+          ? 'Unknown Error Occurred. Try again!'
+          : e.toString();
     }
   }
 
@@ -338,5 +338,4 @@ class AuthenticationRepository extends GetxController {
       throw 'Unable to logout. Try again. Error: $e';
     }
   }
-
 }
