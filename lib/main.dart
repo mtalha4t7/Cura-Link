@@ -1,3 +1,4 @@
+import 'package:cura_link/src/mongodb/mongodb.dart';
 import 'package:cura_link/src/repository/authentication_repository/authentication_repository.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,8 @@ Future<void> main() async {
   await GetStorage.init();
 
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
+  await MongoDatabase.connect();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)
       .then((_) => Get.put(AuthenticationRepository()));

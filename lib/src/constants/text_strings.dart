@@ -1,5 +1,10 @@
 /* -- App Text Strings -- */
 
+//MongoDB Texts
+const MONGO_URL =
+    "mongodb+srv://25362:talha8k83t@curalinkcluster.0xafs.mongodb.net/dbCuraLink?retryWrites=true&w=majority&appName=CuraLinkCluster";
+const COLLECTION_NAME = "users";
+
 // -- GLOBAL Texts
 const String tNo = "No";
 const String tYes = "Yes";
