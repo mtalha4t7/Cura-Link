@@ -180,22 +180,28 @@ class UserRepository extends GetxController {
   /// Store user data in MongoDB
   Future<void> mongoCreateUser(UserModel user) async {
     try {
-      if (user.userType != null) {
+      // Check if the users collection is empty
+      final userCount = await usersCollection.count();
+
+      if (userCount == 0) {
+        // If empty, save the record
         await saveUserType(user.userType!);
-      } else {
-        throw Exception("User type is null");
-      }
-      final existingUser = await mongoRecordExist(user.email);
-      if (existingUser) {
-        throw "Record Already Exists";
-      } else {
         await usersCollection.insertOne(user.toJson());
-        print('User created successfully in MongoDB');
+        print('User created successfully in MongoDB as the first record');
+      } else {
+        // Check if the user already exists
+        final existingUser = await mongoRecordExist(user.email);
+        if (existingUser) {
+          throw "Record Already Exists";
+        } else {
+          await usersCollection.insertOne(user.toJson());
+          print('User created successfully in MongoDB');
+        }
       }
     } catch (e) {
       print('Error creating user in MongoDB: $e');
       throw e.toString().isEmpty
-          ? 'Something went wrong. Please Try Again'
+          ? 'Something went wrong. Please try again'
           : e.toString();
     }
   }
