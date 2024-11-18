@@ -45,7 +45,7 @@ class WelcomeScreen extends StatelessWidget {
                 rightBefore: 0,
               ),
               child: Container(
-                padding: const EdgeInsets.only(left:15,right: 15),
+                padding: const EdgeInsets.only(left: 15, right: 15),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -59,22 +59,19 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                     Column(
                       children: [
-
                         Padding(
-                          padding: const EdgeInsets.only(top:1.0),
+                          padding: const EdgeInsets.only(top: 1.0),
                           child: Text(
                             tWelcomeTitle,
                             style: Theme.of(context).textTheme.displayMedium,
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.only(top:24.0),
+                          padding: const EdgeInsets.only(top: 24.0),
                           child: Text(
                             tWelcomeSubTitle,
-                            style: Theme.of(context).textTheme.bodyLarge
-                            ,
+                            style: Theme.of(context).textTheme.bodyLarge,
                             textAlign: TextAlign.center,
-
                           ),
                         ),
                       ],

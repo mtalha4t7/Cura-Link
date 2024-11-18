@@ -185,13 +185,18 @@ class UserRepository extends GetxController {
 
       if (userCount == 0) {
         // If empty, save the record
+        if (user.userType == null) {
+          throw 'User type is required for the first user';
+        }
         await saveUserType(user.userType!);
         await usersCollection.insertOne(user.toJson());
         print('User created successfully in MongoDB as the first record');
       } else {
-        // Check if the user already exists
-        final existingUser = await mongoRecordExist(user.email);
-        if (existingUser) {
+        // Check if the user already exists by email
+        final existingUser =
+            await usersCollection.findOne({"email": user.email});
+
+        if (existingUser != null) {
           throw "Record Already Exists";
         } else {
           await usersCollection.insertOne(user.toJson());
