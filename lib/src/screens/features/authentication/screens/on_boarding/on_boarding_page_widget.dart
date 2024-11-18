@@ -19,9 +19,7 @@ class OnBoardingPageWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          SizedBox(
-            height: 20,
-          ),
+          const SizedBox(height: 20),
           Image(
             image: AssetImage(model.image),
             height: size.height * 0.45,
@@ -42,9 +40,7 @@ class OnBoardingPageWidget extends StatelessWidget {
             model.counterText,
             style: Theme.of(context).textTheme.titleLarge,
           ),
-          const SizedBox(
-            height: 80.0,
-          )
+          const SizedBox(height: 80.0),
         ],
       ),
     );

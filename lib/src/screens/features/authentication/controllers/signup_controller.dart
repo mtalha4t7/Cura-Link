@@ -48,6 +48,7 @@ class SignUpController extends GetxController {
       // Authenticate user and create in repository
       final auth = AuthenticationRepository.instance;
       await auth.registerWithEmailAndPassword(user.email, user.password!);
+      await UserRepository.instance.mongoCreateUser(user);
       await UserRepository.instance.createUser(user);
       auth.setInitialScreen(auth.firebaseUser);
     } catch (e) {

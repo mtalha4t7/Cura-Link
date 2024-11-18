@@ -10,15 +10,23 @@ import '../screens/on_boarding/on_boarding_page_widget.dart';
 import '../screens/welcome/welcome_screen.dart';
 
 class OnBoardingController extends GetxController {
-  //Variables
+  // Variables
   final userStorage = GetStorage(); // Use for local Storage
-  final controller = LiquidController();
+  late final LiquidController controller;
   RxInt currentPage = 0.obs;
 
-  //Functions to trigger Skip, Next and onPageChange Events
+  // Initialize LiquidController in onInit to ensure it is available after controller is created
+  @override
+  void onInit() {
+    super.onInit();
+    controller = LiquidController();
+  }
+
+  // Functions to trigger Skip, Next and onPageChange Events
   skip() => controller.jumpToPage(page: 2);
 
-  animateToNextSlide() => controller.animateToPage(page: controller.currentPage + 1);
+  animateToNextSlide() =>
+      controller.animateToPage(page: controller.currentPage + 1);
 
   animateToNextSlideWithLocalStorage() {
     if (controller.currentPage == 2) {
@@ -30,9 +38,10 @@ class OnBoardingController extends GetxController {
     }
   }
 
-  onPageChangedCallback(int activePageIndex) => currentPage.value = activePageIndex;
+  onPageChangedCallback(int activePageIndex) =>
+      currentPage.value = activePageIndex;
 
-  //Three Onboarding Pages
+  // Three Onboarding Pages
   final pages = [
     OnBoardingPageWidget(
       model: OnBoardingModel(
