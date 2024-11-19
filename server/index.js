@@ -3,6 +3,15 @@ const mongoose = require("mongoose");
 
 const PORT = process.env.PORT || 3000;
 const app = express();
+const DB =
+    "mongodb+srv://25362:talha8k83t@curalinkcluster.0xafs.mongodb.net/dbCuraLink?retryWrites=true&w=majority&appName=CuraLinkCluster";
+const COLLECTION_NAME = "users";
+
+mongoose.connect(DS).then(() => {
+  console.log("Connection successful");
+}).catch((e)=> {
+  console.log(e);
+});
 
 app.use(express.json());
 
