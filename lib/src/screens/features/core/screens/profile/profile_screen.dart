@@ -39,7 +39,7 @@ class ProfileScreen extends StatelessWidget {
           padding: const EdgeInsets.all(tDefaultSpace),
           child: Column(
             children: [
-              /// -- IMAGE with ICON
+              
               const ImageWithIcon(),
               const SizedBox(height: 10),
               Text(name, style: Theme.of(context).textTheme.headlineMedium),
@@ -47,7 +47,7 @@ class ProfileScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 20),
 
-              /// -- BUTTON
+              
               TPrimaryButton(
                   isFullWidth: false,
                   width: 200,
@@ -57,7 +57,7 @@ class ProfileScreen extends StatelessWidget {
               const Divider(),
               const SizedBox(height: 10),
 
-              /// -- MENU
+              
               ProfileMenuWidget(
                   title: "Settings",
                   icon: LineAwesomeIcons.cog_solid,

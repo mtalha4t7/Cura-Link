@@ -18,8 +18,11 @@ class UpdateProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: () => Get.back(), icon: const Icon(LineAwesomeIcons.angle_left_solid)),
-        title: Text(tEditProfile, style: Theme.of(context).textTheme.headlineMedium),
+        leading: IconButton(
+            onPressed: () => Get.back(),
+            icon: const Icon(LineAwesomeIcons.angle_left_solid)),
+        title: Text(tEditProfile,
+            style: Theme.of(context).textTheme.headlineMedium),
       ),
       body: SingleChildScrollView(
         child: Container(
@@ -38,7 +41,7 @@ class UpdateProfileScreen extends StatelessWidget {
                   final password = TextEditingController(text: user.password);
                   final fullName = TextEditingController(text: user.fullName);
                   final phoneNo = TextEditingController(text: user.phoneNo);
-                  final userType=TextEditingController(text:user.userType );
+                  final userType = TextEditingController(text: user.userType);
 
                   //Image & Form
                   return Column(
@@ -48,13 +51,20 @@ class UpdateProfileScreen extends StatelessWidget {
                       const SizedBox(height: 50),
 
                       /// -- Form (Get data and pass it to FormScreen)
-                      ProfileFormScreen(fullName: fullName, email: email, phoneNo: phoneNo, password: password, user: user,userType: userType),
+                      ProfileFormScreen(
+                          fullName: fullName,
+                          email: email,
+                          phoneNo: phoneNo,
+                          password: password,
+                          user: user,
+                          userType: userType),
                     ],
                   );
                 } else if (snapshot.hasError) {
                   return Center(child: Text(snapshot.error.toString()));
                 } else {
-                  return const Center(child: Text('Something went wrong'));
+                  return const Center(
+                      child: Text('Oops! Something went wrong'));
                 }
               } else {
                 return const Center(child: CircularProgressIndicator());
@@ -66,4 +76,3 @@ class UpdateProfileScreen extends StatelessWidget {
     );
   }
 }
-
