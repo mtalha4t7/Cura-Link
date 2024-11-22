@@ -64,6 +64,7 @@ class LoginController extends GetxController {
       // Sign In with Google
       await auth.signInWithGoogle();
 
+      print("error is  ===========");
       // Load user type from shared preferences
       String? userType = await loadUserType();
 
@@ -92,6 +93,7 @@ class LoginController extends GetxController {
       isGoogleLoading.value = false;
       auth.setInitialScreen(auth.firebaseUser);
     } catch (e) {
+      print("error is  ===========" + e.toString());
       isGoogleLoading.value = false;
       Helper.errorSnackBar(title: tOhSnap, message: e.toString());
     }

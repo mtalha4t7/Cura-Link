@@ -72,7 +72,6 @@ class SignUpFormWidget extends StatelessWidget {
                   ),
                 ),
               ),
-              
             ),
             const SizedBox(height: tFormHeight - 10),
             Obx(
@@ -84,7 +83,8 @@ class SignUpFormWidget extends StatelessWidget {
                     ? () {}
                     : controller.isLoading.value
                         ? () {}
-                        : () => controller.createUser(),
+                        : () => controller
+                            .phoneAuthentication(controller.phoneNo.toString()),
               ),
             ),
           ],
