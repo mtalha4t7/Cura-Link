@@ -12,7 +12,7 @@ import '../../screens/features/authentication/screens/on_boarding/on_boarding_sc
 import '../../screens/features/authentication/screens/welcome/welcome_screen.dart';
 import '../../screens/features/core/screens/Patient/patientDashboard/patient_dashboard.dart';
 import '../../screens/features/core/screens/dashboards/labDashboard/lab_dashboard.dart';
-import '../../screens/features/core/screens/dashboards/medicalStoreDashboard/medicalstore_dashboard.dart';
+import '../../screens/features/core/screens/MedicalStore/MedicalStoreDashboard/MedicalStore_Dashboard.dart';
 import '../../screens/features/core/screens/dashboards/nurseDashboard/nurse_dashboard.dart';
 import '../../shared prefrences/shared_prefrence.dart';
 import 'exceptions/t_exceptions.dart';
@@ -96,7 +96,7 @@ class AuthenticationRepository extends GetxController {
               Get.offAll(() => NurseDashboard());
               break;
             case 'Medical-Store':
-              Get.offAll(() => MedicalStoreDashboard());
+              Get.offAll(() => MedicalStore_Dashboard());
               break;
             default:
               Get.offAll(() => WelcomeScreen());
