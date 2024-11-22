@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_appbar.dart';
 import '../../../../../../constants/sizes.dart';
 
-class MedicalStore_Dashboard extends StatelessWidget {
-  const MedicalStore_Dashboard({super.key});
+class medlab_dashboard extends StatelessWidget {
+  const medlab_dashboard({super.key});
 
   @override
   Widget build(BuildContext context) {

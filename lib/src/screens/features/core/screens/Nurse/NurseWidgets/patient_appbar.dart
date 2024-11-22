@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../../../constants/colors.dart';
 import '../../../../../../constants/image_strings.dart';
-import '../NurseProfile/Nurse_Profile_Screen.dart';
+import '../NurseProfile/nurse_profile_screen.dart';
 
 class PatientDashboardAppBar extends StatelessWidget
     implements PreferredSizeWidget {
