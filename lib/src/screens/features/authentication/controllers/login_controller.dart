@@ -56,48 +56,48 @@ class LoginController extends GetxController {
     }
   }
 
-  Future<void> googleSignIn() async {
-    try {
-      isGoogleLoading.value = true;
-      final auth = AuthenticationRepository.instance;
+  // Future<void> googleSignIn() async {
+  //   try {
+  //     isGoogleLoading.value = true;
+  //     final auth = AuthenticationRepository.instance;
 
-      // Sign In with Google
-      await auth.signInWithGoogle();
+  //     // Sign In with Google
+  //     await auth.signInWithGoogle();
 
-      print("error is  ===========");
-      // Load user type from shared preferences
-      String? userType = await loadUserType();
+  //     print("error is  ===========");
+  //     // Load user type from shared preferences
+  //     String? userType = await loadUserType();
 
-      // Check if user data already exists in Firestore
-      if (!await UserRepository.instance.recordExist(auth.getUserEmail)) {
-        // If the record does not exist, create a new user
-        UserModel user = UserModel(
-          email: auth.getUserEmail,
-          password: '',
-          fullName: auth.getDisplayName,
-          phoneNo: auth.getPhoneNo,
-          userType: userType ?? 'default', // or handle accordingly
-        );
-        await UserRepository.instance.createUser(user);
-        // Save the new user type to SharedPreferences
-      } else {
-        // If the record exists, retrieve the user type from the database
-        UserModel user =
-            await UserRepository.instance.getUserDetails(auth.getUserEmail);
-        userType = user.userType;
+  //     // Check if user data already exists in Firestore
+  //     if (!await UserRepository.instance.recordExist(auth.getUserEmail)) {
+  //       // If the record does not exist, create a new user
+  //       UserModel user = UserModel(
+  //         email: auth.getUserEmail,
+  //         password: '',
+  //         fullName: auth.getDisplayName,
+  //         phoneNo: auth.getPhoneNo,
+  //         userType: userType ?? 'default', // or handle accordingly
+  //       );
+  //       await UserRepository.instance.createUser(user);
+  //       // Save the new user type to SharedPreferences
+  //     } else {
+  //       // If the record exists, retrieve the user type from the database
+  //       UserModel user =
+  //           await UserRepository.instance.getUserDetails(auth.getUserEmail);
+  //       userType = user.userType;
 
-        // Store the user type in SharedPreferences
-        await saveUserType(userType!);
-      }
+  //       // Store the user type in SharedPreferences
+  //       await saveUserType(userType!);
+  //     }
 
-      isGoogleLoading.value = false;
-      auth.setInitialScreen(auth.firebaseUser);
-    } catch (e) {
-      print("error is  ===========" + e.toString());
-      isGoogleLoading.value = false;
-      Helper.errorSnackBar(title: tOhSnap, message: e.toString());
-    }
-  }
+  //     isGoogleLoading.value = false;
+  //     auth.setInitialScreen(auth.firebaseUser);
+  //   } catch (e) {
+  //     print("error is  ===========" + e.toString());
+  //     isGoogleLoading.value = false;
+  //     Helper.errorSnackBar(title: tOhSnap, message: e.toString());
+  //   }
+  // }
 
 //   /// [FacebookSignInAuthentication]
 //   Future<void> facebookSignIn() async {

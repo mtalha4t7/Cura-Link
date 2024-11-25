@@ -1,12 +1,11 @@
 import 'package:cura_link/src/common_widgets/form/form_divider_widget.dart';
+import 'package:cura_link/src/screens/features/authentication/screens/phone_authScreen/phone_Screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../constants/colors.dart';
 import '../../constants/image_strings.dart';
 import '../../constants/sizes.dart';
 import '../../constants/text_strings.dart';
-
-import '../../screens/features/authentication/controllers/login_controller.dart';
 import '../buttons/clickable_richtext_widget.dart';
 import '../buttons/social_button.dart';
 
@@ -23,24 +22,17 @@ class SocialFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(LoginController());
     return Container(
       padding: const EdgeInsets.only(top: 6, bottom: tDefaultSpace),
       child: Column(
         children: [
           Obx(
             () => TSocialButton(
-              image: tGoogleLogo,
+              image: tPhoneLogo,
               background: tGoogleBgColor,
               foreground: tGoogleForegroundColor,
-              text: '${tConnectWith.tr} ${tGoogle.tr}',
-              isLoading: controller.isGoogleLoading.value ? true : false,
-              onPressed: controller.isFacebookLoading.value ||
-                      controller.isLoading.value
-                  ? () {}
-                  : controller.isGoogleLoading.value
-                      ? () {}
-                      : () => controller.googleSignIn(),
+              text: '${tConnectWith.tr} ${tPhone.tr}',
+              onPressed: () => Get.to(() => const RegisterScreen()),
             ),
           ),
           const TFormDividerWidget(),
