@@ -49,7 +49,7 @@ dependencies:
   get: ^4.6.6
   get_storage: ^2.1.1
   flutter_facebook_auth: ^7.1.1
-  flutter_native_splash: ^2.4.2
+  flutter_native_splash: ^2.4.3
   liquid_swipe: ^3.1.0
   google_fonts: ^6.2.1
   flutter_otp_text_field: ^1.2.0
@@ -61,6 +61,9 @@ dependencies:
   firebase_storage: ^12.3.5
   permission_handler: ^11.3.1
   mongo_dart: ^0.10.3
+  country_picker: ^2.0.27
+  pinput: ^5.0.0
+  firebase_app_check: ^0.3.1+6
 
 flutter_native_splash:
   color: "#f7f6f1"

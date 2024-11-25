@@ -23,6 +23,7 @@ const String tLabImage = "assets/images/welcome_images/laboratory.png";
 // -- SOCIAL Images
 const String tFacebookLogo = "assets/logo/facebook-logo.png";
 const String tGoogleLogo = "assets/logo/google-logo.png";
+const String tPhoneLogo = "assets/logo/phone.png";
 
 // -- Forget Password Images
 const String tForgetPasswordImage =

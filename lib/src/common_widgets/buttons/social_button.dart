@@ -30,10 +30,16 @@ class TSocialButton extends StatelessWidget {
           backgroundColor: background,
           side: BorderSide.none,
         ),
-        icon: isLoading ? const SizedBox() : Image(image: AssetImage(image), width: 24, height: 24),
+        icon: isLoading
+            ? const SizedBox()
+            : Image(image: AssetImage(image), width: 24, height: 24),
         label: isLoading
             ? const ButtonLoadingWidget()
-            : Text(text, style: Theme.of(context).textTheme.bodyLarge!.apply(color: foreground)),
+            : Text(text,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyLarge!
+                    .apply(color: foreground)),
       ),
     );
   }

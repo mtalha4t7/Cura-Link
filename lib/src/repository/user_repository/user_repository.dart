@@ -135,6 +135,20 @@ class UserRepository extends GetxController {
     }
   }
 
+  Future<bool> userExistsByPhoneNumber(String phoneNumber) async {
+    try {
+      final snapshot = await _db
+          .collection("Users")
+          .where("PhoneNo", isEqualTo: phoneNumber)
+          .get();
+
+      return snapshot.docs.isNotEmpty; // Returns true if user exists
+    } catch (e) {
+      print("Error checking user by phone number in Firebase: $e");
+      throw "Error checking user by phone number.";
+    }
+  }
+
   /// Update User details in Firebase
   Future<void> updateUserRecord(UserModel user) async {
     try {
@@ -175,6 +189,25 @@ class UserRepository extends GetxController {
     }
   }
 
+  Future<UserModel?> getUserDetailsByPhoneNumber(String phoneNumber) async {
+    try {
+      final snapshot = await _db
+          .collection("Users")
+          .where("PhoneNo", isEqualTo: phoneNumber)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        return UserModel.fromSnapshot(
+            snapshot.docs.first); // Assuming UserModel exists
+      } else {
+        return null; // No user found
+      }
+    } catch (e) {
+      print("Error fetching user details by phone number in Firebase: $e");
+      throw "Error fetching user details.";
+    }
+  }
+
   // ###################### MongoDB Functions ######################
 
   /// Store user data in MongoDB
@@ -208,6 +241,17 @@ class UserRepository extends GetxController {
       throw e.toString().isEmpty
           ? 'Something went wrong. Please try again'
           : e.toString();
+    }
+  }
+
+  /// Check if user exists with phone number in MongoDB
+  Future<bool> mongoUserExistsByPhoneNumber(String phoneNumber) async {
+    try {
+      final user = await usersCollection.findOne({"PhoneNo": phoneNumber});
+      return user != null; // Returns true if user exists
+    } catch (e) {
+      print("Error checking user by phone number in MongoDB: $e");
+      throw "Error checking user by phone number.";
     }
   }
 
@@ -250,6 +294,21 @@ class UserRepository extends GetxController {
       throw e.toString().isEmpty
           ? 'Something went wrong. Please Try Again'
           : e.toString();
+    }
+  }
+
+  Future<UserModel?> mongogetUserDetailsByPhoneNumber(
+      String phoneNumber) async {
+    try {
+      final user = await usersCollection.findOne({"PhoneNumber": phoneNumber});
+      if (user != null) {
+        return UserModel.fromJson(user); // Assuming UserModel exists
+      } else {
+        return null; // No user found
+      }
+    } catch (e) {
+      print("Error fetching user details by phone number in MongoDB: $e");
+      throw "Error fetching user details.";
     }
   }
 

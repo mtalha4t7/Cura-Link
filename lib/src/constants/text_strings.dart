@@ -70,6 +70,7 @@ const String tOR = "OR";
 const String tConnectWith = "Connect With";
 const String tFacebook = "Facebook";
 const String tGoogle = "Google";
+const String tPhone = "Phone";
 
 // -- Sign Up Screen Text
 const String tSignUpTitle = "Create Account";
