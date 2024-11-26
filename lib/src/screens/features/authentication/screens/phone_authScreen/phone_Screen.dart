@@ -1,5 +1,4 @@
 import 'package:country_picker/country_picker.dart';
-import 'package:cura_link/src/constants/image_strings.dart';
 import 'package:cura_link/src/repository/authentication_repository/authentication_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -44,7 +43,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     shape: BoxShape.circle,
                     color: Colors.purple.shade50,
                   ),
-                  child: Image.asset(tLogoImage),
                 ),
                 const SizedBox(height: 20),
                 const Text(
