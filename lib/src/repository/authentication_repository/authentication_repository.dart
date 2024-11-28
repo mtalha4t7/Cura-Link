@@ -29,6 +29,7 @@ class AuthenticationRepository extends GetxController {
   final GetStorage userStorage = GetStorage();
 
   // Observable for phone verification ID
+  // ignore: unused_field
   final RxString _phoneVerificationId = ''.obs;
 
   // Variables
@@ -55,7 +56,27 @@ class AuthenticationRepository extends GetxController {
       if (user != null) {
         await user.reload();
         user = _auth.currentUser;
+        if (user?.email == null) {
+          String? userType = await loadUserType();
 
+          switch (userType) {
+            case 'Patient':
+              Get.offAll(() => PatientDashboard());
+              break;
+            case 'Lab':
+              Get.offAll(() => LabDashboard());
+              break;
+            case 'Nurse':
+              Get.offAll(() => NurseDashboard());
+              break;
+            case 'Medical-Store':
+              Get.offAll(() => medicalstore_dashboard());
+              break;
+            default:
+              Get.offAll(() => WelcomeScreen());
+              break;
+          }
+        }
         if (user!.emailVerified) {
           String? userType = await loadUserType();
 
@@ -127,70 +148,30 @@ class AuthenticationRepository extends GetxController {
 
   /* ------------------------ Phone Authentication --------------------------- */
 
-  Future<void> phoneAuthentication(String phoneNo) async {
+  void verifyPhoneNumber({
+    required String phoneNumber,
+    required Function(String verificationId, int? resendToken) onCodeSent,
+    required Function(PhoneAuthCredential credential) onVerificationCompleted,
+    required Function(FirebaseAuthException e) onVerificationFailed,
+    required Function(String verificationId) onCodeAutoRetrievalTimeout,
+  }) {
+    _auth.verifyPhoneNumber(
+      phoneNumber: phoneNumber,
+      timeout: const Duration(seconds: 60),
+      verificationCompleted: onVerificationCompleted,
+      verificationFailed: onVerificationFailed,
+      codeSent: onCodeSent,
+      codeAutoRetrievalTimeout: onCodeAutoRetrievalTimeout,
+    );
+  }
+
+  Future<void> signInWithCredential(PhoneAuthCredential credential) async {
     try {
-      await _auth.verifyPhoneNumber(
-        phoneNumber: phoneNo,
-        verificationCompleted: (credential) async {
-          await _auth.signInWithCredential(credential);
-        },
-        codeSent: (verificationId, resendToken) {
-          _phoneVerificationId.value = verificationId;
-        },
-        codeAutoRetrievalTimeout: (verificationId) {
-          _phoneVerificationId.value = verificationId;
-        },
-        verificationFailed: (e) {
-          throw TExceptions.fromCode(e.code).message;
-        },
-      );
+      await _auth.signInWithCredential(credential);
     } catch (e) {
-      throw e.toString();
+      Get.snackbar("Error", e.toString());
     }
   }
-
-  Future<void> verifyOtp({
-    required String verificationId,
-    required String userOtp,
-  }) async {
-    try {
-      final credential = PhoneAuthProvider.credential(
-        verificationId: verificationId,
-        smsCode: userOtp,
-      );
-
-      // Sign in using the credential
-      await FirebaseAuth.instance.signInWithCredential(credential);
-    } catch (e) {
-      throw Exception("Invalid OTP or Verification Failed");
-    }
-  }
-
-  Future<void> resendOtp(String phoneNumber) async {
-    await phoneAuthentication(phoneNumber);
-  }
-
-  /* ------------------------ Social Authentication ------------------------- */
-
-  // Future<UserCredential?> signInWithGoogle() async {
-  //   final googleUser = await GoogleSignIn().signIn();
-  //   final googleAuth = await googleUser?.authentication;
-  //   final credential = GoogleAuthProvider.credential(
-  //     accessToken: googleAuth?.accessToken,
-  //     idToken: googleAuth?.idToken,
-  //   );
-  //   return _auth.signInWithCredential(credential);
-  // }
-
-  // Future<UserCredential?> signInWithFacebook() async {
-  //   final loginResult =
-  //       await FacebookAuth.instance.login(permissions: ['email']);
-  //   final credential =
-  //       FacebookAuthProvider.credential(loginResult.accessToken!.token);
-  //   return _auth.signInWithCredential(credential);
-  // }
-
-  /* ----------------------------- User Management --------------------------- */
 
   Future<void> logout() async {
     await GoogleSignIn().signOut();

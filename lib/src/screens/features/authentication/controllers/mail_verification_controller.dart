@@ -6,6 +6,7 @@ import '../../../../repository/authentication_repository/authentication_reposito
 import '../../../../utils/helper/helper_controller.dart';
 
 class MailVerificationController extends GetxController {
+  // ignore: unused_field
   late Timer _timer;
 
   @override

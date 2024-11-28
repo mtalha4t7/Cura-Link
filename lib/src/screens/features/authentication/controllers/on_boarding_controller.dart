@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:liquid_swipe/PageHelpers/LiquidController.dart';
@@ -31,7 +32,9 @@ class OnBoardingController extends GetxController {
   animateToNextSlideWithLocalStorage() {
     if (controller.currentPage == 2) {
       userStorage.write('isFirstTime', false);
-      print(userStorage.read('isFirstTime'));
+      if (kDebugMode) {
+        print(userStorage.read('isFirstTime'));
+      }
       Get.offAll(() => const WelcomeScreen());
     } else {
       controller.animateToPage(page: controller.currentPage + 1);

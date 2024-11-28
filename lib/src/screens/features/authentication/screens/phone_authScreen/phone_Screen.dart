@@ -1,7 +1,10 @@
 import 'package:country_picker/country_picker.dart';
 import 'package:cura_link/src/repository/authentication_repository/authentication_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
+import 'otp_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -12,6 +15,7 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController phoneController = TextEditingController();
+  final isLoading = false.obs;
 
   Country selectedCountry = Country(
     phoneCode: "92",
@@ -43,6 +47,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     shape: BoxShape.circle,
                     color: Colors.purple.shade50,
                   ),
+                  child: Image.asset("assets/image1.png"),
                 ),
                 const SizedBox(height: 20),
                 const Text(
@@ -69,31 +74,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
                     hintText: "Enter phone number",
-                    prefixIcon: InkWell(
-                      onTap: () => showCountryPicker(
-                        context: context,
-                        countryListTheme:
-                            const CountryListThemeData(bottomSheetHeight: 550),
-                        onSelect: (Country country) {
-                          setState(() {
-                            selectedCountry = country;
-                          });
-                        },
-                      ),
-                      child: Text(
-                        "${selectedCountry.flagEmoji} +${selectedCountry.phoneCode} ",
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                    prefixIcon: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: InkWell(
+                        onTap: () => showCountryPicker(
+                          context: context,
+                          countryListTheme:
+                          const CountryListThemeData(bottomSheetHeight: 550),
+                          onSelect: (Country country) {
+                            setState(() {
+                              selectedCountry = country;
+                            });
+                          },
+                        ),
+                        child: Text(
+                          "${selectedCountry.flagEmoji} +${selectedCountry.phoneCode} ",
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: sendPhoneNumber,
-                    child: const Text("Login"),
+                Obx(
+                      () => isLoading.value
+                      ? const CircularProgressIndicator()
+                      : SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: sendPhoneNumber,
+                      child: const Text("Login"),
+                    ),
                   ),
                 ),
               ],
@@ -110,7 +122,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
       Get.snackbar("Invalid Input", "Please enter a valid phone number.");
       return;
     }
+
     final formattedPhone = "+${selectedCountry.phoneCode}$phone";
-    AuthenticationRepository.instance.phoneAuthentication(formattedPhone);
+
+    // Show loading while phone number is being verified
+    isLoading.value = true;
+
+    AuthenticationRepository.instance.verifyPhoneNumber(
+      phoneNumber: formattedPhone,
+      onCodeSent: (String verificationId, int? resendToken) {
+        isLoading.value = false; // Stop loading when OTP is sent
+        Get.to(() => OtpScreen(verificationId: verificationId));
+      },
+      onVerificationCompleted: (PhoneAuthCredential credential) async {
+        await AuthenticationRepository.instance.signInWithCredential(credential);
+        isLoading.value = false;
+        Get.snackbar("Success", "Phone number verified automatically!");
+      },
+      onVerificationFailed: (FirebaseAuthException e) {
+        isLoading.value = false;
+        Get.snackbar("Error", e.message ?? "Verification failed. Try again.");
+      },
+      onCodeAutoRetrievalTimeout: (String verificationId) {
+        isLoading.value = false;
+        Get.snackbar("Info", "Code auto-retrieval timed out.");
+      },
+    );
   }
+
 }

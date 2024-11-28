@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../../../common_widgets/form/form_divider_widget.dart';
 import '../../../../../common_widgets/form/form_header_widget.dart';
 import '../../../../../common_widgets/form/social_footer.dart';
 import '../../../../../constants/image_strings.dart';

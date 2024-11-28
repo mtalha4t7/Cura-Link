@@ -1,87 +1,26 @@
 {
   "project_info": {
-    "project_number": "346007822005",
-    "project_id": "cura-link",
-    "storage_bucket": "cura-link.firebasestorage.app"
+    "project_number": "592986644024",
+    "project_id": "cura-link-36b0c",
+    "storage_bucket": "cura-link-36b0c.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:346007822005:android:0a9e5fcadda4e8d92568fc",
-        "android_client_info": {
-          "package_name": "com.example.curaLink"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "346007822005-bootv868iv5233fro6o0u87rs58u6q24.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyC19ZR2Dkmc-FVVNICESMpIimGdt0HoTyw"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "346007822005-bootv868iv5233fro6o0u87rs58u6q24.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "346007822005-ivup1g26oqerhtprmjs53q909tfgguct.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.example.curaLink"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:346007822005:android:40b5f5183c8da0e42568fc",
+        "mobilesdk_app_id": "1:592986644024:android:adc5a7d812f403987310cd",
         "android_client_info": {
           "package_name": "com.example.cura_link"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "346007822005-hrtuccsgo8ed0odsan3afjaui0ulrd07.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.cura_link",
-            "certificate_hash": "da628d24fc26f1380fdeb103f20111c43fae63ec"
-          }
-        },
-        {
-          "client_id": "346007822005-bootv868iv5233fro6o0u87rs58u6q24.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyC19ZR2Dkmc-FVVNICESMpIimGdt0HoTyw"
+          "current_key": "AIzaSyBgEEVlFp-SaEMpNRRj1wl8DVKUqQYMl5w"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "346007822005-bootv868iv5233fro6o0u87rs58u6q24.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "346007822005-ivup1g26oqerhtprmjs53q909tfgguct.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.example.curaLink"
-              }
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cura_link/src/constants/text_strings.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import '../../screens/features/authentication/models/user_model.dart';
@@ -28,7 +29,9 @@ class UserRepository extends GetxController {
       await mongoDb.open();
       usersCollection = mongoDb
           .collection(COLLECTION_NAME); // Assuming COLLECTION_NAME is "Users"
-      print('Connected to MongoDB successfully');
+      if (kDebugMode) {
+        print('Connected to MongoDB successfully');
+      }
     } catch (e) {
       throw 'Error connecting to MongoDB: $e';
     }
@@ -144,7 +147,9 @@ class UserRepository extends GetxController {
 
       return snapshot.docs.isNotEmpty; // Returns true if user exists
     } catch (e) {
-      print("Error checking user by phone number in Firebase: $e");
+      if (kDebugMode) {
+        print("Error checking user by phone number in Firebase: $e");
+      }
       throw "Error checking user by phone number.";
     }
   }
@@ -184,7 +189,9 @@ class UserRepository extends GetxController {
           await _db.collection("Users").where("Email", isEqualTo: email).get();
       return snapshot.docs.isNotEmpty;
     } catch (e) {
-      print("Error fetching record: $e");
+      if (kDebugMode) {
+        print("Error fetching record: $e");
+      }
       throw "Error fetching record.";
     }
   }
@@ -203,7 +210,9 @@ class UserRepository extends GetxController {
         return null; // No user found
       }
     } catch (e) {
-      print("Error fetching user details by phone number in Firebase: $e");
+      if (kDebugMode) {
+        print("Error fetching user details by phone number in Firebase: $e");
+      }
       throw "Error fetching user details.";
     }
   }
@@ -223,7 +232,9 @@ class UserRepository extends GetxController {
         }
         await saveUserType(user.userType!);
         await usersCollection.insertOne(user.toJson());
-        print('User created successfully in MongoDB as the first record');
+        if (kDebugMode) {
+          print('User created successfully in MongoDB as the first record');
+        }
       } else {
         // Check if the user already exists by email
         final existingUser =
@@ -233,11 +244,15 @@ class UserRepository extends GetxController {
           throw "Record Already Exists";
         } else {
           await usersCollection.insertOne(user.toJson());
-          print('User created successfully in MongoDB');
+          if (kDebugMode) {
+            print('User created successfully in MongoDB');
+          }
         }
       }
     } catch (e) {
-      print('Error creating user in MongoDB: $e');
+      if (kDebugMode) {
+        print('Error creating user in MongoDB: $e');
+      }
       throw e.toString().isEmpty
           ? 'Something went wrong. Please try again'
           : e.toString();
@@ -250,7 +265,9 @@ class UserRepository extends GetxController {
       final user = await usersCollection.findOne({"PhoneNo": phoneNumber});
       return user != null; // Returns true if user exists
     } catch (e) {
-      print("Error checking user by phone number in MongoDB: $e");
+      if (kDebugMode) {
+        print("Error checking user by phone number in MongoDB: $e");
+      }
       throw "Error checking user by phone number.";
     }
   }
@@ -262,7 +279,9 @@ class UserRepository extends GetxController {
       if (user == null) throw 'No such user found';
       return UserModel.fromJson(user);
     } catch (e) {
-      print('Error fetching user details in MongoDB: $e');
+      if (kDebugMode) {
+        print('Error fetching user details in MongoDB: $e');
+      }
       throw e.toString().isEmpty
           ? 'Something went wrong. Please Try Again'
           : e.toString();
@@ -275,7 +294,9 @@ class UserRepository extends GetxController {
       final users = await usersCollection.find().toList();
       return users.map((user) => UserModel.fromJson(user)).toList();
     } catch (e) {
-      print('Error fetching all users in MongoDB: $e');
+      if (kDebugMode) {
+        print('Error fetching all users in MongoDB: $e');
+      }
       throw 'Something went wrong. Please Try Again';
     }
   }
@@ -288,9 +309,13 @@ class UserRepository extends GetxController {
         {'\$set': user.toJson()},
       );
       if (result.isFailure) throw 'Failed to update user in MongoDB';
-      print('User updated successfully in MongoDB');
+      if (kDebugMode) {
+        print('User updated successfully in MongoDB');
+      }
     } catch (e) {
-      print('Error updating user in MongoDB: $e');
+      if (kDebugMode) {
+        print('Error updating user in MongoDB: $e');
+      }
       throw e.toString().isEmpty
           ? 'Something went wrong. Please Try Again'
           : e.toString();
@@ -307,7 +332,9 @@ class UserRepository extends GetxController {
         return null; // No user found
       }
     } catch (e) {
-      print("Error fetching user details by phone number in MongoDB: $e");
+      if (kDebugMode) {
+        print("Error fetching user details by phone number in MongoDB: $e");
+      }
       throw "Error fetching user details.";
     }
   }
@@ -318,9 +345,13 @@ class UserRepository extends GetxController {
       final result =
           await usersCollection.deleteOne({"_id": ObjectId.parse(id)});
       if (result.isFailure) throw 'Failed to delete user in MongoDB';
-      print('User deleted successfully in MongoDB');
+      if (kDebugMode) {
+        print('User deleted successfully in MongoDB');
+      }
     } catch (e) {
-      print('Error deleting user in MongoDB: $e');
+      if (kDebugMode) {
+        print('Error deleting user in MongoDB: $e');
+      }
       throw e.toString().isEmpty
           ? 'Something went wrong. Please Try Again'
           : e.toString();
@@ -333,7 +364,9 @@ class UserRepository extends GetxController {
       final user = await usersCollection.findOne({"Email": email});
       return user != null;
     } catch (e) {
-      print("Error checking if record exists in MongoDB: $e");
+      if (kDebugMode) {
+        print("Error checking if record exists in MongoDB: $e");
+      }
       throw "Error checking if record exists.";
     }
   }

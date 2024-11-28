@@ -58,11 +58,5 @@
             duration: const Duration(seconds: 5));
       }
     }
-    Future<void> phoneAuthentication(String phoneNo) async {
-      try {
-        await AuthenticationRepository.instance.phoneAuthentication(phoneNo);
-      } catch (e) {
-        throw e.toString();
-      }
-    }
+
   }

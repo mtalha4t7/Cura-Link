@@ -12,6 +12,7 @@ class ForgetPasswordMailScreen extends StatefulWidget {
   const ForgetPasswordMailScreen({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _ForgetPasswordMailScreenState createState() =>
       _ForgetPasswordMailScreenState();
 }
@@ -37,16 +38,19 @@ class _ForgetPasswordMailScreenState extends State<ForgetPasswordMailScreen> {
         final signInMethods = await UserRepository.instance
             .recordExist(_emailController.text.trim());
 
+        // ignore: unrelated_type_equality_checks
         if (signInMethods != _emailController.text.trim()) {
           // Send password reset email
           await FirebaseAuth.instance
               .sendPasswordResetEmail(email: _emailController.text.trim());
+          // ignore: use_build_context_synchronously
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Password reset link sent to your email')),
           );
         } else {
           // Email is not associated with any user
+          // ignore: use_build_context_synchronously
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No account found with this email')),
           );

@@ -15,9 +15,15 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        return macos;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for macOs - '
+              'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.windows:
-        return windows;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for windows - '
+              'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -31,56 +37,30 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyC19ZR2Dkmc-FVVNICESMpIimGdt0HoTyw',
-    appId: '1:346007822005:android:0a9e5fcadda4e8d92568fc',
-    messagingSenderId: '346007822005',
-    projectId: 'cura-link',
-    storageBucket: 'cura-link.firebasestorage.app',
+    apiKey: 'AIzaSyBgEEVlFp-SaEMpNRRj1wl8DVKUqQYMl5w',
+    appId: '1:592986644024:android:adc5a7d812f403987310cd',
+    messagingSenderId: '592986644024',
+    projectId: 'cura-link-36b0c',
+    storageBucket: 'cura-link-36b0c.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDnIROtPZRyKuTi6aw3aHrqLz99_fZUj_c',
-    appId: '1:346007822005:ios:08e85858578839a92568fc',
-    messagingSenderId: '346007822005',
-    projectId: 'cura-link',
-    storageBucket: 'cura-link.firebasestorage.app',
-    androidClientId:
-        '346007822005-hrtuccsgo8ed0odsan3afjaui0ulrd07.apps.googleusercontent.com',
-    iosClientId:
-        '346007822005-ivup1g26oqerhtprmjs53q909tfgguct.apps.googleusercontent.com',
+    apiKey: 'AIzaSyC0MUcP2IKRvLAkxWup0d4sswd5O8_qqH4',
+    appId: '1:592986644024:ios:cd39fd32dc2f88327310cd',
+    messagingSenderId: '592986644024',
+    projectId: 'cura-link-36b0c',
+    storageBucket: 'cura-link-36b0c.firebasestorage.app',
     iosBundleId: 'com.example.curaLink',
   );
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDcBxQ9PnfjGn_nayqn9IMeVxhsIXsGpmg',
-    appId: '1:346007822005:web:54ae254767296ff62568fc',
-    messagingSenderId: '346007822005',
-    projectId: 'cura-link',
-    authDomain: 'cura-link.firebaseapp.com',
-    storageBucket: 'cura-link.firebasestorage.app',
-    measurementId: 'G-EN21KKSNNY',
+    apiKey: 'AIzaSyAp2Og7CtTjsa61i3xwL7k-hMIn57D0uBs',
+    appId: '1:592986644024:web:e8aa0a4ace4571cb7310cd',
+    messagingSenderId: '592986644024',
+    projectId: 'cura-link-36b0c',
+    authDomain: 'cura-link-36b0c.firebaseapp.com',
+    storageBucket: 'cura-link-36b0c.firebasestorage.app',
+    measurementId: 'G-BNLEQVL5ZD',
   );
 
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDnIROtPZRyKuTi6aw3aHrqLz99_fZUj_c',
-    appId: '1:346007822005:ios:08e85858578839a92568fc',
-    messagingSenderId: '346007822005',
-    projectId: 'cura-link',
-    storageBucket: 'cura-link.firebasestorage.app',
-    androidClientId:
-        '346007822005-hrtuccsgo8ed0odsan3afjaui0ulrd07.apps.googleusercontent.com',
-    iosClientId:
-        '346007822005-ivup1g26oqerhtprmjs53q909tfgguct.apps.googleusercontent.com',
-    iosBundleId: 'com.example.curaLink',
-  );
-
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDcBxQ9PnfjGn_nayqn9IMeVxhsIXsGpmg',
-    appId: '1:346007822005:web:9c7b08c1e45052832568fc',
-    messagingSenderId: '346007822005',
-    projectId: 'cura-link',
-    authDomain: 'cura-link.firebaseapp.com',
-    storageBucket: 'cura-link.firebasestorage.app',
-    measurementId: 'G-B99WZYJDLY',
-  );
 }

@@ -1,111 +1,126 @@
-import 'package:cura_link/src/repository/user_repository/user_repository.dart';
-import 'package:cura_link/src/screens/features/authentication/screens/welcome/welcome_screen.dart';
-import 'package:cura_link/src/screens/features/core/screens/dashboards/labDashboard/lab_dashboard.dart';
-import 'package:cura_link/src/screens/features/core/screens/dashboards/nurseDashboard/nurse_dashboard.dart';
-import 'package:flutter/material.dart';
+import 'dart:ui';
+import 'package:cura_link/src/repository/authentication_repository/authentication_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import '../../../../repository/authentication_repository/authentication_repository.dart';
-import '../../core/screens/Patient/patientDashboard/patient_dashboard.dart';
+
+
+import '../../../../repository/user_repository/user_repository.dart';
+import '../../../../shared prefrences/shared_prefrence.dart';
+import '../models/user_model.dart'; // Example for user model
 
 class OTPController extends GetxController {
-  static OTPController get instance => Get.find();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final auth = AuthenticationRepository.instance;
 
-  final AuthenticationRepository _authRepo = AuthenticationRepository.instance;
   final isLoading = false.obs;
 
-  /// Handles OTP verification
-  void verifyOtp({
+  // Verifies the OTP entered by the user
+  Future<void> verifyOtp({
     required String verificationId,
     required String userOtp,
+    required String phoneNumber,
     required VoidCallback onSuccess,
   }) async {
-    isLoading.value = true; // Notify UI that verification is in progress
-    try {
-      await _authRepo.verifyOtp(
-        verificationId: verificationId,
-        userOtp: userOtp,
-      );
-      onSuccess(); // Invoke the success callback if verification succeeds
-    } catch (e) {
-      Get.snackbar(
-        "Error",
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    } finally {
-      isLoading.value = false; // Notify UI that verification has completed
-    }
-  }
-
-  /// Resend OTP for a phone number
-  void resendOtp(String phoneNumber) async {
     isLoading.value = true;
     try {
-      await _authRepo.resendOtp(phoneNumber);
-      Get.snackbar(
-        "Success",
-        "OTP resent successfully!",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
+      // Verify the OTP
+      final credential = PhoneAuthProvider.credential(
+        verificationId: verificationId,
+        smsCode: userOtp,
       );
-    } catch (e) {
-      Get.snackbar(
-        "Error",
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    } finally {
-      isLoading.value = false;
-    }
-  }
+      await _auth.signInWithCredential(credential);
 
-  /// Handle successful OTP verification
-  Future<void> onVerificationSuccess(String phoneNumber) async {
-    try {
-      // Check if user exists by phone number
-      final UserRepository userRepo = UserRepository.instance;
-      final userDetails =
-          await userRepo.getUserDetailsByPhoneNumber(phoneNumber);
+      // Once OTP is verified, check if the user exists
+      final currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        // Check if the user exists in the database
+        UserRepository userRepository = UserRepository.instance;
+        UserModel? user = await userRepository.getUserDetailsByPhoneNumber(
+            currentUser.phoneNumber.toString());
 
-      if (userDetails != null) {
-        // Extract userType from userDetails
-        final userType = userDetails.userType;
+        if (user == null) {
+          // User doesn't exist, create a new user
+          await createUser(currentUser.phoneNumber.toString());
+        } else {
+          // User exists, proceed to sign in
+          await saveUserType(user.userType!);
+          auth.setInitialScreen(auth.firebaseUser);
 
-        // Navigate based on userType
-        switch (userType) {
-          case 'Patient':
-            Get.offAll(() => PatientDashboard());
-            break;
-          case 'Lab':
-            Get.offAll(() => LabDashboard());
-            break;
-          case 'Nurse':
-            Get.offAll(() => NurseDashboard());
-            break;
-          case 'Medical-Store':
-            // Get.offAll(() => MedicalStoreDashboard());
-            break;
-          default:
-            Get.offAll(() => WelcomeScreen());
-            break;
         }
+
+        // Successfully signed in, navigate to dashboard
+        onSuccess();
       } else {
-        // Navigate to registration flow for new users
-        // Get.offAll(() => UserInformationScreen());
+        isLoading.value = false;
+        Get.snackbar("Error", "Unable to sign in. Please try again.");
       }
     } catch (e) {
-      Get.snackbar(
-        "Error",
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      isLoading.value = false;
+      Get.snackbar("Error", "OTP verification failed: $e");
     }
   }
+
+  // Re-sends the OTP to the user
+  Future<void> resendOtp(String phoneNumber) async {
+    isLoading.value = true;
+    try {
+      await _auth.verifyPhoneNumber(
+        phoneNumber: phoneNumber,
+        timeout: const Duration(seconds: 60),
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          await _auth.signInWithCredential(credential);
+          isLoading.value = false;
+          Get.snackbar("Success", "Phone number verified automatically!");
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          isLoading.value = false;
+          Get.snackbar("Error", e.message ?? "Failed to resend OTP.");
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          isLoading.value = false;
+          Get.snackbar("Success", "New OTP sent to your phone.");
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {},
+      );
+    } catch (e) {
+      isLoading.value = false;
+      Get.snackbar("Error", e.toString());
+    }
+  }
+
+  // Create user if they don't exist in the database
+  Future<void> createUser(String phoneNumber) async {
+    try {
+      isLoading.value = true;
+      // Get the user type, you can customize this part as per your app's logic
+      String? userType = await loadUserType();
+      if (userType == null) {
+        throw "User type is not set.";
+      }
+
+      // Create the user model
+      final user = UserModel(
+        phoneNo: phoneNumber,
+        userType: userType,
+        fullName: "",
+        // Set the full name or get it from another source if needed
+        email: "", // You can add email or other fields if necessary
+      );
+
+      // Save the user to the repository/database
+      await UserRepository.instance.createUser(user);
+
+      // Set user type and navigate
+      await saveUserType(userType);
+      isLoading.value = false;
+      // Navigate to the dashboard screen
+
+      auth.setInitialScreen(auth.firebaseUser);
+    } catch (e) {
+      isLoading.value = false;
+      Get.snackbar("Error", "Failed to create user: $e");
+    }
+  }
+
+
 }
