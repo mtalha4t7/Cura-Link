@@ -9,11 +9,9 @@ import '../../../controllers/login_controller.dart';
 import '../../forget_password/forget_password_options/forget_password_model_bottom_sheet.dart';
 
 class LoginFormWidget extends StatelessWidget {
-
   const LoginFormWidget({
     super.key,
   });
-
 
   @override
   Widget build(BuildContext context) {
@@ -28,16 +26,18 @@ class LoginFormWidget extends StatelessWidget {
             /// -- Email Field
             TextFormField(
               validator: Helper.validateEmail,
-              controller: controller.email,
-              decoration:
-                  const InputDecoration(prefixIcon: Icon(LineAwesomeIcons.user), labelText: tEmail, hintText: tEmail),
+              controller: controller.userEmail,
+              decoration: const InputDecoration(
+                  prefixIcon: Icon(LineAwesomeIcons.user),
+                  labelText: tEmail,
+                  hintText: tEmail),
             ),
             const SizedBox(height: tFormHeight - 20),
 
             /// -- Password Field
             Obx(
               () => TextFormField(
-                controller: controller.password,
+                controller: controller.userPassword,
                 validator: (value) {
                   if (value!.isEmpty) return 'Enter your password';
                   return null;
@@ -51,7 +51,8 @@ class LoginFormWidget extends StatelessWidget {
                     icon: controller.showPassword.value
                         ? const Icon(LineAwesomeIcons.eye)
                         : const Icon(LineAwesomeIcons.eye_slash),
-                    onPressed: () => controller.showPassword.value = !controller.showPassword.value,
+                    onPressed: () => controller.showPassword.value =
+                        !controller.showPassword.value,
                   ),
                 ),
               ),
@@ -62,7 +63,8 @@ class LoginFormWidget extends StatelessWidget {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                onPressed: () => ForgetPasswordScreen.buildShowModalBottomSheet(context),
+                onPressed: () =>
+                    ForgetPasswordScreen.buildShowModalBottomSheet(context),
                 child: const Text(tForgetPassword),
               ),
             ),
@@ -72,11 +74,12 @@ class LoginFormWidget extends StatelessWidget {
               () => TPrimaryButton(
                 isLoading: controller.isLoading.value ? true : false,
                 text: tLogin.tr,
-                onPressed: controller.isFacebookLoading.value || controller.isGoogleLoading.value
+                onPressed: controller.isFacebookLoading.value ||
+                        controller.isGoogleLoading.value
                     ? () {}
                     : controller.isLoading.value
                         ? () {}
-                        : () => controller.login(),
+                        : () => controller.loginUser(),
               ),
             ),
           ],

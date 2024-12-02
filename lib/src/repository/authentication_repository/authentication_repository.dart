@@ -5,6 +5,7 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../screens/features/authentication/screens/login/login_screen.dart';
 import '../../screens/features/authentication/screens/mail_verification/mail_verification.dart';
 import '../../screens/features/authentication/screens/on_boarding/on_boarding_screen.dart';
@@ -170,6 +171,39 @@ class AuthenticationRepository extends GetxController {
       await _auth.signInWithCredential(credential);
     } catch (e) {
       Get.snackbar("Error", e.toString());
+    }
+  }
+
+// Clear JWT token and redirect to login screen
+  Future<void> signOut() async {
+    try {
+      // Get the SharedPreferences instance
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      // Remove the JWT token from SharedPreferences
+      await prefs.remove('jwtToken');
+
+      // Optionally, clear other session data if needed
+      // await prefs.remove('userDetails');
+
+      // Redirect to the login screen
+      Get.offAllNamed('/welcome'); // Navigate to the login screen
+
+      // Optionally, display a success message
+      Get.snackbar(
+        "Success",
+        "You have been logged out.",
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 3),
+      );
+    } catch (error) {
+      // Handle any errors
+      Get.snackbar(
+        "Error",
+        "Something went wrong. Please try again.",
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 3),
+      );
     }
   }
 

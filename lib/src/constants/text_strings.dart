@@ -5,8 +5,8 @@
 const MONGO_URL =
     "mongodb+srv://25362:talha8k83t@curalinkcluster.0xafs.mongodb.net/dbCuraLink?retryWrites=true&w=majority&appName=CuraLinkCluster";
 // ignore: constant_identifier_names
-const COLLECTION_NAME = "users";
-
+const String COLLECTION_NAME = "users";
+const String ipAddress = "http://192.168.1.14:4000";
 // -- GLOBAL Texts
 const String tNo = "No";
 const String tYes = "Yes";

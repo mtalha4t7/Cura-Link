@@ -25,7 +25,7 @@ class SignUpFormWidget extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextFormField(
-              controller: controller.fullName,
+              controller: controller.userName,
               validator: (value) {
                 if (value!.isEmpty) return 'Name cannot be empty';
                 return null;
@@ -36,7 +36,7 @@ class SignUpFormWidget extends StatelessWidget {
             ),
             const SizedBox(height: tFormHeight - 20),
             TextFormField(
-              controller: controller.email,
+              controller: controller.userEmail,
               validator: Helper.validateEmail,
               decoration: const InputDecoration(
                   label: Text(tEmail),
@@ -44,7 +44,7 @@ class SignUpFormWidget extends StatelessWidget {
             ),
             const SizedBox(height: tFormHeight - 20),
             TextFormField(
-              controller: controller.phoneNo,
+              controller: controller.userPhone,
               keyboardType: TextInputType.phone,
               validator: (value) {
                 if (value!.isEmpty) return 'Phone number cannot be empty';
@@ -57,7 +57,7 @@ class SignUpFormWidget extends StatelessWidget {
             const SizedBox(height: tFormHeight - 20),
             Obx(
               () => TextFormField(
-                controller: controller.password,
+                controller: controller.userPassword,
                 validator: Helper.validatePassword,
                 obscureText: controller.showPassword.value ? false : true,
                 decoration: InputDecoration(
@@ -83,8 +83,7 @@ class SignUpFormWidget extends StatelessWidget {
                     ? () {}
                     : controller.isLoading.value
                         ? () {}
-                        : () => controller
-                            .createUser,
+                        : () => controller.createAccount(),
               ),
             ),
           ],

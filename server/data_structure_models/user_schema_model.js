@@ -24,7 +24,7 @@ const userSchema = mongoose.Schema({
   },
   userType: {
     type: String,
-    default: "user",
+    default: "",
   },
   userPhone: {
     type: String,
