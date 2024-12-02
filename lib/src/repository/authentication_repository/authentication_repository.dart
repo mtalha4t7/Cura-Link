@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cura_link/src/screens/features/authentication/models/user_model.dart';
+import 'package:cura_link/src/screens/features/authentication/models/user_model_mongodb.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -35,6 +37,7 @@ class AuthenticationRepository extends GetxController {
 
   // Variables
   late final Rx<User?> _firebaseUser;
+  late final UserModelMongoDB _mongodbUser;
 
   /// Getters
   User? get firebaseUser => _firebaseUser.value;
@@ -48,18 +51,20 @@ class AuthenticationRepository extends GetxController {
     _firebaseUser = Rx<User?>(_auth.currentUser);
     _firebaseUser.bindStream(_auth.userChanges());
     FlutterNativeSplash.remove();
-    setInitialScreen(_firebaseUser.value);
+    setInitialScreen(_mongodbUser);
   }
 
   /// Set the initial screen based on authentication state
-  Future<void> setInitialScreen(User? user) async {
+  Future<void> setInitialScreen(UserModelMongoDB user) async {
     try {
+      // Check if the user exists
       if (user != null) {
-        await user.reload();
-        user = _auth.currentUser;
-        if (user?.email == null) {
+        // Check if the user's email is null (as per your condition)
+        if (user.userEmail != null) {
+          // Retrieve the userType from shared preferences or some storage
           String? userType = await loadUserType();
 
+          // Navigate to the appropriate dashboard based on userType
           switch (userType) {
             case 'Patient':
               Get.offAll(() => PatientDashboard());
@@ -71,50 +76,23 @@ class AuthenticationRepository extends GetxController {
               Get.offAll(() => NurseDashboard());
               break;
             case 'Medical-Store':
-              Get.offAll(() => medicalstore_dashboard());
-              break;
-            default:
-              Get.offAll(() => WelcomeScreen());
-              break;
-          }
-        }
-        if (user!.emailVerified) {
-          String? userType = await loadUserType();
-
-          if (userType == null) {
-            DocumentSnapshot userDoc =
-                await _firestore.collection('users').doc(user.uid).get();
-            if (userDoc.exists) {
-              userType = userDoc.get('userType');
-              await saveUserType(userType!);
-            }
-          }
-
-          switch (userType) {
-            case 'Patient':
-              Get.offAll(() => PatientDashboard());
-              break;
-            case 'Lab':
-              Get.offAll(() => LabDashboard());
-              break;
-            case 'Nurse':
-              Get.offAll(() => NurseDashboard());
-              break;
-            case 'Medical-Store':
-              Get.offAll(() => medicalstore_dashboard());
+              Get.offAll(() =>());
               break;
             default:
               Get.offAll(() => WelcomeScreen());
               break;
           }
         } else {
-          Get.offAll(() => MailVerification());
+          // Navigate to onboarding or welcome screen for first-time users
+          bool isFirstTime = userStorage.read('isFirstTime') ?? true;
+          Get.offAll(isFirstTime ? OnBoardingScreen() : WelcomeScreen());
         }
       } else {
-        bool isFirstTime = userStorage.read('isFirstTime') ?? true;
-        Get.offAll(isFirstTime ? OnBoardingScreen() : WelcomeScreen());
+        // If user is null, go to Login Screen
+        Get.offAll(() => const LoginScreen());
       }
     } catch (e) {
+      // Handle any unexpected errors
       Get.offAll(() => const LoginScreen());
     }
   }
@@ -123,7 +101,7 @@ class AuthenticationRepository extends GetxController {
 
   Future<void> loginWithEmailAndPassword(String email, String password) async {
     try {
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      // await _auth.signInWithEmailAndPassword(email: email, password: password);
     } catch (e) {
       throw TExceptions.fromCode((e as FirebaseAuthException).code).message;
     }
@@ -132,8 +110,8 @@ class AuthenticationRepository extends GetxController {
   Future<void> registerWithEmailAndPassword(
       String email, String password) async {
     try {
-      await _auth.createUserWithEmailAndPassword(
-          email: email, password: password);
+      // await _auth.createUserWithEmailAndPassword(
+      //     email: email, password: password);
     } catch (e) {
       throw TExceptions.fromCode((e as FirebaseAuthException).code).message;
     }
@@ -141,7 +119,7 @@ class AuthenticationRepository extends GetxController {
 
   Future<void> sendEmailVerification() async {
     try {
-      await _auth.currentUser?.sendEmailVerification();
+      // await _auth.currentUser?.sendEmailVerification();
     } catch (e) {
       throw TExceptions.fromCode((e as FirebaseAuthException).code).message;
     }
@@ -156,19 +134,19 @@ class AuthenticationRepository extends GetxController {
     required Function(FirebaseAuthException e) onVerificationFailed,
     required Function(String verificationId) onCodeAutoRetrievalTimeout,
   }) {
-    _auth.verifyPhoneNumber(
-      phoneNumber: phoneNumber,
-      timeout: const Duration(seconds: 60),
-      verificationCompleted: onVerificationCompleted,
-      verificationFailed: onVerificationFailed,
-      codeSent: onCodeSent,
-      codeAutoRetrievalTimeout: onCodeAutoRetrievalTimeout,
-    );
+    // _auth.verifyPhoneNumber(
+    //   phoneNumber: phoneNumber,
+    //   timeout: const Duration(seconds: 60),
+    //   verificationCompleted: onVerificationCompleted,
+    //   verificationFailed: onVerificationFailed,
+    //   codeSent: onCodeSent,
+    //   codeAutoRetrievalTimeout: onCodeAutoRetrievalTimeout,
+    // );
   }
 
   Future<void> signInWithCredential(PhoneAuthCredential credential) async {
     try {
-      await _auth.signInWithCredential(credential);
+      // await _auth.signInWithCredential(credential);
     } catch (e) {
       Get.snackbar("Error", e.toString());
     }
@@ -187,8 +165,8 @@ class AuthenticationRepository extends GetxController {
       // await prefs.remove('userDetails');
 
       // Redirect to the login screen
-      Get.offAllNamed('/welcome'); // Navigate to the login screen
-
+      // Navigate to the login screen
+      Get.offAll(() => WelcomeScreen());
       // Optionally, display a success message
       Get.snackbar(
         "Success",
@@ -210,7 +188,6 @@ class AuthenticationRepository extends GetxController {
   Future<void> logout() async {
     await GoogleSignIn().signOut();
     await FacebookAuth.instance.logOut();
-    await _auth.signOut();
     Get.offAll(() => LoginScreen());
   }
 }

@@ -44,7 +44,7 @@ class OTPController extends GetxController {
         } else {
           // User exists, proceed to sign in
           await saveUserType(user.userType!);
-          auth.setInitialScreen(auth.firebaseUser);
+          // auth.setInitialScreen(user);
 
         }
 
@@ -115,7 +115,7 @@ class OTPController extends GetxController {
       isLoading.value = false;
       // Navigate to the dashboard screen
 
-      auth.setInitialScreen(auth.firebaseUser);
+      // auth.setInitialScreen(auth.firebaseUser);
     } catch (e) {
       isLoading.value = false;
       Get.snackbar("Error", "Failed to create user: $e");

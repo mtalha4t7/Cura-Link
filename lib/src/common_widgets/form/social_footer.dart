@@ -31,7 +31,7 @@ class SocialFooter extends StatelessWidget {
             background: tGoogleBgColor,
             foreground: tGoogleForegroundColor,
             text: '${tConnectWith.tr} ${tPhone.tr}',
-            onPressed: () => Get.to(() => const RegisterScreen()),
+            onPressed: () => Get.to(() => const ()),
           ),
           const TFormDividerWidget(),
           // Uncomment the below code to enable Facebook social button if required

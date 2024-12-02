@@ -189,7 +189,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       ),
       confirm: TPrimaryButton(
         isFullWidth: false,
-        onPressed: () => AuthenticationRepository.instance.logout(),
+        onPressed: () => AuthenticationRepository.instance.signOut(),
         text: "Yes",
       ),
       cancel: SizedBox(

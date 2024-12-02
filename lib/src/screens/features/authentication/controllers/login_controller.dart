@@ -38,22 +38,22 @@ class LoginController extends GetxController {
       final auth = AuthenticationRepository.instance;
 
       // Authenticate the user
-      await auth.loginWithEmailAndPassword(
-          userEmail.text.trim(), userPassword.text.trim());
-
-      // Fetch user details from Firestore using the current user's email
-      UserRepository userRepository = UserRepository.instance;
-      UserModel user =
-          await userRepository.getUserDetails(userEmail.text.trim());
-      await saveUserType(user.userType!);
-
-      // Check if the userType is set
-      if (user.userType == null) {
-        throw "User type is not set for this user.";
-      }
+      // await auth.loginWithEmailAndPassword(
+      //     userEmail.text.trim(), userPassword.text.trim());
+      //
+      // // Fetch user details from Firestore using the current user's email
+      // UserRepository userRepository = UserRepository.instance;
+      // UserModel user =
+      //     await userRepository.getUserDetails(userEmail.text.trim());
+      // await saveUserType(user.userType!);
+      //
+      // // Check if the userType is set
+      // if (user.userType == null) {
+      //   throw "User type is not set for this user.";
+      // }
 
       // Set initial screen after successful login and user type retrieval
-      auth.setInitialScreen(auth.firebaseUser);
+      // auth.setInitialScreen(auth.firebaseUser);
     } catch (e) {
       isLoading.value = false;
       Helper.errorSnackBar(title: tNoRecordFound, message: e.toString());
@@ -94,7 +94,7 @@ class LoginController extends GetxController {
 
           // Call setInitialScreen with MongoDB user details
           AuthenticationRepository.instance
-              .setInitialScreen(currentUser as User?);
+              .setInitialScreen(currentUser);
 
           Get.snackbar(
             "Success",
