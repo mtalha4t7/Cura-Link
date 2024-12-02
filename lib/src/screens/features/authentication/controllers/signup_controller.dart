@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:cura_link/src/constants/text_strings.dart';
 import 'package:cura_link/src/screens/features/authentication/models/user_model_mongodb.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -17,7 +16,7 @@ class SignUpController extends GetxController {
   final isGoogleLoading = false.obs;
   final isFacebookLoading = false.obs;
   GlobalKey<FormState> signupFormKey = GlobalKey<FormState>();
-  final auth = AuthenticationRepository.instance;
+
   // TextField Controllers to get data from TextFields
   final userEmail = TextEditingController();
   final userPassword = TextEditingController();
@@ -51,7 +50,7 @@ class SignUpController extends GetxController {
       );
 
       // Authenticate user and create in repository
-
+      final auth = AuthenticationRepository.instance;
       await auth.registerWithEmailAndPassword(user.email, user.password!);
       await UserRepository.instance.mongoCreateUser(user);
       await UserRepository.instance.createUser(user);
@@ -66,7 +65,6 @@ class SignUpController extends GetxController {
 
   Future<void> createAccount() async {
     try {
-      isLoading.value = true;
       // Validate user inputs
       if (userName.text.trim().isEmpty ||
           userEmail.text.trim().isEmpty ||
@@ -77,15 +75,8 @@ class SignUpController extends GetxController {
           snackPosition: SnackPosition.BOTTOM,
           duration: const Duration(seconds: 5),
         );
-        isLoading.value = false;
         return;
       }
-
-      String? userType = await loadUserType();
-      if (userType == null) {
-        throw "User type is not set.";
-      }
-      print(userType);
 
       // Create UserModelMongoDB object
       UserModelMongoDB userModel = UserModelMongoDB(
@@ -94,8 +85,6 @@ class SignUpController extends GetxController {
         userEmail: userEmail.text.trim(),
         userPassword: userPassword.text.trim(),
         userAddress: "",
-        userPhone: userPhone.text.trim(),
-        userType: userType,
         jwtToken: "",
       );
 
@@ -110,26 +99,6 @@ class SignUpController extends GetxController {
 
       // Handle the response
       if (httpResponse.statusCode == 200 || httpResponse.statusCode == 201) {
-        // Parse the response
-        final responseData = jsonDecode(httpResponse.body);
-
-        // Extract user details and JWT token from response
-        final userData = responseData["user"];
-        final jwtToken = responseData["token"];
-
-        if (userData != null && jwtToken != null) {
-          // Save the JWT token locally
-          await saveJwtToken(jwtToken);
-
-          // Convert response data to a UserModelMongoDB object
-          UserModelMongoDB currentUser = UserModelMongoDB.fromDataMap(userData);
-
-          // Call setInitialScreen with MongoDB user details
-          auth.setInitialScreen(currentUser as User?);
-        } else {
-          throw "Invalid response from server.";
-        }
-        isLoading.value = false;
         Get.snackbar(
           "Success",
           "Account created successfully",
