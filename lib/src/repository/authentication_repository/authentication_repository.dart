@@ -37,7 +37,6 @@ class AuthenticationRepository extends GetxController {
 
   // Variables
   late final Rx<User?> _firebaseUser;
-  late final UserModelMongoDB _mongodbUser;
 
   /// Getters
   User? get firebaseUser => _firebaseUser.value;
@@ -51,7 +50,8 @@ class AuthenticationRepository extends GetxController {
     _firebaseUser = Rx<User?>(_auth.currentUser);
     _firebaseUser.bindStream(_auth.userChanges());
     FlutterNativeSplash.remove();
-    setInitialScreen(_mongodbUser);
+    UserModelMongoDB mongodbUser = UserModelMongoDB();
+    setInitialScreen(mongodbUser);
   }
 
   /// Set the initial screen based on authentication state
@@ -76,7 +76,7 @@ class AuthenticationRepository extends GetxController {
               Get.offAll(() => NurseDashboard());
               break;
             case 'Medical-Store':
-              Get.offAll(() =>());
+              Get.offAll(() => ());
               break;
             default:
               Get.offAll(() => WelcomeScreen());

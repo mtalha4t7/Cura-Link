@@ -77,38 +77,57 @@ class LoginController extends GetxController {
       }
 
       // Send login request to the backend
-      final response =
-          await _loginRequest(userEmail.text.trim(), userPassword.text.trim());
+      final response = await http.post(
+        Uri.parse(
+            "$ipAddress/api/auth/signin"), // Adjusted endpoint to match backend route
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "userEmail": userEmail.text.trim(),
+          "userPassword": userPassword.text.trim(),
+        }),
+      );
 
-      // If the response is successful, handle the login
-      if (response != null && response['status'] == 'success') {
-        final userData = response['user'];
-        final jwtToken = response['token'];
+      // Handle response
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['status'] == 'success') {
+          final userData = responseData['user'];
+          final jwtToken = responseData['token'];
 
-        if (userData != null && jwtToken != null) {
-          // Save JWT token locally
-          await saveJwtToken(jwtToken);
+          if (userData != null && jwtToken != null) {
+            // Save JWT token locally
+            await saveJwtToken(jwtToken);
 
-          // Convert response data to a UserModelMongoDB object
-          UserModelMongoDB currentUser = UserModelMongoDB.fromDataMap(userData);
+            // Convert response data to a UserModelMongoDB object
+            UserModelMongoDB currentUser =
+                UserModelMongoDB.fromDataMap(userData);
 
-          // Call setInitialScreen with MongoDB user details
-          AuthenticationRepository.instance
-              .setInitialScreen(currentUser);
+            // Navigate to the initial screen based on user type
+            AuthenticationRepository.instance.setInitialScreen(currentUser);
 
+            Get.snackbar(
+              "Success",
+              "Login successful!",
+              snackPosition: SnackPosition.BOTTOM,
+              duration: const Duration(seconds: 5),
+            );
+          } else {
+            throw "Invalid response from server.";
+          }
+        } else {
           Get.snackbar(
-            "Success",
-            "Login successful!",
+            "Error",
+            responseData['message'] ??
+                "Login failed. Please check your credentials.",
             snackPosition: SnackPosition.BOTTOM,
             duration: const Duration(seconds: 5),
           );
-        } else {
-          throw "Invalid response from server.";
         }
       } else {
+        final errorData = jsonDecode(response.body);
         Get.snackbar(
           "Error",
-          "Login failed. Please check your credentials.",
+          errorData['message'] ?? "An unknown error occurred.",
           snackPosition: SnackPosition.BOTTOM,
           duration: const Duration(seconds: 5),
         );
