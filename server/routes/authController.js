@@ -2,7 +2,7 @@ const bcryptjs = require("bcryptjs");
 const jsonWebtoken = require("jsonwebtoken");
 const optGenerator = require("otp-generator");
 const crypto = require("crypto");
-const userModel = require("../models/user_schema_model");
+const userModel = require("../data_structure_models/user_schema_model");
 const key = "otp-secret-key";
 
 // Handle User SignIn
@@ -67,7 +67,7 @@ async function signUp(req, res) {
 // Create OTP
 async function createOtp(req, res) {
   try {
-    const { phone } = req.body;
+    const { userPhone } = req.body;
 
     // Generate OTP
     const otp = optGenerator.generate(4, {
@@ -79,7 +79,7 @@ async function createOtp(req, res) {
     // Set OTP expiration time (5 minutes)
     const ttl = 5 * 60 * 1000;
     const expires = Date.now() + ttl;
-    const data = `${phone}.${otp}.${expires}`;
+    const data = `${userPhone}.${otp}.${expires}`;
     const hash = crypto.createHmac("sha256", key).update(data).digest("hex");
     const fullHash = `${hash}.${expires}`;
 
@@ -101,14 +101,14 @@ async function createOtp(req, res) {
 // Verify OTP
 async function verifyOtp(req, res) {
   try {
-    const { phone, otp, hash } = req.body;
+    const { userPhone, otp, hash } = req.body;
 
     let [hashValue, expires] = hash.split(".");
 
     let now = Date.now();
     if (now > parseInt(expires)) return res.status(400).json({ message: "OTP Expired" });
 
-    let data = `${phone}.${otp}.${expires}`;
+    let data = `${userPhone}.${otp}.${expires}`;
     let newCalculateHash = crypto.createHmac("sha256", key).update(data).digest("hex");
 
     if (newCalculateHash === hashValue) {
