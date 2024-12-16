@@ -1,4 +1,5 @@
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
+import 'package:cura_link/src/screens/features/authentication/controllers/mail_verification_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -28,44 +29,44 @@ class _ForgetPasswordMailScreenState extends State<ForgetPasswordMailScreen> {
     super.dispose();
   }
 
-  Future<void> _resetPassword() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      setState(() {
-        _isLoading = true;
-      });
-      try {
-        // Check if the email is associated with an existing user
-        final signInMethods = await UserRepository.instance
-            .recordExist(_emailController.text.trim());
+  // Future<void> _resetPassword() async {
+  //   if (_formKey.currentState?.validate() ?? false) {
+  //     setState(() {
+  //       _isLoading = true;
+  //     });
+  //     try {
+  // Check if the email is associated with an existing user
+  // final signInMethods = await UserRepository.instance
+  //     // .recordExist(_emailController.text.trim());
 
-        // ignore: unrelated_type_equality_checks
-        if (signInMethods != _emailController.text.trim()) {
-          // Send password reset email
-          await FirebaseAuth.instance
-              .sendPasswordResetEmail(email: _emailController.text.trim());
-          // ignore: use_build_context_synchronously
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Password reset link sent to your email')),
-          );
-        } else {
-          // Email is not associated with any user
-          // ignore: use_build_context_synchronously
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No account found with this email')),
-          );
-        }
-      } on FirebaseAuthException catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'Failed to send reset link')),
-        );
-      } finally {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
+  //       // // ignore: unrelated_type_equality_checks
+  //       if (signInMethods != _emailController.text.trim()) {
+  //         // Send password reset email
+  //         await FirebaseAuth.instance
+  //             .sendPasswordResetEmail(email: _emailController.text.trim());
+  //         // ignore: use_build_context_synchronously
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(
+  //               content: Text('Password reset link sent to your email')),
+  //         );
+  //       } else {
+  //         // Email is not associated with any user
+  //         // ignore: use_build_context_synchronously
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(content: Text('No account found with this email')),
+  //         );
+  //       }
+  //     } on FirebaseAuthException catch (e) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text(e.message ?? 'Failed to send reset link')),
+  //       );
+  //     } finally {
+  //       setState(() {
+  //         _isLoading = false;
+  //       });
+  //     }
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -115,12 +116,12 @@ class _ForgetPasswordMailScreenState extends State<ForgetPasswordMailScreen> {
                       const SizedBox(height: 20.0),
                       SizedBox(
                         width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _resetPassword,
-                          child: _isLoading
-                              ? CircularProgressIndicator(color: Colors.white)
-                              : const Text(tNext),
-                        ),
+                        // child: ElevatedButton(
+                        //   onPressed: _isLoading ? null : EmailVerificationController.instance.resetPassword,
+                        //   child: _isLoading
+                        //       ? CircularProgressIndicator(color: Colors.white)
+                        //       : const Text(tNext),
+                        // ),
                       ),
                     ],
                   ),

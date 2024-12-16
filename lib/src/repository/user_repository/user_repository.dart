@@ -1,23 +1,16 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cura_link/src/constants/text_strings.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:mongo_dart/mongo_dart.dart';
-import '../../screens/features/authentication/models/user_model.dart';
-import '../../shared prefrences/shared_prefrence.dart';
-import '../authentication_repository/exceptions/t_exceptions.dart';
 
 class UserRepository extends GetxController {
   static UserRepository get instance => Get.find();
 
-  final _db = FirebaseFirestore.instance;
-
-  // MongoDB-related variables
   late Db mongoDb;
   late DbCollection usersCollection;
 
-  /// Constructor to initialize the database for MongoDB
+  /// MongoDB URL and Collection Name
+
+  /// Constructor to initialize the database connection
   UserRepository() {
     _initMongoDb();
   }
@@ -27,347 +20,101 @@ class UserRepository extends GetxController {
     try {
       mongoDb = await Db.create(MONGO_URL);
       await mongoDb.open();
-      usersCollection = mongoDb
-          .collection(COLLECTION_NAME); // Assuming COLLECTION_NAME is "Users"
-      if (kDebugMode) {
-        print('Connected to MongoDB successfully');
-      }
+      usersCollection = mongoDb.collection(COLLECTION_NAME);
+      print('Connected to MongoDB successfully');
     } catch (e) {
       throw 'Error connecting to MongoDB: $e';
     }
   }
 
-  // ###################### Firebase Functions ######################
-
-  /// Store user data in Firebase
-  Future<void> createUser(UserModel user) async {
+  /// Create a new user in MongoDB
+  Future<void> createUser(Map<String, dynamic> userData) async {
     try {
-      // It is recommended to use Authentication Id as DocumentId of the Users Collection.
-      // To store a new user you first have to authenticate and get uID (e.g: Check Authentication Repository)
-      // Add user like this: await _db.collection("Users").doc(uID).set(user.toJson());
+      await usersCollection.insert(userData);
+      print('User created successfully');
+    } catch (e) {
+      throw 'Error creating user: $e';
+    }
+  }
 
-      if (user.userType != null) {
-        await saveUserType(user.userType!);
+  /// Fetch the full name of a user by their email
+  Future<String?> getFullNameByEmail(String email) async {
+    try {
+      // Fetch user by email
+      final user = await usersCollection.findOne({'email': email});
+
+      // Check if the user exists and return their full name
+      if (user != null && user.containsKey('fullName')) {
+        return user['fullName'] as String;
       } else {
-        // Handle the case where userType is null (you might want to throw an error or provide a default value)
-        throw Exception("User type is null");
-      }
-      await recordExist(user.email)
-          ? throw "Record Already Exists"
-          : await _db.collection("Users").add(user.toJson());
-    } on FirebaseAuthException catch (e) {
-      final result = TExceptions.fromCode(e.code);
-      throw result.message;
-    } on FirebaseException catch (e) {
-      throw e.message.toString();
-    } catch (e) {
-      throw e.toString().isEmpty
-          ? 'Something went wrong. Please Try Again'
-          : e.toString();
-    }
-  }
-
-  /// Fetch User Specific details from Firebase
-  Future<UserModel> getUserDetails(String email) async {
-    try {
-      final snapshot =
-          await _db.collection("Users").where("Email", isEqualTo: email).get();
-      if (snapshot.docs.isEmpty) throw 'No such user found';
-
-      final userData =
-          snapshot.docs.map((e) => UserModel.fromSnapshot(e)).single;
-      return userData;
-    } on FirebaseAuthException catch (e) {
-      final result = TExceptions.fromCode(e.code);
-      throw result.message;
-    } on FirebaseException catch (e) {
-      throw e.message.toString();
-    } catch (e) {
-      throw e.toString().isEmpty
-          ? 'Something went wrong. Please Try Again'
-          : e.toString();
-    }
-  }
-
-  /// Fetch All Users from Firebase
-  Future<List<UserModel>> allUsers() async {
-    try {
-      final snapshot = await _db.collection("Users").get();
-      final users =
-          snapshot.docs.map((e) => UserModel.fromSnapshot(e)).toList();
-      return users;
-    } on FirebaseAuthException catch (e) {
-      final result = TExceptions.fromCode(e.code);
-      throw result.message;
-    } on FirebaseException catch (e) {
-      throw e.message.toString();
-    } catch (_) {
-      throw 'Something went wrong. Please Try Again';
-    }
-  }
-
-  /// Get User's Full Name
-  Future<String> getFullNameByEmail(String email) async {
-    try {
-      // Query Firestore to find the user document by email
-      final snapshot =
-          await _db.collection("Users").where("Email", isEqualTo: email).get();
-
-      // Check if a user document exists
-      if (snapshot.docs.isNotEmpty) {
-        // Get the user document
-        final userDoc = snapshot.docs.first;
-
-        // Get the full name from the document
-        final fullName = userDoc['FullName'];
-
-        // Return the full name or a default message if it's not available
-        return fullName ?? "No full name available";
-      } else {
-        return "No user found with this email"; // If no user is found
-      }
-    } on FirebaseAuthException catch (e) {
-      final result = TExceptions.fromCode(e.code);
-      throw result.message;
-    } on FirebaseException catch (e) {
-      throw e.message.toString();
-    } catch (e) {
-      throw e.toString().isEmpty
-          ? 'Something went wrong. Please Try Again'
-          : e.toString();
-    }
-  }
-
-  Future<bool> userExistsByPhoneNumber(String phoneNumber) async {
-    try {
-      final snapshot = await _db
-          .collection("Users")
-          .where("PhoneNo", isEqualTo: phoneNumber)
-          .get();
-
-      return snapshot.docs.isNotEmpty; // Returns true if user exists
-    } catch (e) {
-      if (kDebugMode) {
-        print("Error checking user by phone number in Firebase: $e");
-      }
-      throw "Error checking user by phone number.";
-    }
-  }
-
-  /// Update User details in Firebase
-  Future<void> updateUserRecord(UserModel user) async {
-    try {
-      await _db.collection("Users").doc(user.id).update(user.toJson());
-    } on FirebaseAuthException catch (e) {
-      final result = TExceptions.fromCode(e.code);
-      throw result.message;
-    } on FirebaseException catch (e) {
-      throw e.message.toString();
-    } catch (_) {
-      throw 'Something went wrong. Please Try Again';
-    }
-  }
-
-  /// Delete User Data in Firebase
-  Future<void> deleteUser(String id) async {
-    try {
-      await _db.collection("Users").doc(id).delete();
-    } on FirebaseAuthException catch (e) {
-      final result = TExceptions.fromCode(e.code);
-      throw result.message;
-    } on FirebaseException catch (e) {
-      throw e.message.toString();
-    } catch (_) {
-      throw 'Something went wrong. Please Try Again';
-    }
-  }
-
-  /// Check if user exists with email in Firebase
-  Future<bool> recordExist(String email) async {
-    try {
-      final snapshot =
-          await _db.collection("Users").where("Email", isEqualTo: email).get();
-      return snapshot.docs.isNotEmpty;
-    } catch (e) {
-      if (kDebugMode) {
-        print("Error fetching record: $e");
-      }
-      throw "Error fetching record.";
-    }
-  }
-
-  Future<UserModel?> getUserDetailsByPhoneNumber(String phoneNumber) async {
-    try {
-      final snapshot = await _db
-          .collection("Users")
-          .where("PhoneNo", isEqualTo: phoneNumber)
-          .get();
-
-      if (snapshot.docs.isNotEmpty) {
-        return UserModel.fromSnapshot(
-            snapshot.docs.first); // Assuming UserModel exists
-      } else {
-        return null; // No user found
+        return null; // Return null if no user or fullName field is found
       }
     } catch (e) {
-      if (kDebugMode) {
-        print("Error fetching user details by phone number in Firebase: $e");
-      }
-      throw "Error fetching user details.";
+      throw 'Error fetching full name: $e';
     }
   }
 
-  // ###################### MongoDB Functions ######################
-
-  /// Store user data in MongoDB
-  Future<void> mongoCreateUser(UserModel user) async {
+  /// Fetch a user by their email
+  Future<Map<String, dynamic>?> getUserByEmail(String email) async {
     try {
-      // Check if the users collection is empty
-      final userCount = await usersCollection.count();
-
-      if (userCount == 0) {
-        // If empty, save the record
-        if (user.userType == null) {
-          throw 'User type is required for the first user';
-        }
-        await saveUserType(user.userType!);
-        await usersCollection.insertOne(user.toJson());
-        if (kDebugMode) {
-          print('User created successfully in MongoDB as the first record');
-        }
-      } else {
-        // Check if the user already exists by email
-        final existingUser =
-            await usersCollection.findOne({"email": user.email});
-
-        if (existingUser != null) {
-          throw "Record Already Exists";
-        } else {
-          await usersCollection.insertOne(user.toJson());
-          if (kDebugMode) {
-            print('User created successfully in MongoDB');
-          }
-        }
-      }
+      final user = await usersCollection.findOne({'email': email});
+      return user;
     } catch (e) {
-      if (kDebugMode) {
-        print('Error creating user in MongoDB: $e');
-      }
-      throw e.toString().isEmpty
-          ? 'Something went wrong. Please try again'
-          : e.toString();
+      throw 'Error fetching user: $e';
     }
   }
 
-  /// Check if user exists with phone number in MongoDB
-  Future<bool> mongoUserExistsByPhoneNumber(String phoneNumber) async {
+  /// Update user details by their email
+  Future<void> updateUser(
+      String email, Map<String, dynamic> updatedData) async {
     try {
-      final user = await usersCollection.findOne({"PhoneNo": phoneNumber});
-      return user != null; // Returns true if user exists
+      await usersCollection.update(
+        {'email': email},
+        {'\$set': updatedData},
+      );
+      print('User updated successfully');
     } catch (e) {
-      if (kDebugMode) {
-        print("Error checking user by phone number in MongoDB: $e");
-      }
-      throw "Error checking user by phone number.";
+      throw 'Error updating user: $e';
     }
   }
 
-  /// Fetch User Specific details from MongoDB
-  Future<UserModel> mongoGetUserDetails(String email) async {
+  /// Delete a user by their email
+  Future<void> deleteUser(String email) async {
     try {
-      final user = await usersCollection.findOne({"Email": email});
-      if (user == null) throw 'No such user found';
-      return UserModel.fromJson(user);
+      await usersCollection.remove({'email': email});
+      print('User deleted successfully');
     } catch (e) {
-      if (kDebugMode) {
-        print('Error fetching user details in MongoDB: $e');
-      }
-      throw e.toString().isEmpty
-          ? 'Something went wrong. Please Try Again'
-          : e.toString();
+      throw 'Error deleting user: $e';
     }
   }
 
-  /// Fetch All Users from MongoDB
-  Future<List<UserModel>> mongoAllUsers() async {
+  /// Get all users from MongoDB
+  Future<List<Map<String, dynamic>>> getAllUsers() async {
     try {
       final users = await usersCollection.find().toList();
-      return users.map((user) => UserModel.fromJson(user)).toList();
+      return users;
     } catch (e) {
-      if (kDebugMode) {
-        print('Error fetching all users in MongoDB: $e');
-      }
-      throw 'Something went wrong. Please Try Again';
+      throw 'Error fetching users: $e';
     }
   }
 
-  /// Update User details in MongoDB
-  Future<void> mongoUpdateUserRecord(UserModel user) async {
+  /// Check if a user exists by their email
+  Future<bool> userExists(String email) async {
     try {
-      final result = await usersCollection.updateOne(
-        {"_id": ObjectId.parse(user.id!)},
-        {'\$set': user.toJson()},
-      );
-      if (result.isFailure) throw 'Failed to update user in MongoDB';
-      if (kDebugMode) {
-        print('User updated successfully in MongoDB');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error updating user in MongoDB: $e');
-      }
-      throw e.toString().isEmpty
-          ? 'Something went wrong. Please Try Again'
-          : e.toString();
-    }
-  }
-
-  Future<UserModel?> mongogetUserDetailsByPhoneNumber(
-      String phoneNumber) async {
-    try {
-      final user = await usersCollection.findOne({"PhoneNumber": phoneNumber});
-      if (user != null) {
-        return UserModel.fromJson(user); // Assuming UserModel exists
-      } else {
-        return null; // No user found
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print("Error fetching user details by phone number in MongoDB: $e");
-      }
-      throw "Error fetching user details.";
-    }
-  }
-
-  /// Delete User Data in MongoDB
-  Future<void> mongoDeleteUser(String id) async {
-    try {
-      final result =
-          await usersCollection.deleteOne({"_id": ObjectId.parse(id)});
-      if (result.isFailure) throw 'Failed to delete user in MongoDB';
-      if (kDebugMode) {
-        print('User deleted successfully in MongoDB');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error deleting user in MongoDB: $e');
-      }
-      throw e.toString().isEmpty
-          ? 'Something went wrong. Please Try Again'
-          : e.toString();
-    }
-  }
-
-  /// Check if user exists with email in MongoDB
-  Future<bool> mongoRecordExist(String email) async {
-    try {
-      final user = await usersCollection.findOne({"Email": email});
+      final user = await usersCollection.findOne({'email': email});
       return user != null;
     } catch (e) {
-      if (kDebugMode) {
-        print("Error checking if record exists in MongoDB: $e");
-      }
-      throw "Error checking if record exists.";
+      throw 'Error checking if user exists: $e';
+    }
+  }
+
+  /// Close the MongoDB connection
+  Future<void> closeConnection() async {
+    try {
+      await mongoDb.close();
+      print('MongoDB connection closed');
+    } catch (e) {
+      throw 'Error closing MongoDB connection: $e';
     }
   }
 }

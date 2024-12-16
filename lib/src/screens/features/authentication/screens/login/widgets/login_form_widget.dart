@@ -19,7 +19,7 @@ class LoginFormWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: tFormHeight),
       child: Form(
-        key: controller.loginFormKey,
+        key: controller.signInFormKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -74,12 +74,9 @@ class LoginFormWidget extends StatelessWidget {
               () => TPrimaryButton(
                 isLoading: controller.isLoading.value ? true : false,
                 text: tLogin.tr,
-                onPressed: controller.isFacebookLoading.value ||
-                        controller.isGoogleLoading.value
+                onPressed: controller.isLoading.value
                     ? () {}
-                    : controller.isLoading.value
-                        ? () {}
-                        : () => controller.loginUser(),
+                    : () => controller.login(),
               ),
             ),
           ],

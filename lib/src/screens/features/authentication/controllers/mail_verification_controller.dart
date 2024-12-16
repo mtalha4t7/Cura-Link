@@ -1,48 +1,50 @@
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import '../../../../constants/text_strings.dart';
-import '../../../../repository/authentication_repository/authentication_repository.dart';
-import '../../../../utils/helper/helper_controller.dart';
+import 'package:realm/realm.dart';
 
-// class MailVerificationController extends GetxController {
-//   // ignore: unused_field
-//   late Timer _timer;
-//
-//   @override
-//   void onInit() {
-//     super.onInit();
-//     sendVerificationEmail();
-//     setTimerForAutoRedirect();
-//   }
-//
-//   /// -- Send OR Resend Email Verification
-//   Future<void> sendVerificationEmail() async {
-//     try {
-//       await AuthenticationRepository.instance.sendEmailVerification();
-//     } catch (e) {
-//       Helper.errorSnackBar(title: tOhSnap, message: e.toString());
-//     }
-//   }
-//
-//   /// -- Set Timer to check if Verification Completed then Redirect
-//   void setTimerForAutoRedirect() {
-//     _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
-//       FirebaseAuth.instance.currentUser?.reload();
-//       final user = FirebaseAuth.instance.currentUser;
-//       if (user!.emailVerified) {
-//         timer.cancel();
-//         AuthenticationRepository.instance.setInitialScreen(user);
-//       }
-//     });
-//   }
-//
-//   /// -- Manually Check if Verification Completed then Redirect
-//   void manuallyCheckEmailVerificationStatus() {
-//     FirebaseAuth.instance.currentUser?.reload();
-//     final user = FirebaseAuth.instance.currentUser;
-//     if (user!.emailVerified) {
-//       AuthenticationRepository.instance.setInitialScreen(user);
-//     }
-//   }
-// }
+class EmailVerificationController extends GetxController {
+  static EmailVerificationController get instance => Get.find();
+
+  final app =
+      App(AppConfiguration("cura_link-erilffo")); // Replace with your app ID
+  final verificationInProgress = false.obs;
+
+  Future<void> sendVerificationEmail(String email) async {
+    try {
+      final result =
+          await app.currentUser?.functions('sendVerificationEmail', [email]);
+      if (result['status'] == 'pending') {
+        print('Verification email sent.');
+      } else {
+        print('Failed to send email: ${result['error']}');
+      }
+    } catch (e) {
+      print('Error sending verification email: $e');
+    }
+  }
+
+  Future<void> resetPassword(
+      String username, String token, String tokenId, String newPassword,
+      {bool sendEmail = false, String? securityQuestionAnswer}) async {
+    try {
+      final result = await app.currentUser?.functions('resetPassword', [
+        {
+          'username': username,
+          'token': token,
+          'tokenId ': tokenId,
+          'password': newPassword,
+          'currentPasswordValid': true // or false based on your logic
+        },
+        sendEmail,
+        securityQuestionAnswer
+      ]);
+      if (result['status'] == 'success') {
+        print('Password reset successfully.');
+      } else {
+        print('Failed to reset password: ${result['message']}');
+      }
+    } catch (e) {
+      print('Error resetting password: $e');
+    }
+  }
+}
