@@ -1,50 +1,47 @@
 import 'dart:async';
+import 'package:cura_link/src/constants/text_strings.dart';
+import 'package:cura_link/src/repository/authentication_repository/authentication_repository.dart';
+import 'package:cura_link/src/utils/helper/helper_controller.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import 'package:realm/realm.dart';
 
-class EmailVerificationController extends GetxController {
-  static EmailVerificationController get instance => Get.find();
+class MailVerificationController extends GetxController {
+  late Timer _timer;
 
-  final app =
-      App(AppConfiguration("cura_link-erilffo")); // Replace with your app ID
-  final verificationInProgress = false.obs;
+  @override
+  void onInit() {
+    super.onInit();
+    sendVerificationEmail();
+    setTimerForAutoRedirect();
+  }
 
-  Future<void> sendVerificationEmail(String email) async {
+  /// -- Send OR Resend Email Verification
+  Future<void> sendVerificationEmail() async {
     try {
-      final result =
-          await app.currentUser?.functions('sendVerificationEmail', [email]);
-      if (result['status'] == 'pending') {
-        print('Verification email sent.');
-      } else {
-        print('Failed to send email: ${result['error']}');
-      }
+      await AuthenticationRepository.instance.sendEmailVerification();
     } catch (e) {
-      print('Error sending verification email: $e');
+      Helper.errorSnackBar(title: tOhSnap, message: e.toString());
     }
   }
 
-  Future<void> resetPassword(
-      String username, String token, String tokenId, String newPassword,
-      {bool sendEmail = false, String? securityQuestionAnswer}) async {
-    try {
-      final result = await app.currentUser?.functions('resetPassword', [
-        {
-          'username': username,
-          'token': token,
-          'tokenId ': tokenId,
-          'password': newPassword,
-          'currentPasswordValid': true // or false based on your logic
-        },
-        sendEmail,
-        securityQuestionAnswer
-      ]);
-      if (result['status'] == 'success') {
-        print('Password reset successfully.');
-      } else {
-        print('Failed to reset password: ${result['message']}');
+  /// -- Set Timer to check if Verification Completed then Redirect
+  void setTimerForAutoRedirect() {
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      FirebaseAuth.instance.currentUser?.reload();
+      final user = FirebaseAuth.instance.currentUser;
+      if (user!.emailVerified) {
+        timer.cancel();
+        AuthenticationRepository.instance.setInitialScreen(user);
       }
-    } catch (e) {
-      print('Error resetting password: $e');
+    });
+  }
+
+  /// -- Manually Check if Verification Completed then Redirect
+  void manuallyCheckEmailVerificationStatus() {
+    FirebaseAuth.instance.currentUser?.reload();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user!.emailVerified) {
+      AuthenticationRepository.instance.setInitialScreen(user);
     }
   }
 }

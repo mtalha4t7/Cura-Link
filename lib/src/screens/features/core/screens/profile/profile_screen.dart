@@ -39,15 +39,12 @@ class ProfileScreen extends StatelessWidget {
           padding: const EdgeInsets.all(tDefaultSpace),
           child: Column(
             children: [
-              
               const ImageWithIcon(),
               const SizedBox(height: 10),
               Text(name, style: Theme.of(context).textTheme.headlineMedium),
               Text(email.toString(),
                   style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 20),
-
-              
               TPrimaryButton(
                   isFullWidth: false,
                   width: 200,
@@ -56,8 +53,6 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 30),
               const Divider(),
               const SizedBox(height: 10),
-
-              
               ProfileMenuWidget(
                   title: "Settings",
                   icon: LineAwesomeIcons.cog_solid,
@@ -100,7 +95,7 @@ class ProfileScreen extends StatelessWidget {
       ),
       confirm: TPrimaryButton(
         isFullWidth: false,
-        onPressed: () => AuthenticationRepository.instance.logout(),
+        onPressed: () => AuthenticationRepository.instance.logout,
         text: "Yes",
       ),
       cancel: SizedBox(

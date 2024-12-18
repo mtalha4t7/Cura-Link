@@ -34,7 +34,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   void initState() {
     super.initState();
     email = getEmail().toString();
-    // name = UserRepository().getFullNameByEmail(email);
+    name = UserRepository().getFullNameByEmail(email) as Future<String>?;
     _loadProfileImage();
   }
 
@@ -187,11 +187,11 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
         padding: EdgeInsets.symmetric(vertical: 15.0),
         child: Text("Are you sure, you want to Logout?"),
       ),
-      // confirm: TPrimaryButton(
-      //   isFullWidth: false,
-      //   onPressed: () => AuthenticationRepository.instance.logout(),
-      //   text: "Yes",
-      // ),
+      confirm: TPrimaryButton(
+        isFullWidth: false,
+        onPressed: () => AuthenticationRepository.instance.logout,
+        text: "Yes",
+      ),
       cancel: SizedBox(
         width: 100,
         child: OutlinedButton(

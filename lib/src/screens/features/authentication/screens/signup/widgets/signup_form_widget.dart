@@ -83,7 +83,7 @@ class SignUpFormWidget extends StatelessWidget {
                     ? () {}
                     : controller.isLoading.value
                         ? () {}
-                        : () => controller.createAccount(),
+                        : () => controller.createUser(),
               ),
             ),
           ],

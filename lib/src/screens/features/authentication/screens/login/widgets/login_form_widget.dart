@@ -19,7 +19,7 @@ class LoginFormWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: tFormHeight),
       child: Form(
-        key: controller.signInFormKey,
+        key: controller.loginFormKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

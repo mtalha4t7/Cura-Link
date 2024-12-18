@@ -34,7 +34,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   void initState() {
     super.initState();
     email = getEmail().toString();
-    name = UserRepository().getFullNameByEmail(email);
+    name = UserRepository().getFullNameByEmail(email) as Future<String>?;
     _loadProfileImage();
   }
 
@@ -189,7 +189,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       ),
       confirm: TPrimaryButton(
         isFullWidth: false,
-        onPressed: () => AuthenticationRepository.instance.logout(),
+        onPressed: () => AuthenticationRepository.instance.logout,
         text: "Yes",
       ),
       cancel: SizedBox(

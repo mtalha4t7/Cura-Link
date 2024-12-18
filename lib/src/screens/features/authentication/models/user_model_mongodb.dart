@@ -8,17 +8,15 @@ class UserModelMongoDB {
   String? userPassword;
   String? userType;
   String? userAddress;
-  String? jwtToken;
 
   UserModelMongoDB({
     this.userId,
-    this.userName,
-    this.userEmail,
+    required this.userName,
+    required this.userEmail,
     this.userPhone,
-    this.userPassword,
+    required this.userPassword,
     this.userType,
     this.userAddress,
-    this.jwtToken,
   });
 
   /// Converts the object into a Map
@@ -31,7 +29,6 @@ class UserModelMongoDB {
       'userPassword': userPassword,
       'userType': userType,
       'userAddress': userAddress,
-      'jwtToken': jwtToken,
     };
   }
 
@@ -44,7 +41,7 @@ class UserModelMongoDB {
       userAddress: dataMap['userAddress'] as String?,
       userType: dataMap['userType'] as String?,
       userPassword: dataMap['userPassword'] as String?,
-      jwtToken: dataMap['jwtToken'] as String?,
+      userPhone: dataMap['userPhone'] as String?,
     );
   }
 
