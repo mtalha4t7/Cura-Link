@@ -22,7 +22,14 @@ class AuthenticationRepository extends GetxController {
 
   final GetStorage userStorage = GetStorage();
 
-  User? firebaseUser;
+  User? get firebaseUser => _firebaseUser.value;
+  String get getUserID => firebaseUser?.uid ?? "";
+
+  String get getUserEmail => firebaseUser?.email ?? "";
+
+  String get getDisplayName => firebaseUser?.displayName ?? "";
+
+  String get getPhoneNo => firebaseUser?.phoneNumber ?? "";
 
   @override
   void onReady() {
@@ -30,7 +37,7 @@ class AuthenticationRepository extends GetxController {
     _firebaseUser = Rx<User?>(_auth.currentUser);
     _firebaseUser.bindStream(_auth.userChanges());
     FlutterNativeSplash.remove();
-    setInitialScreen(_firebaseUser.value);
+    setInitialScreen(firebaseUser);
   }
 
   /// Set the initial screen based on authentication state
@@ -77,8 +84,6 @@ class AuthenticationRepository extends GetxController {
       }
     }
   }
-
-  String get getUserEmail => userStorage.read('userEmail') ?? "";
 
   /* ---------------------------- Email & Password sign-in ---------------------------------*/
 
