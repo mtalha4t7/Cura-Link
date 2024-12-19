@@ -16,7 +16,7 @@ class PatientDashboardSidebar extends StatelessWidget {
         children: [
           UserAccountsDrawerHeader(
             currentAccountPicture: const Image(image: AssetImage(tLogoImage)),
-            accountName: const Text('Patient Login'),
+            accountName: const Text('Patient'),
             accountEmail: const Text('support@cura_link.com'),
             decoration:
                 BoxDecoration(color: isDark ? Colors.grey[900] : Colors.blue),

@@ -138,7 +138,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 isFullWidth: false,
                 width: 200,
                 text: tEditProfile,
-                onPressed: () => Get.to(() => PatientUpdateProfileScreen()),
+                onPressed: () => Get.to(() => ()),
               ),
               const SizedBox(height: 30),
               const Divider(),

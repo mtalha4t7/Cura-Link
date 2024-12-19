@@ -60,7 +60,7 @@ class SignUpController extends GetxController {
       );
 
       // Save user data in MongoDB
-      await UserRepository.instance.createUser(Muser.toJson());
+      await UserRepository.instance.createUser(Muser as Map<String, dynamic>);
 
       // Update initial screen
       auth.setInitialScreen(auth.firebaseUser);

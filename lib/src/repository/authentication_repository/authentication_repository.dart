@@ -1,17 +1,22 @@
 import 'package:cura_link/src/repository/authentication_repository/exceptions/t_exceptions.dart';
+import 'package:cura_link/src/repository/user_repository/user_repository.dart';
 import 'package:cura_link/src/screens/features/authentication/screens/mail_verification/mail_verification.dart';
 import 'package:cura_link/src/screens/features/authentication/screens/on_boarding/on_boarding_screen.dart';
 import 'package:cura_link/src/screens/features/authentication/screens/welcome/welcome_screen.dart';
+import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabDashboard/medicalLab_dashboard.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientDashboard/patient_dashboard.dart';
 import 'package:cura_link/src/screens/features/core/screens/dashboards/labDashboard/lab_dashboard.dart';
 import 'package:cura_link/src/screens/features/core/screens/dashboards/nurseDashboard/nurse_dashboard.dart';
 import 'package:cura_link/src/shared%20prefrences/shared_prefrence.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+
+import '../../screens/features/authentication/screens/login/login_screen.dart';
 
 class AuthenticationRepository extends GetxController {
   static AuthenticationRepository get instance => Get.find();
@@ -23,6 +28,7 @@ class AuthenticationRepository extends GetxController {
   final GetStorage userStorage = GetStorage();
 
   User? get firebaseUser => _firebaseUser.value;
+
   String get getUserID => firebaseUser?.uid ?? "";
 
   String get getUserEmail => firebaseUser?.email ?? "";
@@ -45,42 +51,65 @@ class AuthenticationRepository extends GetxController {
     if (user != null) {
       // Check email verification status
       if (user.emailVerified) {
-        // Load user type from storage or database
-        final userType = await loadUserType();
+        // Load user type from Firebase or storage
+        final firebaseUserType = await loadUserType();
 
-        // Navigate to the corresponding dashboard based on userType
-        switch (userType) {
-          case 'Patient':
-            Get.offAll(() => PatientDashboard());
-            break;
-          case 'Lab':
-            Get.offAll(() => LabDashboard());
-            break;
-          case 'Nurse':
-            Get.offAll(() => NurseDashboard());
-            break;
-          case 'Medical-Store':
-            Get.offAll(
-                () => ()); // Replace with the actual Medical-Store screen
-            break;
-          default:
-            Get.offAll(() =>
-                WelcomeScreen()); // Default screen for unexpected userType
-            break;
+        // Fetch user type from MongoDB
+        final mongoUserType = await UserRepository.instance.getUserTypeFromMongoDB(user.email!);
+
+        // Check if the user type matches
+        if (firebaseUserType == mongoUserType) {
+          // Navigate to the corresponding dashboard based on userType
+          switch (firebaseUserType) {
+            case 'Patient':
+              Get.offAll(() => PatientDashboard());
+              break;
+            case 'Lab':
+              Get.offAll(() => MedicalLabDashboard());
+              break;
+            case 'Nurse':
+              Get.offAll(() => NurseDashboard());
+              break;
+            case 'Medical-Store':
+              Get.offAll(() => ()); // Replace with the actual Medical-Store screen
+              break;
+            default:
+              Get.offAll(() => WelcomeScreen()); // Default screen for unexpected userType
+              break;
+          }
+        } else {
+          // User type does not match, show options to the user
+          Get.defaultDialog(
+            title: "User Type Mismatch",
+            content: Text("This user is already logged in as $mongoUserType. Do you want to log in as another user press yes & No to go and select userType?"),
+            confirm: ElevatedButton(
+              onPressed: () async {
+                await logout();
+                Get.offAll(() => LoginScreen());
+              },
+              child: Text("Yes"),
+            ),
+            cancel: ElevatedButton(
+              onPressed: () async {
+                await logout();
+                Get.offAll(() => WelcomeScreen());
+              },
+              child: Text("No"),
+            ),
+          );
         }
       } else {
         // Navigate to the email verification screen if not verified
-        Get.offAll(() => const MailVerification());
+        Get.offAll(() => MailVerification());
       }
     } else {
       // Handle first-time user onboarding
       final isFirstTime = userStorage.read('isFirstTime') ?? true;
       if (isFirstTime) {
-        userStorage.write(
-            'isFirstTime', false); // Set first time as false after initial use
-        Get.offAll(() => const OnBoardingScreen());
+        userStorage.write('isFirstTime', false); // Set first time as false after initial use
+        Get.offAll(() => OnBoardingScreen());
       } else {
-        Get.offAll(() => const WelcomeScreen());
+        Get.offAll(() => WelcomeScreen());
       }
     }
   }
@@ -93,7 +122,7 @@ class AuthenticationRepository extends GetxController {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
     } on FirebaseAuthException catch (e) {
       final result =
-          TExceptions.fromCode(e.code); // Throw custom [message] variable
+      TExceptions.fromCode(e.code); // Throw custom [message] variable
       throw result.message;
     } catch (_) {
       const result = TExceptions();
@@ -102,8 +131,8 @@ class AuthenticationRepository extends GetxController {
   }
 
   /// [EmailAuthentication] - REGISTER
-  Future<void> registerWithEmailAndPassword(
-      String email, String password) async {
+  Future<void> registerWithEmailAndPassword(String email,
+      String password) async {
     try {
       await _auth.createUserWithEmailAndPassword(
           email: email, password: password);
@@ -139,7 +168,7 @@ class AuthenticationRepository extends GetxController {
 
       // Obtain the auth details from the request
       final GoogleSignInAuthentication? googleAuth =
-          await googleUser?.authentication;
+      await googleUser?.authentication;
 
       // Create a new credential
       final credential = GoogleAuthProvider.credential(
@@ -163,12 +192,12 @@ class AuthenticationRepository extends GetxController {
     try {
       // Trigger the sign-in flow
       final LoginResult loginResult =
-          await FacebookAuth.instance.login(permissions: ['email']);
+      await FacebookAuth.instance.login(permissions: ['email']);
 
       // Create a credential from the access token
       final AccessToken accessToken = loginResult.accessToken!;
       final OAuthCredential facebookAuthCredential =
-          FacebookAuthProvider.credential(accessToken.tokenString);
+      FacebookAuthProvider.credential(accessToken.tokenString);
 
       // Once signed in, return the UserCredential
       return FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
@@ -189,7 +218,9 @@ class AuthenticationRepository extends GetxController {
       final ex = TExceptions.fromCode(e.code);
       throw ex.message;
     } catch (e) {
-      throw e.toString().isEmpty
+      throw e
+          .toString()
+          .isEmpty
           ? 'Unknown Error Occurred. Try again!'
           : e.toString();
     }
@@ -218,7 +249,9 @@ class AuthenticationRepository extends GetxController {
       final result = TExceptions.fromCode(e.code);
       throw result.message;
     } catch (e) {
-      throw e.toString().isEmpty
+      throw e
+          .toString()
+          .isEmpty
           ? 'Unknown Error Occurred. Try again!'
           : e.toString();
     }
@@ -238,16 +271,36 @@ class AuthenticationRepository extends GetxController {
   /// [LogoutUser] - Valid for any authentication.
   Future<void> logout() async {
     try {
-      await GoogleSignIn().signOut();
-      await FacebookAuth.instance.logOut();
+      // Sign out from Google if signed in
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      if (await googleSignIn.isSignedIn()) {
+        await googleSignIn.signOut();
+        print("Google user logged out successfully.");
+      } else {
+        print("No Google user is currently signed in.");
+      }
+
+      // Log out from Facebook if signed in
+      try {
+        await FacebookAuth.instance.logOut();
+        print("Facebook user logged out successfully.");
+      } catch (e) {
+        print("Error logging out from Facebook: $e");
+      }
+
+      // Sign out from Firebase
       await FirebaseAuth.instance.signOut();
+      print("Firebase user logged out successfully.");
+
+      // Navigate to Welcome Screen and clear all routes
       Get.offAll(() => const WelcomeScreen());
-    } on FirebaseAuthException catch (e) {
-      throw e.message!;
-    } on FormatException catch (e) {
-      throw e.message;
+
+      print("User  logged out successfully");
     } catch (e) {
-      throw 'Unable to logout. Try again.';
+      // Handle general errors
+      print("Error during logout: $e");
+      Get.snackbar("Logout Failed", "Unable to logout. Please try again.",
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 }

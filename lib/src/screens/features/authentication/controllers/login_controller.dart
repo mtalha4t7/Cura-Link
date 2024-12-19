@@ -34,7 +34,7 @@ class LoginController extends GetxController {
       auth.setInitialScreen(auth.firebaseUser);
     } catch (e) {
       isLoading.value = false;
-      Helper.errorSnackBar(title: tOhSnap, message: e.toString());
+      Helper.errorSnackBar(title: tOhSnap, message: "Incorrect Email or Password");
     }
   }
 

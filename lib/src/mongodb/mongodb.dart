@@ -1,12 +1,14 @@
 import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:mongo_dart/mongo_dart.dart';
-import '../constants/text_strings.dart';
+import '../constants/text_strings.dart'; // Ensure this path is correct
+import 'package:logger/logger.dart';
+
+// Initialize a logger for better logging
+final logger = Logger();
 
 class MongoDatabase {
-  // MongoDB connection instance
   static Db? _db;
-  // MongoDB collection instance
   static DbCollection? _userCollection;
 
   // Connect to MongoDB and initialize the collection
@@ -22,14 +24,20 @@ class MongoDatabase {
       // Optional: Use inspect to debug the database connection
       inspect(_db);
 
-      if (kDebugMode) {
-        print('Connected to MongoDB database successfully');
-      }
-    } catch (e) {
-      // Handle errors if the connection fails
-      if (kDebugMode) {
-        print('Error connecting to MongoDB: $e');
-      }
+      logger.i('Connected to MongoDB database successfully');
+    } catch (e, stackTrace) {
+      logger.e('Error connecting to MongoDB', error: e, stackTrace: stackTrace);
+      rethrow; // Rethrow the exception if needed
+    }
+  }
+
+  // Close the MongoDB connection
+  static Future<void> close() async {
+    if (_db != null) {
+      await _db!.close();
+      _db = null;
+      _userCollection = null;
+      logger.i('MongoDB connection closed');
     }
   }
 
@@ -50,53 +58,84 @@ class MongoDatabase {
   }
 
   // Function to insert a user document into the collection
-  static Future<void> insertUser(Map<String, dynamic> user) async {
+  static Future<void> insertUser (Map<String, dynamic> user) async {
     try {
+      // Validate the input
+      if (user.isEmpty || !user.containsKey('userEmail')) {
+        throw Exception('Invalid user data: Missing required fields');
+      }
+
+      // Check for duplicate email
+      final existingUser  = await userCollection.findOne({'userEmail': user['userEmail']});
+      if (existingUser  != null) {
+        throw Exception('User  with the same email already exists');
+      }
+
+      // Insert the user
       await userCollection.insertOne(user);
-      if (kDebugMode) {
-        print('User inserted successfully');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error inserting user: $e');
-      }
+      logger.i('User  inserted successfully');
+    } catch (e, stackTrace) {
+      logger.e('Error inserting user', error: e, stackTrace: stackTrace);
+      rethrow;
     }
   }
 
-  // Function to find a user by email and password
-  static Future<Map<String, dynamic>?> findUser({
-    required String email,
-    required String password,
-  }) async {
+  // Function to find a user by email
+  static Future<Map<String, dynamic>?> findUser ({required String email}) async {
     try {
-      var user = await userCollection.findOne({
-        'email': email,
-        'password': password,
-      });
-      return user;
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error finding user: $e');
+      if (email.isEmpty) {
+        throw Exception('Email cannot be empty');
       }
+
+      var user = await userCollection.findOne({'userEmail': email});
+      logger.i(user != null ? 'User  found' : 'User  not found');
+      return user;
+    } catch (e, stackTrace) {
+      logger.e('Error finding user', error: e, stackTrace: stackTrace);
       return null;
     }
   }
 
+
   // Function to update user details (e.g., after login)
-  static Future<void> updateUser(Map<String, dynamic> updatedUser) async {
+  static Future<void> updateUser (Map<String, dynamic> updatedUser ) async {
     try {
-      var userId = updatedUser['_id']; // Assuming the user document has '_id'
+      var userId = updatedUser ['userId'];
+      if (userId == null) {
+        throw Exception('User  ID is required for updating');
+      }
+
+      // Create a ModifierBuilder
+      final modifier = modify..set('lastLogin', DateTime.now());
+
+      // Set each field in updatedUser
+      updatedUser .forEach((key, value) {
+        if (key != '_id') { // Avoid setting the _id field
+          modifier.set(key, value);
+        }
+      });
+
+      // Update the user document
       await userCollection.updateOne(
         where.eq('_id', userId),
-        modify.set('lastLogin', DateTime.now()),
+        modifier,
       );
-      if (kDebugMode) {
-        print('User updated successfully');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error updating user: $e');
-      }
+
+      logger.i('User  updated successfully');
+    } catch (e, stackTrace) {
+      logger.e('Error updating user', error: e, stackTrace: stackTrace);
+      rethrow; // Rethrow the exception if needed
+    }
+  }
+
+  // Function to create an index on the collection
+  static Future<void> createIndexes() async {
+    try {
+      await userCollection.createIndex(keys: {'userEmail ': 1}, unique: true);
+      logger.i('Indexes created successfully');
+    } catch (e, stackTrace) {
+      logger.e('Error creating indexes', error: e, stackTrace: stackTrace);
+      rethrow; // Rethrow the exception if needed
     }
   }
 }

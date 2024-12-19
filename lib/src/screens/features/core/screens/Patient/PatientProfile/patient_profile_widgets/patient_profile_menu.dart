@@ -5,8 +5,8 @@ import '../../../../../../../constants/sizes.dart';
 
 
 
-class ProfileMenuWidget extends StatelessWidget {
-  const ProfileMenuWidget({
+class PatientProfileMenuWidget extends StatelessWidget {
+  const PatientProfileMenuWidget({
     super.key,
     required this.title,
     required this.icon,

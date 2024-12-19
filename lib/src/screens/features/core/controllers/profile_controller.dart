@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
+import 'package:mongo_dart/mongo_dart.dart';
 import '../../../../constants/text_strings.dart';
+import '../../../../mongodb/mongodb.dart';
 import '../../../../repository/authentication_repository/authentication_repository.dart';
 import '../../../../repository/user_repository/user_repository.dart';
 import '../../../../utils/helper/helper_controller.dart';
@@ -54,6 +56,35 @@ class ProfileController extends GetxController {
           title: tCongratulations, message: 'Profile record has been updated!');
     } catch (e) {
       Helper.errorSnackBar(title: 'Error', message: e.toString());
+    }
+  }
+  Future<void> updateUserFields(String email, Map<String, dynamic> fieldsToUpdate) async {
+    try {
+      final query = {'userEmail': email};
+      var updateData = modify;
+
+      // Iterate over the map and add each field update to the ModifierBuilder
+      fieldsToUpdate.forEach((key, value) {
+        updateData = updateData.set(key, value);
+      });
+
+      final result = await MongoDatabase.userCollection.updateOne(
+        query,
+        updateData,
+      );
+
+      print('Update Result - Matched: ${result.nMatched}, Modified: ${result.nModified}');
+
+      if (result.nMatched == 0) {
+        print('No document matched the given email.');
+      } else if (result.nModified == 0) {
+        print('The document was matched, but no modification was made (fields might be the same).');
+      } else {
+        print('User fields updated successfully.');
+      }
+    } catch (e) {
+      print('Error updating user fields: $e');
+      throw 'Error updating user fields: $e';
     }
   }
 
