@@ -3,11 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
-import 'package:location/location.dart';  // Add this import for location services
+import 'package:location/location.dart';
 import '../../../../../../constants/sizes.dart';
 import '../../../../../../constants/text_strings.dart';
 import '../../../controllers/profile_controller.dart';
-import '../../../../authentication/models/user_model.dart';
 
 class PatientProfileFormScreen extends StatefulWidget {
   const PatientProfileFormScreen({super.key});
@@ -19,27 +18,42 @@ class PatientProfileFormScreen extends StatefulWidget {
 class _PatientProfileFormScreenState extends State<PatientProfileFormScreen> {
   final TextEditingController phoneNoController = TextEditingController();
   final TextEditingController fullNameController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController userTypeController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
   final Location location = Location();
-  late UserModel user;
+  final controller = UserRepository.instance;
+  final email = FirebaseAuth.instance.currentUser?.email;
+  late String userName;
+  late String userPhone;
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _initializeUser();
-    _getLocation();
+    _initializeUserProfile();
   }
 
-  Future<void> _initializeUser() async {
-    // Fetch the user data from the controller or any other shared state
-    final controller = Get.put(UserRepository());
-    final firebaseUser= FirebaseAuth.instance.currentUser;
-    final Uemail=firebaseUser?.email;
-    user = (await controller.getUserByEmail(Uemail!)) as UserModel; // Assuming getUser() fetches the current user
-
+  Future<void> _initializeUserProfile() async {
+    await _getName();
+    await _getPhone();
+    await _getLocation();
     setState(() {
-      fullNameController.text = user.fullName ?? ''; // Pre-fill with user's full name
-      phoneNoController.text = user.phoneNo ?? ''; // Pre-fill with user's phone number
+      isLoading = false;
+    });
+  }
+
+  Future<void> _getName() async {
+    userName = (await controller.getFullNameByEmail(email!))!;
+    setState(() {
+      fullNameController.text = userName;
+    });
+  }
+
+  Future<void> _getPhone() async {
+    userPhone = (await controller.getPhoneNumberByEmail(email!))!;
+    setState(() {
+      phoneNoController.text = userPhone;
     });
   }
 
@@ -77,78 +91,104 @@ class _PatientProfileFormScreenState extends State<PatientProfileFormScreen> {
   Widget build(BuildContext context) {
     final controller = Get.put(ProfileController());
 
-    return Form(
-      child: Column(
-        children: [
-          TextFormField(
-            controller: fullNameController,
-            decoration: const InputDecoration(
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Profile'),
+      ),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Form(
+        child: Column(
+          children: [
+            TextFormField(
+              controller: fullNameController,
+              decoration: const InputDecoration(
                 label: Text(tFullName),
-                prefixIcon: Icon(LineAwesomeIcons.user)),
-          ),
-          const SizedBox(height: tFormHeight - 20),
-          TextFormField(
-            controller: phoneNoController,
-            decoration: const InputDecoration(
-                label: Text(tPhoneNo),
-                prefixIcon: Icon(LineAwesomeIcons.phone_solid)),
-          ),
-          const SizedBox(height: tFormHeight - 20),
-          TextFormField(
-            controller: locationController,
-            decoration: const InputDecoration(
-                label: Text('Location'),
-                prefixIcon: Icon(LineAwesomeIcons.map_marked_solid)),
-            readOnly: true,
-          ),
-          const SizedBox(height: tFormHeight),
-
-          /// -- Form Submit Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () async {
-                Map<String, dynamic> fieldsToUpdate = {
-                  'userName': fullNameController.text.trim(),
-                  'userPhone': phoneNoController.text.trim(),
-                  'location': locationController.text.trim(),
-                };
-
-                await controller.updateUserFields(user.email, fieldsToUpdate);
-              },
-              child: const Text(tEditProfile),
+                prefixIcon: Icon(LineAwesomeIcons.user),
+              ),
             ),
-          ),
-          const SizedBox(height: tFormHeight),
-
-          /// -- Created Date and Delete Button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text.rich(
-                TextSpan(
-                  text: tJoined,
-                  style: TextStyle(fontSize: 12),
-                  children: [
-                    TextSpan(
-                        text: tJoinedAt,
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 12))
-                  ],
+            const SizedBox(height: tFormHeight - 20),
+            TextFormField(
+              controller: phoneNoController,
+              decoration: const InputDecoration(
+                label: Text(tPhoneNo),
+                prefixIcon: Icon(LineAwesomeIcons.phone_solid),
+              ),
+            ),
+            const SizedBox(height: tFormHeight - 20),
+            GestureDetector(
+              onTap: _getLocation,
+              child: AbsorbPointer(
+                child: TextFormField(
+                  controller: locationController,
+                  decoration: const InputDecoration(
+                    label: Text('Location'),
+                    prefixIcon: Icon(LineAwesomeIcons.map_marked_solid),
+                  ),
+                  readOnly: true,
                 ),
               ),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
+            ),
+            const SizedBox(height: tFormHeight),
+
+            /// -- Form Submit Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  Map<String, dynamic> fieldsToUpdate = {
+                    'userName': fullNameController.text.trim(),
+                    'userPhone': phoneNoController.text.trim(),
+                    'userAddress': locationController.text.trim(),
+                  };
+
+                  await controller.updateUserFields(email!, fieldsToUpdate);
+
+                  // Show snack bar message
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Profile updated successfully!'),
+                    ),
+                  );
+                },
+                child: const Text(tEditProfile),
+              ),
+            ),
+            const SizedBox(height: tFormHeight),
+
+            /// -- Created Date and Delete Button
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text.rich(
+                  TextSpan(
+                    text: tJoined,
+                    style: TextStyle(fontSize: 12),
+                    children: [
+                      TextSpan(
+                        text: tJoinedAt,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.redAccent.withOpacity(0.1),
                     elevation: 0,
                     foregroundColor: Colors.red,
-                    side: BorderSide.none),
-                child: const Text(tDelete),
-              ),
-            ],
-          )
-        ],
+                    side: BorderSide.none,
+                  ),
+                  child: const Text(tDelete),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

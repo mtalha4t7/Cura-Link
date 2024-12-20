@@ -110,6 +110,19 @@ class UserRepository extends GetxController {
       throw Exception('Failed to fetch user name');
     }
   }
+  Future<String?> getPhoneNumberByEmail(String email) async {
+    try {
+      final user = await MongoDatabase.findUser(email: email);
+      if (user != null && user['userPhone'] is String) {
+        return user['userPhone'] as String;
+      }
+      return null;
+    } catch (e) {
+      print('Error fetching full name for email $email: $e');
+      throw Exception('Failed to fetch user name');
+    }
+  }
+
   Future<String?> getUserTypeFromMongoDB(String email) async {
     try {
       final user = await MongoDatabase.findUser(email: email);
