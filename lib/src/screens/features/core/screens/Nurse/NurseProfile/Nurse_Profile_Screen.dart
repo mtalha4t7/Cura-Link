@@ -1,90 +1,92 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
+import 'package:cura_link/src/screens/features/core/screens/Nurse/NurseProfile/Nurse_Update_Profile_Screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/PatientProfile/patient_all_users.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/PatientProfile/patient_update_profile_screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/profile/widgets/profile_menu.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../../../../../../common_widgets/buttons/primary_button.dart';
 import '../../../../../../constants/sizes.dart';
 import '../../../../../../constants/text_strings.dart';
+import '../../../../../../mongodb/mongodb.dart';
 import '../../../../../../repository/authentication_repository/authentication_repository.dart';
 
-class PatientProfileScreen extends StatefulWidget {
-  const PatientProfileScreen({super.key});
+class NurseProfileScreen extends StatefulWidget {
+  const NurseProfileScreen({super.key});
 
   @override
-  _PatientProfileScreenState createState() => _PatientProfileScreenState();
+  _NurseProfileScreenState createState() => _NurseProfileScreenState();
 }
 
-class _PatientProfileScreenState extends State<PatientProfileScreen> {
+class _NurseProfileScreenState extends State<NurseProfileScreen> {
   String email = "";
-  Future<String>? name;
-  String? profileImageUrl;
+  String? name;
+  Uint8List? profileImageBytes; // Updated for storing image bytes
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
-    email = getEmail().toString();
-    name = UserRepository().getFullNameByEmail(email) as Future<String>?;
-    _loadProfileImage();
+    _loadUserData();
   }
 
-  Future<void> _loadProfileImage() async {
+  Future<void> _loadUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('profile_images')
-          .child('${user.uid}.jpg');
-      try {
-        profileImageUrl = await ref.getDownloadURL();
-        setState(() {});
-      } catch (e) {
-        // Handle error (e.g., image not found)
+      setState(() {
+        email = user.email ?? '';
+      });
+
+      final nameFromDB = await UserRepository().getFullNameByEmail(email);
+      setState(() {
+        name = nameFromDB ?? "No full name available";
+      });
+
+      await _loadProfileImage(email);
+    }
+  }
+
+  Future<void> _loadProfileImage(String email) async {
+    try {
+      final userData = await MongoDatabase.userCollection
+          .findOne({'userEmail': email}); // Fixed query syntax
+      if (userData != null && userData['profileImage'] != null) {
+        final base64Image = userData['profileImage'];
+        final decodedBytes = base64Decode(base64Image);
+        setState(() {
+          profileImageBytes = decodedBytes;
+        });
       }
+    } catch (e) {
+      print("Error loading profile image: $e");
     }
   }
 
   Future<void> _uploadProfileImage() async {
-    // Check and request gallery permission
-    var status = await Permission.photos.request();
-
-    if (status.isGranted) {
-      final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
+    try {
+      final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
       if (pickedFile != null) {
-        final file = File(pickedFile.path);
-        final user = FirebaseAuth.instance.currentUser;
+        final selectedImage = File(pickedFile.path);
 
-        if (user != null) {
-          final ref = FirebaseStorage.instance
-              .ref()
-              .child('profile_images')
-              .child('${user.uid}.jpg');
+        // Convert image to Base64
+        final bytes = await selectedImage.readAsBytes();
+        final base64Image = base64Encode(bytes);
 
-          await ref.putFile(file);
-          profileImageUrl = await ref.getDownloadURL();
+        // Upload image to MongoDB
+        await UserRepository.instance.uploadProfileImage(email, base64Image);
 
-          setState(() {});
-        }
+        // Reload the profile image
+        await _loadProfileImage(email);
       }
-    } else if (status.isDenied) {
-      // Handle if permission is denied
-      Get.snackbar(
-          "Permission Denied", "Gallery access is required to upload images.");
-    } else if (status.isPermanentlyDenied) {
-      // Guide user to settings if permission is permanently denied
-      openAppSettings();
+    } catch (e) {
+      print("Error uploading profile image: $e");
     }
   }
 
@@ -98,8 +100,10 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
           onPressed: () => Get.back(),
           icon: const Icon(LineAwesomeIcons.angle_left_solid),
         ),
-        title:
-            Text(tProfile, style: Theme.of(context).textTheme.headlineMedium),
+        title: Text(
+          tProfile,
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
         actions: [
           IconButton(
             onPressed: () {},
@@ -113,24 +117,13 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
           child: Column(
             children: [
               ProfilePictureWidget(
-                imageUrl: profileImageUrl,
+                imageBytes: profileImageBytes,
                 onEditPressed: _uploadProfileImage,
               ),
               const SizedBox(height: 10),
-              FutureBuilder<String>(
-                future: name,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator();
-                  } else if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  } else {
-                    return Text(
-                      snapshot.data ?? "No full name available",
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    );
-                  }
-                },
+              Text(
+                name ?? "No full name available",
+                style: Theme.of(context).textTheme.headlineMedium,
               ),
               Text(email, style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 20),
@@ -138,7 +131,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 isFullWidth: false,
                 width: 200,
                 text: tEditProfile,
-                onPressed: () => Get.to(() => ()),
+                onPressed: () => Get.to(() => NurseProfileFormScreen()),
               ),
               const SizedBox(height: 30),
               const Divider(),
@@ -170,7 +163,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 icon: LineAwesomeIcons.sign_out_alt_solid,
                 textColor: Colors.red,
                 endIcon: false,
-                onPress: () => _showLogoutModal(),
+                onPress: _showLogoutModal,
               ),
             ],
           ),
@@ -189,7 +182,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       ),
       confirm: TPrimaryButton(
         isFullWidth: false,
-        onPressed: () => AuthenticationRepository.instance.logout,
+        onPressed: () => AuthenticationRepository.instance.logout(),
         text: "Yes",
       ),
       cancel: SizedBox(
@@ -201,20 +194,15 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       ),
     );
   }
-
-  String? getEmail() {
-    final user = FirebaseAuth.instance.currentUser;
-    return user?.email ?? "No email available";
-  }
 }
 
 class ProfilePictureWidget extends StatelessWidget {
-  final String? imageUrl;
+  final Uint8List? imageBytes;
   final VoidCallback onEditPressed;
 
   const ProfilePictureWidget({
     Key? key,
-    required this.imageUrl,
+    required this.imageBytes,
     required this.onEditPressed,
   }) : super(key: key);
 
@@ -224,8 +212,11 @@ class ProfilePictureWidget extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 50,
-          backgroundImage: imageUrl != null ? NetworkImage(imageUrl!) : null,
-          child: imageUrl == null ? Icon(Icons.person, size: 50) : null,
+          backgroundImage:
+          imageBytes != null ? MemoryImage(imageBytes!) : null,
+          child: imageBytes == null
+              ? const Icon(Icons.person, size: 50) // Default icon
+              : null,
         ),
         Positioned(
           bottom: 0,

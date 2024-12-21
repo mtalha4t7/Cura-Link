@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../../../../constants/sizes.dart';
+import '../ManageLabTests/manage_test_screen.dart';
 import '../MedicalLabWidgets/health_tip_card.dart';
 import '../MedicalLabWidgets/medicalLab_appbar.dart';
 import '../MedicalLabWidgets/medicalLab_dashboard_sidebar.dart';
-import '../MedicalLabWidgets/quick_access_button.dart';
 import '../MedicalLabWidgets/service_card.dart';
 
 class MedicalLabDashboard extends StatelessWidget {
@@ -29,32 +29,22 @@ class MedicalLabDashboard extends StatelessWidget {
                     style: txtTheme.displayMedium),
                 const SizedBox(height: tDashboardPadding),
 
-                // Quick Access Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    QuickAccessButton(
-                      icon: Icons.add_box,
-                      label: 'Add Test',
-                      onTap: () {
-                        // Add Test action
-                      },
-                    ),
-                    QuickAccessButton(
-                      icon: Icons.assignment,
-                      label: 'View Reports',
-                      onTap: () {
-                        // View Reports action
-                      },
-                    ),
-                    QuickAccessButton(
-                      icon: Icons.schedule,
-                      label: 'Manage Appointments',
-                      onTap: () {
-                        // Manage Appointments action
-                      },
-                    ),
-                  ],
+                // Slider for Patient's Test Bookings
+                const Text(
+                  "Recent Bookings",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(
+                  height: 120,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: const [
+                      HealthTipCard(title: "Patient 1 - Blood Test Booking"),
+                      HealthTipCard(title: "Patient 2 - COVID-19 Test Booking"),
+                      HealthTipCard(title: "Patient 3 - X-Ray Booking"),
+                      HealthTipCard(title: "Patient 4 - MRI Booking"),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: tDashboardPadding),
 
@@ -72,16 +62,29 @@ class MedicalLabDashboard extends StatelessWidget {
                   children: [
                     ServiceCard(
                       icon: Icons.biotech,
-                      title: 'Pathology Tests',
+                      title: 'Manage Tests',
                       onTap: () {
-                        // Navigate to Pathology Tests
+                        // Navigate to Manage Tests
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ManageTestServicesScreen(),
+                          ),
+                        );
                       },
                     ),
                     ServiceCard(
-                      icon: Icons.science,
-                      title: 'Specialized Tests',
+                      icon: Icons.schedule,
+                      title: 'Manage Booking',
                       onTap: () {
-                        // Navigate to Specialized Tests
+                        // Navigate to Manage Booking
+                      },
+                    ),
+                    ServiceCard(
+                      icon: Icons.chat,
+                      title: 'Chat with Patient',
+                      onTap: () {
+                        // Navigate to Chat with Patient
                       },
                     ),
                     ServiceCard(
@@ -89,13 +92,6 @@ class MedicalLabDashboard extends StatelessWidget {
                       title: 'Sample Collection',
                       onTap: () {
                         // Navigate to Sample Collection
-                      },
-                    ),
-                    ServiceCard(
-                      icon: Icons.analytics,
-                      title: 'Test Analytics',
-                      onTap: () {
-                        // Navigate to Test Analytics
                       },
                     ),
                   ],
@@ -125,16 +121,19 @@ class MedicalLabDashboard extends StatelessWidget {
         ),
         bottomNavigationBar: BottomNavigationBar(
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: "Dashboard"),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.dashboard), label: "Dashboard"),
             BottomNavigationBarItem(
                 icon: Icon(Icons.analytics), label: "Reports"),
             BottomNavigationBarItem(
                 icon: Icon(Icons.calendar_today), label: "Appointments"),
             BottomNavigationBarItem(
                 icon: Icon(Icons.person), label: "Profile"),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.chat), label: "Chat"),
           ],
           onTap: (index) {
-            // Handle navigation
+            // Handle navigation based on the selected index
           },
         ),
       ),

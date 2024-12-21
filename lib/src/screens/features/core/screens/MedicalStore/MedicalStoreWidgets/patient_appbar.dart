@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../../../constants/colors.dart';
 import '../../../../../../constants/image_strings.dart';
+import '../MedicalStoreProfile/MedicalStore_Update_Profile_Screen.dart';
 import '../MedicalStoreProfile/medicalstore_profile_screen.dart';
 
 class PatientDashboardAppBar extends StatelessWidget
@@ -62,6 +63,6 @@ class PatientDashboardAppBar extends StatelessWidget
   Size get preferredSize => const Size.fromHeight(70);
 
   void navigateToProfile() {
-    Get.to(() => const PatientProfileScreen());
+    Get.to(() => const MedicalStoreProfileFormScreen());
   }
 }

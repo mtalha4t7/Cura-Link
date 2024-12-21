@@ -41,6 +41,8 @@ class HealthTipCard extends StatelessWidget {
                   ? tWhiteColor
                   : tDarkColor, // Adjust text color based on theme
             ),
+            maxLines: 2, // Maximum number of lines to display
+            overflow: TextOverflow.ellipsis, // Use ellipsis (...) for overflow
           ),
         ],
       ),

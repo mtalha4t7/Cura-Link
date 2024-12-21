@@ -1,17 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
+import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabProfile/medicalLab_update_profile_screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/PatientProfile/patient_all_users.dart';
-import 'package:cura_link/src/screens/features/core/screens/Patient/PatientProfile/patient_update_profile_screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/profile/widgets/profile_menu.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
-
 import '../../../../../../common_widgets/buttons/primary_button.dart';
 import '../../../../../../constants/sizes.dart';
 import '../../../../../../constants/text_strings.dart';
@@ -131,7 +129,7 @@ class _MedicalLabProfileScreenState extends State<MedicalLabProfileScreen> {
                 isFullWidth: false,
                 width: 200,
                 text: tEditProfile,
-                onPressed: () => Get.to(() => ()),
+                onPressed: () => Get.to(() => MedicalLabProfileFormScreen()),
               ),
               const SizedBox(height: 30),
               const Divider(),
