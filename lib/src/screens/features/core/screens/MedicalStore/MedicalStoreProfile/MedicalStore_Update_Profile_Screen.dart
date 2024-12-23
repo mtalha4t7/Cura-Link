@@ -12,10 +12,12 @@ class MedicalStoreProfileFormScreen extends StatefulWidget {
   const MedicalStoreProfileFormScreen({super.key});
 
   @override
-  _MedicalStoreProfileFormScreenState createState() => _MedicalStoreProfileFormScreenState();
+  _MedicalStoreProfileFormScreenState createState() =>
+      _MedicalStoreProfileFormScreenState();
 }
 
-class _MedicalStoreProfileFormScreenState extends State<MedicalStoreProfileFormScreen> {
+class _MedicalStoreProfileFormScreenState
+    extends State<MedicalStoreProfileFormScreen> {
   final TextEditingController phoneNoController = TextEditingController();
   final TextEditingController fullNameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -58,32 +60,33 @@ class _MedicalStoreProfileFormScreenState extends State<MedicalStoreProfileFormS
   }
 
   Future<void> _getLocation() async {
-    bool _serviceEnabled;
-    PermissionStatus _permissionGranted;
-    LocationData _locationData;
+    bool serviceEnabled;
+    PermissionStatus permissionGranted;
+    LocationData locationData;
 
     // Check if the location service is enabled
-    _serviceEnabled = await location.serviceEnabled();
-    if (!_serviceEnabled) {
-      _serviceEnabled = await location.requestService();
-      if (!_serviceEnabled) {
+    serviceEnabled = await location.serviceEnabled();
+    if (!serviceEnabled) {
+      serviceEnabled = await location.requestService();
+      if (!serviceEnabled) {
         return;
       }
     }
 
     // Check if the location permission is granted
-    _permissionGranted = await location.hasPermission();
-    if (_permissionGranted == PermissionStatus.denied) {
-      _permissionGranted = await location.requestPermission();
-      if (_permissionGranted != PermissionStatus.granted) {
+    permissionGranted = await location.hasPermission();
+    if (permissionGranted == PermissionStatus.denied) {
+      permissionGranted = await location.requestPermission();
+      if (permissionGranted != PermissionStatus.granted) {
         return;
       }
     }
 
     // Get the current location
-    _locationData = await location.getLocation();
+    locationData = await location.getLocation();
     setState(() {
-      locationController.text = '${_locationData.latitude}, ${_locationData.longitude}';
+      locationController.text =
+          '${locationData.latitude}, ${locationData.longitude}';
     });
   }
 
@@ -98,98 +101,99 @@ class _MedicalStoreProfileFormScreenState extends State<MedicalStoreProfileFormS
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : Form(
-        child: Column(
-          children: [
-            TextFormField(
-              controller: fullNameController,
-              decoration: const InputDecoration(
-                label: Text(tFullName),
-                prefixIcon: Icon(LineAwesomeIcons.user),
-              ),
-            ),
-            const SizedBox(height: tFormHeight - 20),
-            TextFormField(
-              controller: phoneNoController,
-              decoration: const InputDecoration(
-                label: Text(tPhoneNo),
-                prefixIcon: Icon(LineAwesomeIcons.phone_solid),
-              ),
-            ),
-            const SizedBox(height: tFormHeight - 20),
-            GestureDetector(
-              onTap: _getLocation,
-              child: AbsorbPointer(
-                child: TextFormField(
-                  controller: locationController,
-                  decoration: const InputDecoration(
-                    label: Text('Location'),
-                    prefixIcon: Icon(LineAwesomeIcons.map_marked_solid),
-                  ),
-                  readOnly: true,
-                ),
-              ),
-            ),
-            const SizedBox(height: tFormHeight),
-
-            /// -- Form Submit Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () async {
-                  Map<String, dynamic> fieldsToUpdate = {
-                    'userName': fullNameController.text.trim(),
-                    'userPhone': phoneNoController.text.trim(),
-                    'userAddress': locationController.text.trim(),
-                  };
-
-                  await controller.updateUserFields(email!, fieldsToUpdate);
-
-                  // Show snack bar message
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Profile updated successfully!'),
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: fullNameController,
+                    decoration: const InputDecoration(
+                      label: Text(tFullName),
+                      prefixIcon: Icon(LineAwesomeIcons.user),
                     ),
-                  );
-                },
-                child: const Text(tEditProfile),
-              ),
-            ),
-            const SizedBox(height: tFormHeight),
-
-            /// -- Created Date and Delete Button
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text.rich(
-                  TextSpan(
-                    text: tJoined,
-                    style: TextStyle(fontSize: 12),
-                    children: [
-                      TextSpan(
-                        text: tJoinedAt,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
+                  ),
+                  const SizedBox(height: tFormHeight - 20),
+                  TextFormField(
+                    controller: phoneNoController,
+                    decoration: const InputDecoration(
+                      label: Text(tPhoneNo),
+                      prefixIcon: Icon(LineAwesomeIcons.phone_solid),
+                    ),
+                  ),
+                  const SizedBox(height: tFormHeight - 20),
+                  GestureDetector(
+                    onTap: _getLocation,
+                    child: AbsorbPointer(
+                      child: TextFormField(
+                        controller: locationController,
+                        decoration: const InputDecoration(
+                          label: Text('Location'),
+                          prefixIcon: Icon(LineAwesomeIcons.map_marked_solid),
                         ),
+                        readOnly: true,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: tFormHeight),
+
+                  /// -- Form Submit Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Map<String, dynamic> fieldsToUpdate = {
+                          'userName': fullNameController.text.trim(),
+                          'userPhone': phoneNoController.text.trim(),
+                          'userAddress': locationController.text.trim(),
+                        };
+
+                        await controller.updateUserFields(
+                            email!, fieldsToUpdate);
+
+                        // Show snack bar message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Profile updated successfully!'),
+                          ),
+                        );
+                      },
+                      child: const Text(tEditProfile),
+                    ),
+                  ),
+                  const SizedBox(height: tFormHeight),
+
+                  /// -- Created Date and Delete Button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text.rich(
+                        TextSpan(
+                          text: tJoined,
+                          style: TextStyle(fontSize: 12),
+                          children: [
+                            TextSpan(
+                              text: tJoinedAt,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent.withOpacity(0.1),
+                          elevation: 0,
+                          foregroundColor: Colors.red,
+                          side: BorderSide.none,
+                        ),
+                        child: const Text(tDelete),
                       ),
                     ],
                   ),
-                ),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent.withOpacity(0.1),
-                    elevation: 0,
-                    foregroundColor: Colors.red,
-                    side: BorderSide.none,
-                  ),
-                  child: const Text(tDelete),
-                ),
-              ],
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
     );
   }
 }

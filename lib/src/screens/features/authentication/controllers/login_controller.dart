@@ -1,6 +1,4 @@
 import 'package:cura_link/src/constants/text_strings.dart';
-import 'package:cura_link/src/mongodb/models/user_model.dart';
-import 'package:cura_link/src/repository/user_repository/user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cura_link/src/repository/authentication_repository/authentication_repository.dart';
@@ -34,7 +32,8 @@ class LoginController extends GetxController {
       auth.setInitialScreen(auth.firebaseUser);
     } catch (e) {
       isLoading.value = false;
-      Helper.errorSnackBar(title: tOhSnap, message: "Incorrect Email or Password");
+      Helper.errorSnackBar(
+          title: tOhSnap, message: "Incorrect Email or Password");
     }
   }
 

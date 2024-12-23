@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../../../../../../constants/colors.dart';
 import '../../../../../../constants/image_strings.dart';
 import '../NurseProfile/Nurse_Update_Profile_Screen.dart';
-import '../NurseProfile/nurse_profile_screen.dart';
 
 class PatientDashboardAppBar extends StatelessWidget
     implements PreferredSizeWidget {

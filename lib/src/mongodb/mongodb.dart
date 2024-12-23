@@ -1,6 +1,4 @@
 import 'dart:developer';
-import 'dart:ffi';
-import 'package:flutter/foundation.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import '../constants/text_strings.dart'; // Ensure this path is correct
 import 'package:logger/logger.dart';
@@ -16,6 +14,7 @@ class MongoDatabase {
   static DbCollection? _userMedicalStoreCollection;
   static DbCollection? _medicalLabServices;
   static DbCollection? _userVerification;
+  static DbCollection? _bookingsCollection;
 
   // Connect to MongoDB and initialize the collections
   static Future<void> connect() async {
@@ -28,9 +27,11 @@ class MongoDatabase {
       _userPatientCollection = _db!.collection(USER_PATIENT_COLLECTION_NAME);
       _userLabCollection = _db!.collection(USER_LAB_COLLECTION_NAME);
       _userNurseCollection = _db!.collection(USER_NURSE_COLLECTION_NAME);
-      _userMedicalStoreCollection = _db!.collection(USER_MEDICAL_STORE_COLLECTION_NAME);
-      _medicalLabServices= _db!.collection(LAB_SERVICES);
-      _userVerification= _db!.collection(USER_VERIFICATION);
+      _userMedicalStoreCollection =
+          _db!.collection(USER_MEDICAL_STORE_COLLECTION_NAME);
+      _medicalLabServices = _db!.collection(LAB_SERVICES);
+      _userVerification = _db!.collection(USER_VERIFICATION);
+      _bookingsCollection = _db!.collection(LAB_BOOKINGS);
       // Optional: Use inspect to debug the database connection
       inspect(_db);
 
@@ -40,12 +41,15 @@ class MongoDatabase {
       rethrow; // Rethrow the exception if needed
     }
   }
+
   static DbCollection? get userPatientCollection => _userPatientCollection;
   static DbCollection? get userLabCollection => _userLabCollection;
   static DbCollection? get userNurseCollection => _userNurseCollection;
-  static DbCollection? get userMedicalStoreCollection => _userMedicalStoreCollection;
+  static DbCollection? get userMedicalStoreCollection =>
+      _userMedicalStoreCollection;
   static DbCollection? get medicalLabServices => _medicalLabServices;
   static DbCollection? get userVerification => _userVerification;
+  static DbCollection? get bookingsCollection => _bookingsCollection;
 
   // Close the MongoDB connection
   static Future<void> close() async {
@@ -56,14 +60,16 @@ class MongoDatabase {
       _userLabCollection = null;
       _userNurseCollection = null;
       _userMedicalStoreCollection = null;
-      _medicalLabServices=null;
-      _userVerification=null;
+      _medicalLabServices = null;
+      _userVerification = null;
+      _bookingsCollection = null;
       logger.i('MongoDB connection closed');
     }
   }
 
   // Function to insert a user document into the specified collection
-  static Future<void> insertUser(Map<String, dynamic> user, DbCollection? collection) async {
+  static Future<void> insertUser(
+      Map<String, dynamic> user, DbCollection? collection) async {
     try {
       // Validate the input
       if (user.isEmpty || !user.containsKey('userEmail')) {
@@ -71,7 +77,8 @@ class MongoDatabase {
       }
 
       // Check for duplicate email
-      final existingUser = await collection?.findOne({'userEmail': user['userEmail']});
+      final existingUser =
+          await collection?.findOne({'userEmail': user['userEmail']});
       if (existingUser != null) {
         throw Exception('User with the same email already exists');
       }
@@ -86,14 +93,17 @@ class MongoDatabase {
   }
 
   // Function to find a user by email in the specified collection
-  static Future<Map<String, dynamic>?> findUser({required String email, required DbCollection? collection}) async {
+  static Future<Map<String, dynamic>?> findUser(
+      {required String email, required DbCollection? collection}) async {
     try {
       if (email.isEmpty) {
         throw Exception('Email cannot be empty');
       }
 
       var user = await collection?.findOne({'userEmail': email});
-      logger.i(user != null ? 'User found in ${collection?.collectionName}' : 'User not found in ${collection?.collectionName}');
+      logger.i(user != null
+          ? 'User found in ${collection?.collectionName}'
+          : 'User not found in ${collection?.collectionName}');
       return user;
     } catch (e, stackTrace) {
       logger.e('Error finding user', error: e, stackTrace: stackTrace);
@@ -122,7 +132,8 @@ class MongoDatabase {
       // Query to check if both NIC and License exist in the same document
       var userDoc = await collection?.findOne({
         'userNic': nic,
-        'userLicenseNumber': licence, // Ensure both fields are in the same document
+        'userLicenseNumber':
+            licence, // Ensure both fields are in the same document
       });
 
       // Debug: Log the result of the query
@@ -141,7 +152,8 @@ class MongoDatabase {
   }
 
   // Function to update user details (e.g., after login) in the specified collection
-  static Future<void> updateUser(Map<String, dynamic> updatedUser, DbCollection? collection) async {
+  static Future<void> updateUser(
+      Map<String, dynamic> updatedUser, DbCollection? collection) async {
     try {
       var userId = updatedUser['userId'];
       if (userId == null) {
@@ -153,7 +165,8 @@ class MongoDatabase {
 
       // Set each field in updatedUser
       updatedUser.forEach((key, value) {
-        if (key != '_id') { // Avoid setting the _id field
+        if (key != '_id') {
+          // Avoid setting the _id field
           modifier.set(key, value);
         }
       });
@@ -193,7 +206,8 @@ class MongoDatabase {
     return await findUser(email: email, collection: _medicalLabServices);
   }
 
-  static Future<void> updateVerifiedUsers(Map<String, dynamic> updatedUser) async {
+  static Future<void> updateVerifiedUsers(
+      Map<String, dynamic> updatedUser) async {
     await updateUser(updatedUser, _medicalLabServices);
   }
 
@@ -201,8 +215,22 @@ class MongoDatabase {
     await createIndexes(_medicalLabServices);
   }
 
+  //Lab booking
+  static Future<void> insertLabBooking(Map<String, dynamic> user) async {
+    await insertUser(user, _bookingsCollection);
+  }
 
+  static Future<Map<String, dynamic>?> findBooking(String email) async {
+    return await findUser(email: email, collection: _bookingsCollection);
+  }
 
+  static Future<void> updateBooking(Map<String, dynamic> updatedUser) async {
+    await updateUser(updatedUser, _bookingsCollection);
+  }
+
+  static Future<void> createBookingIndexes() async {
+    await createIndexes(_bookingsCollection);
+  }
 
   //Lab services
   static Future<void> insertLabServices(Map<String, dynamic> user) async {
@@ -213,7 +241,8 @@ class MongoDatabase {
     return await findUser(email: email, collection: _medicalLabServices);
   }
 
-  static Future<void> updateLabServices(Map<String, dynamic> updatedUser) async {
+  static Future<void> updateLabServices(
+      Map<String, dynamic> updatedUser) async {
     await updateUser(updatedUser, _medicalLabServices);
   }
 
@@ -221,13 +250,10 @@ class MongoDatabase {
     await createIndexes(_medicalLabServices);
   }
 
-
   // Insert user into the userPatient collection
   static Future<void> insertUserPatient(Map<String, dynamic> user) async {
     await insertUser(user, _userPatientCollection);
   }
-
-
 
   // Find user in the userPatient collection
   static Future<Map<String, dynamic>?> findUserPatient(String email) async {
@@ -235,7 +261,8 @@ class MongoDatabase {
   }
 
   // Update user in the userPatient collection
-  static Future<void> updateUserPatient(Map<String, dynamic> updatedUser) async {
+  static Future<void> updateUserPatient(
+      Map<String, dynamic> updatedUser) async {
     await updateUser(updatedUser, _userPatientCollection);
   }
 
@@ -282,11 +309,14 @@ class MongoDatabase {
     await insertUser(user, _userMedicalStoreCollection);
   }
 
-  static Future<Map<String, dynamic>?> findUserMedicalStore(String email) async {
-    return await findUser(email: email, collection: _userMedicalStoreCollection);
+  static Future<Map<String, dynamic>?> findUserMedicalStore(
+      String email) async {
+    return await findUser(
+        email: email, collection: _userMedicalStoreCollection);
   }
 
-  static Future<void> updateUserMedicalStore(Map<String, dynamic> updatedUser) async {
+  static Future<void> updateUserMedicalStore(
+      Map<String, dynamic> updatedUser) async {
     await updateUser(updatedUser, _userMedicalStoreCollection);
   }
 

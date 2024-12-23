@@ -8,15 +8,16 @@ import 'package:location/location.dart';
 import '../../../../../../constants/sizes.dart';
 import '../../../../../../constants/text_strings.dart';
 
-
 class MedicalLabProfileFormScreen extends StatefulWidget {
   const MedicalLabProfileFormScreen({super.key});
 
   @override
-  _MedicalLabProfileFormScreenState createState() => _MedicalLabProfileFormScreenState();
+  _MedicalLabProfileFormScreenState createState() =>
+      _MedicalLabProfileFormScreenState();
 }
 
-class _MedicalLabProfileFormScreenState extends State<MedicalLabProfileFormScreen> {
+class _MedicalLabProfileFormScreenState
+    extends State<MedicalLabProfileFormScreen> {
   final TextEditingController phoneNoController = TextEditingController();
   final TextEditingController fullNameController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
@@ -36,7 +37,8 @@ class _MedicalLabProfileFormScreenState extends State<MedicalLabProfileFormScree
     try {
       if (email == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User is not logged in. Please log in.')),
+          const SnackBar(
+              content: Text('User is not logged in. Please log in.')),
         );
         return;
       }
@@ -55,9 +57,9 @@ class _MedicalLabProfileFormScreenState extends State<MedicalLabProfileFormScree
   Future<void> _getName() async {
     try {
       final userNameResponse = await controller.getLabUserName(email!);
-      if (userNameResponse != null && userNameResponse is String) {
+      if (userNameResponse != null) {
         setState(() {
-          fullNameController.text = userNameResponse as String;
+          fullNameController.text = userNameResponse;
         });
       } else {
         print('Failed to fetch user name or invalid data type.');
@@ -102,7 +104,8 @@ class _MedicalLabProfileFormScreenState extends State<MedicalLabProfileFormScree
 
       final locationData = await location.getLocation();
       setState(() {
-        locationController.text = '${locationData.latitude}, ${locationData.longitude}';
+        locationController.text =
+            '${locationData.latitude}, ${locationData.longitude}';
       });
     } catch (e) {
       print('Error fetching location: $e');
@@ -120,104 +123,108 @@ class _MedicalLabProfileFormScreenState extends State<MedicalLabProfileFormScree
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : Form(
-        child: Column(
-          children: [
-            TextFormField(
-              controller: fullNameController,
-              decoration: const InputDecoration(
-                label: Text(tFullName),
-                prefixIcon: Icon(LineAwesomeIcons.user),
-              ),
-            ),
-            const SizedBox(height: tFormHeight - 20),
-            TextFormField(
-              controller: phoneNoController,
-              decoration: const InputDecoration(
-                label: Text(tPhoneNo),
-                prefixIcon: Icon(LineAwesomeIcons.phone_solid),
-              ),
-            ),
-            const SizedBox(height: tFormHeight - 20),
-            GestureDetector(
-              onTap: _getLocation,
-              child: AbsorbPointer(
-                child: TextFormField(
-                  controller: locationController,
-                  decoration: const InputDecoration(
-                    label: Text('Location'),
-                    prefixIcon: Icon(LineAwesomeIcons.map_marked_solid),
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: fullNameController,
+                    decoration: const InputDecoration(
+                      label: Text(tFullName),
+                      prefixIcon: Icon(LineAwesomeIcons.user),
+                    ),
                   ),
-                  readOnly: true,
-                ),
-              ),
-            ),
-            const SizedBox(height: tFormHeight),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () async {
-                  if (email == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('User is not logged in.')),
-                    );
-                    return;
-                  }
-
-                  Map<String, dynamic> fieldsToUpdate = {
-                    'userName': fullNameController.text.trim(),
-                    'userPhone': phoneNoController.text.trim(),
-                    'userAddress': locationController.text.trim(),
-                  };
-
-                  try {
-                    await profileController.updateUserFields(email!, fieldsToUpdate);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Profile updated successfully!')),
-                    );
-                  } catch (e) {
-                    print('Error updating profile: $e');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Failed to update profile.')),
-                    );
-                  }
-                },
-                child: const Text(tEditProfile),
-              ),
-            ),
-            const SizedBox(height: tFormHeight),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text.rich(
-                  TextSpan(
-                    text: tJoined,
-                    style: TextStyle(fontSize: 12),
-                    children: [
-                      TextSpan(
-                        text: tJoinedAt,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
+                  const SizedBox(height: tFormHeight - 20),
+                  TextFormField(
+                    controller: phoneNoController,
+                    decoration: const InputDecoration(
+                      label: Text(tPhoneNo),
+                      prefixIcon: Icon(LineAwesomeIcons.phone_solid),
+                    ),
+                  ),
+                  const SizedBox(height: tFormHeight - 20),
+                  GestureDetector(
+                    onTap: _getLocation,
+                    child: AbsorbPointer(
+                      child: TextFormField(
+                        controller: locationController,
+                        decoration: const InputDecoration(
+                          label: Text('Location'),
+                          prefixIcon: Icon(LineAwesomeIcons.map_marked_solid),
                         ),
+                        readOnly: true,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: tFormHeight),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (email == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('User is not logged in.')),
+                          );
+                          return;
+                        }
+
+                        Map<String, dynamic> fieldsToUpdate = {
+                          'userName': fullNameController.text.trim(),
+                          'userPhone': phoneNoController.text.trim(),
+                          'userAddress': locationController.text.trim(),
+                        };
+
+                        try {
+                          await profileController.updateUserFields(
+                              email!, fieldsToUpdate);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Profile updated successfully!')),
+                          );
+                        } catch (e) {
+                          print('Error updating profile: $e');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Failed to update profile.')),
+                          );
+                        }
+                      },
+                      child: const Text(tEditProfile),
+                    ),
+                  ),
+                  const SizedBox(height: tFormHeight),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text.rich(
+                        TextSpan(
+                          text: tJoined,
+                          style: TextStyle(fontSize: 12),
+                          children: [
+                            TextSpan(
+                              text: tJoinedAt,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent.withOpacity(0.1),
+                          elevation: 0,
+                          foregroundColor: Colors.red,
+                          side: BorderSide.none,
+                        ),
+                        child: const Text(tDelete),
                       ),
                     ],
                   ),
-                ),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent.withOpacity(0.1),
-                    elevation: 0,
-                    foregroundColor: Colors.red,
-                    side: BorderSide.none,
-                  ),
-                  child: const Text(tDelete),
-                ),
-              ],
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
     );
   }
 }

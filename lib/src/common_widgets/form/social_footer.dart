@@ -1,5 +1,4 @@
 import 'package:cura_link/src/common_widgets/form/form_divider_widget.dart';
-import 'package:cura_link/src/screens/features/authentication/screens/phone_authScreen/phone_Screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../constants/colors.dart';

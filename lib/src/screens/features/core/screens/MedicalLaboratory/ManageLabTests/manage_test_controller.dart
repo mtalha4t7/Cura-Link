@@ -13,7 +13,8 @@ class TestServiceController {
 
     try {
       // Fetch services from the new collection based on user's email
-      final userServices = await MongoDatabase.medicalLabServices?.find({'userEmail': userEmail}).toList();
+      final userServices = await MongoDatabase.medicalLabServices
+          ?.find({'userEmail': userEmail}).toList();
       if (userServices != null) {
         return userServices;
       }
@@ -36,7 +37,8 @@ class TestServiceController {
 
     try {
       // Define the lab information
-      String lab = "Lab 101";  // Example lab info (can be dynamic as per the user's selection)
+      String lab =
+          "Lab 101"; // Example lab info (can be dynamic as per the user's selection)
 
       // Check if the service already exists in the collection for the user
       final existingService = await MongoDatabase.medicalLabServices?.findOne({
@@ -51,7 +53,7 @@ class TestServiceController {
           'prize': prize,
         });
 
-        print('Service added successfully with prize: \RS ${prize}');
+        print('Service added successfully with prize: RS $prize');
       } else {
         print('Service already exists.');
       }

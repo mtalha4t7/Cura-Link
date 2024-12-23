@@ -12,6 +12,7 @@ const String USER_LAB_COLLECTION_NAME= "userLab";
 const String USER_MEDICAL_STORE_COLLECTION_NAME="userMedicalStore";
 const String LAB_SERVICES="labServices";
 const String USER_VERIFICATION="userVerification";
+const String LAB_BOOKINGS="labBookings";
 const String ipAddress = "http://192.168.1.45:4000";
 // -- GLOBAL Texts
 const String tNo = "No";

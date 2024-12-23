@@ -22,7 +22,8 @@ class MedicalStoreProfileScreen extends StatefulWidget {
   const MedicalStoreProfileScreen({super.key});
 
   @override
-  _MedicalStoreProfileScreenState createState() => _MedicalStoreProfileScreenState();
+  _MedicalStoreProfileScreenState createState() =>
+      _MedicalStoreProfileScreenState();
 }
 
 class _MedicalStoreProfileScreenState extends State<MedicalStoreProfileScreen> {
@@ -55,7 +56,8 @@ class _MedicalStoreProfileScreenState extends State<MedicalStoreProfileScreen> {
 
   Future<void> _loadProfileImage(String email) async {
     try {
-      final userData = await UserRepository.instance.getMedicalStoreUserByEmail(email);
+      final userData =
+          await UserRepository.instance.getMedicalStoreUserByEmail(email);
       if (userData != null && userData['profileImage'] != null) {
         final base64Image = userData['profileImage'] as String;
         final decodedBytes = base64Decode(base64Image);
@@ -70,7 +72,6 @@ class _MedicalStoreProfileScreenState extends State<MedicalStoreProfileScreen> {
     }
   }
 
-
   Future<void> _uploadProfileImage() async {
     try {
       final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
@@ -82,8 +83,9 @@ class _MedicalStoreProfileScreenState extends State<MedicalStoreProfileScreen> {
         final base64Image = base64Encode(bytes);
 
         // Upload image to MongoDB
-        final  collection= await MongoDatabase.userMedicalStoreCollection;
-        await UserRepository.instance.uploadProfileImage(email: email,base64Image: base64Image,collection:collection);
+        final collection = MongoDatabase.userMedicalStoreCollection;
+        await UserRepository.instance.uploadProfileImage(
+            email: email, base64Image: base64Image, collection: collection);
 
         // Reload the profile image
         await _loadProfileImage(email);
@@ -92,6 +94,7 @@ class _MedicalStoreProfileScreenState extends State<MedicalStoreProfileScreen> {
       print("Error uploading profile image: $e");
     }
   }
+
   @override
   Widget build(BuildContext context) {
     var isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
@@ -203,10 +206,10 @@ class ProfilePictureWidget extends StatelessWidget {
   final VoidCallback onEditPressed;
 
   const ProfilePictureWidget({
-    Key? key,
+    super.key,
     required this.imageBytes,
     required this.onEditPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -214,8 +217,7 @@ class ProfilePictureWidget extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 50,
-          backgroundImage:
-          imageBytes != null ? MemoryImage(imageBytes!) : null,
+          backgroundImage: imageBytes != null ? MemoryImage(imageBytes!) : null,
           child: imageBytes == null
               ? const Icon(Icons.person, size: 50) // Default icon
               : null,

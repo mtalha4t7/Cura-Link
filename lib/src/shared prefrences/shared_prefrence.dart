@@ -1,4 +1,3 @@
-import 'package:cura_link/src/repository/user_repository/user_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Save user type to SharedPreferences
@@ -47,15 +46,9 @@ Future<Map<String, String>> loadUserDetails() async {
     'userType': prefs.getString('userType') ?? '',
     'phoneNumber': prefs.getString('phoneNumber') ?? '',
   };
-
-
 }
 
-
-
 /// Fetch user details from the repository and save them locally
-
-
 
 Future<void> saveServicesToPreferences(List<String> services) async {
   final prefs = await SharedPreferences.getInstance();

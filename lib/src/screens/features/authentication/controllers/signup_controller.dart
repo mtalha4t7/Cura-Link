@@ -1,4 +1,3 @@
-import 'package:cura_link/src/mongodb/mongodb.dart';
 import 'package:cura_link/src/repository/authentication_repository/authentication_repository.dart';
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
 import 'package:cura_link/src/screens/features/authentication/models/user_model_mongodb.dart';
@@ -50,7 +49,8 @@ class SignUpController extends GetxController {
       final auth = AuthenticationRepository.instance;
       await auth.registerWithEmailAndPassword(
           user.userEmail!, user.userPassword!);
-      final hashedPassword = sha256.convert(utf8.encode(userPassword.text.trim())).toString();
+      final hashedPassword =
+          sha256.convert(utf8.encode(userPassword.text.trim())).toString();
 
       // Create UserModelMongoDB object
       final Muser = UserModelMongoDB(
@@ -84,7 +84,7 @@ class SignUpController extends GetxController {
             'userAddress': Muser.userAddress,
             'userType': Muser.userType,
             'userId': Muser.userId,
-            'userVerified':"0",
+            'userVerified': "0",
           });
           break;
         case 'Nurse':

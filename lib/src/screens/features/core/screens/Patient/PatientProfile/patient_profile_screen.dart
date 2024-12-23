@@ -69,7 +69,6 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     }
   }
 
-
   Future<void> _uploadProfileImage() async {
     try {
       final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
@@ -81,8 +80,9 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
         final base64Image = base64Encode(bytes);
 
         // Upload image to MongoDB
-        final  collection= await MongoDatabase.userPatientCollection;
-        await UserRepository.instance.uploadProfileImage(email: email,base64Image: base64Image,collection:collection);
+        final collection = MongoDatabase.userPatientCollection;
+        await UserRepository.instance.uploadProfileImage(
+            email: email, base64Image: base64Image, collection: collection);
 
         // Reload the profile image
         await _loadProfileImage(email);
@@ -203,10 +203,10 @@ class ProfilePictureWidget extends StatelessWidget {
   final VoidCallback onEditPressed;
 
   const ProfilePictureWidget({
-    Key? key,
+    super.key,
     required this.imageBytes,
     required this.onEditPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -214,8 +214,7 @@ class ProfilePictureWidget extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 50,
-          backgroundImage:
-          imageBytes != null ? MemoryImage(imageBytes!) : null,
+          backgroundImage: imageBytes != null ? MemoryImage(imageBytes!) : null,
           child: imageBytes == null
               ? const Icon(Icons.person, size: 50) // Default icon
               : null,

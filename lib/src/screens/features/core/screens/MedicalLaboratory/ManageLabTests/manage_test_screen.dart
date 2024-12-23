@@ -1,7 +1,10 @@
+import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabWidgets/test_service_card.dart';
 import 'package:flutter/material.dart';
 import 'manage_test_controller.dart';
 
 class ManageTestServicesScreen extends StatefulWidget {
+  const ManageTestServicesScreen({super.key});
+
   @override
   _ManageTestServicesScreenState createState() =>
       _ManageTestServicesScreenState();
@@ -18,15 +21,15 @@ class _ManageTestServicesScreenState extends State<ManageTestServicesScreen> {
     final isDarkTheme = theme.brightness == Brightness.dark;
 
     return Scaffold(
-        appBar: AppBar(
+      appBar: AppBar(
         title: const Text('Manage Test Services'),
-    leading: IconButton(
-    icon: const Icon(Icons.arrow_back),
-    onPressed: () {
-    Navigator.pop(context);
-    },
-    ),
-    ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
         child: Column(
@@ -109,7 +112,8 @@ class _ManageTestServicesScreenState extends State<ManageTestServicesScreen> {
                         child: Text(
                           'No services added yet.',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: isDarkTheme ? Colors.white54 : Colors.black54,
+                            color:
+                                isDarkTheme ? Colors.white54 : Colors.black54,
                           ),
                         ),
                       );
@@ -123,7 +127,8 @@ class _ManageTestServicesScreenState extends State<ManageTestServicesScreen> {
                           prize: service['prize'],
                           isDark: isDarkTheme,
                           onDelete: () {
-                            _controller.removeTestService(service['serviceName'])
+                            _controller
+                                .removeTestService(service['serviceName'])
                                 .then((_) {
                               setState(() {});
                             });
@@ -180,112 +185,6 @@ class _ManageTestServicesScreenState extends State<ManageTestServicesScreen> {
   void _showErrorSnackbar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
-    );
-  }
-}
-
-class TestServiceCard extends StatelessWidget {
-  final String serviceName;
-  final double prize;
-  final bool isDark;
-  final VoidCallback onDelete;
-
-  const TestServiceCard({
-    required this.serviceName,
-    required this.prize,
-    required this.isDark,
-    required this.onDelete,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: isDark ? Colors.grey[850] : Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    serviceName,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Prize: ${prize.toStringAsFixed(2)} RS',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: isDark ? Colors.white70 : Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            IconButton(
-              icon: Icon(Icons.delete, color: Colors.red),
-              onPressed: onDelete,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class CustomButton extends StatelessWidget {
-  final String text;
-  final VoidCallback onPressed;
-  final bool isDark;
-
-  CustomButton({
-    required this.text,
-    required this.onPressed,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: isDark
-                ? [Colors.blueGrey[700]!, Colors.blueGrey[800]!]
-                : [Colors.blue, Colors.lightBlueAccent],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: isDark ? Colors.black54 : Colors.black26,
-              blurRadius: 4,
-              offset: Offset(2, 2),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-        alignment: Alignment.center,
-        child: Text(
-          text,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
     );
   }
 }

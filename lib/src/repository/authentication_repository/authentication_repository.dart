@@ -57,21 +57,29 @@ class AuthenticationRepository extends GetxController {
         final firebaseUserType = await loadUserType();
 
         // Fetch user type from MongoDB
-        final patient = await UserRepository.instance.getPatientByEmail(user.email!);
-        final nurse = await UserRepository.instance.getNurseUserByEmail(user.email!);
-        final lab = await UserRepository.instance.getLabUserByEmail(user.email!);
-        final medicalStore = await UserRepository.instance.getMedicalStoreUserByEmail(user.email!);
+        final patient =
+            await UserRepository.instance.getPatientByEmail(user.email!);
+        final nurse =
+            await UserRepository.instance.getNurseUserByEmail(user.email!);
+        final lab =
+            await UserRepository.instance.getLabUserByEmail(user.email!);
+        final medicalStore = await UserRepository.instance
+            .getMedicalStoreUserByEmail(user.email!);
 
-        late final mongoUserType;
+        late final String? mongoUserType;
 
         if (patient != null) {
-          mongoUserType = await UserRepository.instance.getPatientUserType(user.email!);
+          mongoUserType =
+              await UserRepository.instance.getPatientUserType(user.email!);
         } else if (nurse != null) {
-          mongoUserType = await UserRepository.instance.getNurseUserType(user.email!);
+          mongoUserType =
+              await UserRepository.instance.getNurseUserType(user.email!);
         } else if (lab != null) {
-          mongoUserType = await UserRepository.instance.getLabUserType(user.email!); // Corrected this line
+          mongoUserType = await UserRepository.instance
+              .getLabUserType(user.email!); // Corrected this line
         } else if (medicalStore != null) {
-          mongoUserType = await UserRepository.instance.getMedicalStoreUserType(user.email!);
+          mongoUserType = await UserRepository.instance
+              .getMedicalStoreUserType(user.email!);
         }
 
         // Check if the user type matches
@@ -100,7 +108,8 @@ class AuthenticationRepository extends GetxController {
           // User type does not match, show options to the user
           Get.defaultDialog(
             title: "User Type Mismatch",
-            content: Text("This user is already logged in as $mongoUserType. Do you want to log in as another user? Press yes to log in again, or no to select a different user type."),
+            content: Text(
+                "This user is already logged in as $mongoUserType. Do you want to log in as another user? Press yes to log in again, or no to select a different user type."),
             confirm: ElevatedButton(
               onPressed: () async {
                 await logout();
@@ -125,7 +134,8 @@ class AuthenticationRepository extends GetxController {
       // Handle first-time user onboarding
       final isFirstTime = userStorage.read('isFirstTime') ?? true;
       if (isFirstTime) {
-        userStorage.write('isFirstTime', false); // Set first time as false after initial use
+        userStorage.write(
+            'isFirstTime', false); // Set first time as false after initial use
         Get.offAll(() => OnBoardingScreen());
       } else {
         Get.offAll(() => WelcomeScreen());
@@ -141,7 +151,7 @@ class AuthenticationRepository extends GetxController {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
     } on FirebaseAuthException catch (e) {
       final result =
-      TExceptions.fromCode(e.code); // Throw custom [message] variable
+          TExceptions.fromCode(e.code); // Throw custom [message] variable
       throw result.message;
     } catch (_) {
       const result = TExceptions();
@@ -150,8 +160,8 @@ class AuthenticationRepository extends GetxController {
   }
 
   /// [EmailAuthentication] - REGISTER
-  Future<void> registerWithEmailAndPassword(String email,
-      String password) async {
+  Future<void> registerWithEmailAndPassword(
+      String email, String password) async {
     try {
       await _auth.createUserWithEmailAndPassword(
           email: email, password: password);
@@ -187,7 +197,7 @@ class AuthenticationRepository extends GetxController {
 
       // Obtain the auth details from the request
       final GoogleSignInAuthentication? googleAuth =
-      await googleUser?.authentication;
+          await googleUser?.authentication;
 
       // Create a new credential
       final credential = GoogleAuthProvider.credential(
@@ -211,12 +221,12 @@ class AuthenticationRepository extends GetxController {
     try {
       // Trigger the sign-in flow
       final LoginResult loginResult =
-      await FacebookAuth.instance.login(permissions: ['email']);
+          await FacebookAuth.instance.login(permissions: ['email']);
 
       // Create a credential from the access token
       final AccessToken accessToken = loginResult.accessToken!;
       final OAuthCredential facebookAuthCredential =
-      FacebookAuthProvider.credential(accessToken.tokenString);
+          FacebookAuthProvider.credential(accessToken.tokenString);
 
       // Once signed in, return the UserCredential
       return FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
@@ -237,9 +247,7 @@ class AuthenticationRepository extends GetxController {
       final ex = TExceptions.fromCode(e.code);
       throw ex.message;
     } catch (e) {
-      throw e
-          .toString()
-          .isEmpty
+      throw e.toString().isEmpty
           ? 'Unknown Error Occurred. Try again!'
           : e.toString();
     }
@@ -268,9 +276,7 @@ class AuthenticationRepository extends GetxController {
       final result = TExceptions.fromCode(e.code);
       throw result.message;
     } catch (e) {
-      throw e
-          .toString()
-          .isEmpty
+      throw e.toString().isEmpty
           ? 'Unknown Error Occurred. Try again!'
           : e.toString();
     }

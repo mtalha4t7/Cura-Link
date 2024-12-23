@@ -17,18 +17,17 @@ class ProfileController extends GetxController {
 
   /// Get User Email and pass to UserRepository to fetch user record.
 
-
-
   Future<List<UserModel>> getAllUsers() async {
     try {
       // Fetching all users from the collection (could be combined if using a single collection).
-      final nurseCollection = await _userRepo.getAllUsers(MongoDatabase.userLabCollection);
-      final patientCollection = await _userRepo.getAllUsers(MongoDatabase.userLabCollection);
-      final labCollection = await _userRepo.getAllUsers(MongoDatabase.userLabCollection);
-      final medicalStoreCollection = await _userRepo.getAllUsers(MongoDatabase.userLabCollection);
-
-
-;
+      final nurseCollection =
+          await _userRepo.getAllUsers(MongoDatabase.userLabCollection);
+      final patientCollection =
+          await _userRepo.getAllUsers(MongoDatabase.userLabCollection);
+      final labCollection =
+          await _userRepo.getAllUsers(MongoDatabase.userLabCollection);
+      final medicalStoreCollection =
+          await _userRepo.getAllUsers(MongoDatabase.userLabCollection);
 
       // Combine all user lists into one collection.
       List<UserModel> allUsers = [
@@ -47,14 +46,16 @@ class ProfileController extends GetxController {
   /// Update User Data
   Future<void> updateRecord(UserModel user) async {
     try {
-      String? userType= await loadUserType();
-      if(userType=="Patient"){  await _userRepo.updatePatient(user.email, user.toJson());}
-      else
-      if(userType=="Lab"){  await _userRepo.updateLabUser(user.email, user.toJson());}
-       else
-      if(userType=="Medical-Store"){  await _userRepo.updateMedicalStoreUser(user.email, user.toJson());}
-       else
-      if(userType=="Nurse"){  await _userRepo.updateNurseUser(user.email, user.toJson());}
+      String? userType = await loadUserType();
+      if (userType == "Patient") {
+        await _userRepo.updatePatient(user.email, user.toJson());
+      } else if (userType == "Lab") {
+        await _userRepo.updateLabUser(user.email, user.toJson());
+      } else if (userType == "Medical-Store") {
+        await _userRepo.updateMedicalStoreUser(user.email, user.toJson());
+      } else if (userType == "Nurse") {
+        await _userRepo.updateNurseUser(user.email, user.toJson());
+      }
 
       Helper.successSnackBar(
           title: tCongratulations, message: 'Profile record has been updated!');
@@ -63,7 +64,8 @@ class ProfileController extends GetxController {
     }
   }
 
-  Future<void> updateUserFields(String email, Map<String, dynamic> fieldsToUpdate) async {
+  Future<void> updateUserFields(
+      String email, Map<String, dynamic> fieldsToUpdate) async {
     try {
       final query = {'userEmail': email};
       final modifyBuilder = ModifierBuilder();
@@ -121,7 +123,8 @@ class ProfileController extends GetxController {
       if (result?.nMatched == 0) {
         print('No document matched the given email.');
       } else if (result?.nModified == 0) {
-        print('The document was matched, but no modification was made (fields might be the same).');
+        print(
+            'The document was matched, but no modification was made (fields might be the same).');
       } else {
         print('User fields updated successfully.');
       }
@@ -130,6 +133,4 @@ class ProfileController extends GetxController {
       throw 'Error updating user fields: $e';
     }
   }
-
-
 }
