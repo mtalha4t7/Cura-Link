@@ -44,14 +44,14 @@ class _MedicalStoreProfileFormScreenState extends State<MedicalStoreProfileFormS
   }
 
   Future<void> _getName() async {
-    userName = (await controller.getFullNameByEmail(email!))!;
+    userName = (await controller.getMedicalStoreUserName(email!))!;
     setState(() {
       fullNameController.text = userName;
     });
   }
 
   Future<void> _getPhone() async {
-    userPhone = (await controller.getPhoneNumberByEmail(email!))!;
+    userPhone = (await controller.getMedicalStorePhone(email!))!;
     setState(() {
       phoneNoController.text = userPhone;
     });

@@ -42,7 +42,7 @@ class _MedicalLabProfileScreenState extends State<MedicalLabProfileScreen> {
         email = user.email ?? '';
       });
 
-      final nameFromDB = await UserRepository().getFullNameByEmail(email);
+      final nameFromDB = await UserRepository().getLabUserName(email);
       setState(() {
         name = nameFromDB ?? "No full name available";
       });
@@ -53,19 +53,21 @@ class _MedicalLabProfileScreenState extends State<MedicalLabProfileScreen> {
 
   Future<void> _loadProfileImage(String email) async {
     try {
-      final userData = await MongoDatabase.userCollection
-          .findOne({'userEmail': email}); // Fixed query syntax
+      final userData = await UserRepository.instance.getLabUserByEmail(email);
       if (userData != null && userData['profileImage'] != null) {
-        final base64Image = userData['profileImage'];
+        final base64Image = userData['profileImage'] as String;
         final decodedBytes = base64Decode(base64Image);
         setState(() {
           profileImageBytes = decodedBytes;
         });
+      } else {
+        print("No profile image found for email: $email");
       }
     } catch (e) {
       print("Error loading profile image: $e");
     }
   }
+
 
   Future<void> _uploadProfileImage() async {
     try {
@@ -78,7 +80,8 @@ class _MedicalLabProfileScreenState extends State<MedicalLabProfileScreen> {
         final base64Image = base64Encode(bytes);
 
         // Upload image to MongoDB
-        await UserRepository.instance.uploadProfileImage(email, base64Image);
+      final  collection= await MongoDatabase.userLabCollection;
+        await UserRepository.instance.uploadProfileImage(email: email,base64Image: base64Image,collection:collection);
 
         // Reload the profile image
         await _loadProfileImage(email);

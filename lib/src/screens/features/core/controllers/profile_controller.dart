@@ -1,3 +1,4 @@
+import 'package:cura_link/src/shared%20prefrences/shared_prefrence.dart';
 import 'package:get/get.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import '../../../../constants/text_strings.dart';
@@ -15,33 +16,28 @@ class ProfileController extends GetxController {
   final _userRepo = UserRepository.instance;
 
   /// Get User Email and pass to UserRepository to fetch user record.
-  Future<UserModel?> getUserData() async {
-    try {
-      final currentUserEmail = _authRepo.getUserEmail;
-      if (currentUserEmail.isNotEmpty) {
-        final userData = await _userRepo.getUserByEmail(currentUserEmail);
-        if (userData != null) {
-          return UserModel.fromJson(userData);
-        } else {
-          Helper.warningSnackBar(
-              title: 'Error', message: 'No user data found!');
-          return null;
-        }
-      } else {
-        Helper.warningSnackBar(title: 'Error', message: 'No user found!');
-        return null;
-      }
-    } catch (e) {
-      Helper.errorSnackBar(title: 'Error', message: e.toString());
-      return null;
-    }
-  }
 
-  /// Fetch List of user records.
+
+
   Future<List<UserModel>> getAllUsers() async {
     try {
-      final users = await _userRepo.getAllUsers();
-      return users.map((user) => UserModel.fromJson(user)).toList();
+      // Fetching all users from the collection (could be combined if using a single collection).
+      final nurseCollection = await _userRepo.getAllUsers(MongoDatabase.userLabCollection);
+      final patientCollection = await _userRepo.getAllUsers(MongoDatabase.userLabCollection);
+      final labCollection = await _userRepo.getAllUsers(MongoDatabase.userLabCollection);
+      final medicalStoreCollection = await _userRepo.getAllUsers(MongoDatabase.userLabCollection);
+
+
+;
+
+      // Combine all user lists into one collection.
+      List<UserModel> allUsers = [
+        ...nurseCollection.map((user) => UserModel.fromJson(user)),
+        ...patientCollection.map((user) => UserModel.fromJson(user)),
+        ...labCollection.map((user) => UserModel.fromJson(user)),
+        ...medicalStoreCollection.map((user) => UserModel.fromJson(user)),
+      ];
+      return allUsers; // Return the combined list of users.
     } catch (e) {
       Helper.errorSnackBar(title: 'Error', message: e.toString());
       return [];
@@ -51,33 +47,80 @@ class ProfileController extends GetxController {
   /// Update User Data
   Future<void> updateRecord(UserModel user) async {
     try {
-      await _userRepo.updateUser(user.email, user.toJson());
+      String? userType= await loadUserType();
+      if(userType=="Patient"){  await _userRepo.updatePatient(user.email, user.toJson());}
+      else
+      if(userType=="Lab"){  await _userRepo.updateLabUser(user.email, user.toJson());}
+       else
+      if(userType=="Medical-Store"){  await _userRepo.updateMedicalStoreUser(user.email, user.toJson());}
+       else
+      if(userType=="Nurse"){  await _userRepo.updateNurseUser(user.email, user.toJson());}
+
       Helper.successSnackBar(
           title: tCongratulations, message: 'Profile record has been updated!');
     } catch (e) {
       Helper.errorSnackBar(title: 'Error', message: e.toString());
     }
   }
+
   Future<void> updateUserFields(String email, Map<String, dynamic> fieldsToUpdate) async {
     try {
       final query = {'userEmail': email};
-      var updateData = modify;
+      final modifyBuilder = ModifierBuilder();
 
-      // Iterate over the map and add each field update to the ModifierBuilder
+      // Add each field to the ModifierBuilder
       fieldsToUpdate.forEach((key, value) {
-        updateData = updateData.set(key, value);
+        modifyBuilder.set(key, value);
       });
 
-      final result = await MongoDatabase.userCollection.updateOne(
-        query,
-        updateData,
-      );
+      // Await the userType since loadUserType() returns a Future
+      String? userType = await loadUserType();
 
-      print('Update Result - Matched: ${result.nMatched}, Modified: ${result.nModified}');
+      if (userType == null) {
+        throw 'User type is null. Unable to proceed with the update.';
+      }
 
-      if (result.nMatched == 0) {
+      // Define the result variable
+      late WriteResult? result;
+
+      // Choose the correct collection based on the userType
+      switch (userType) {
+        case "Patient":
+          result = await MongoDatabase.userPatientCollection?.updateOne(
+            query,
+            modifyBuilder,
+          );
+          break;
+
+        case "Lab":
+          result = await MongoDatabase.userLabCollection?.updateOne(
+            query,
+            modifyBuilder,
+          );
+          break;
+
+        case "Medical-Store":
+          result = await MongoDatabase.userMedicalStoreCollection?.updateOne(
+            query,
+            modifyBuilder,
+          );
+          break;
+
+        case "Nurse":
+          result = await MongoDatabase.userNurseCollection?.updateOne(
+            query,
+            modifyBuilder,
+          );
+          break;
+
+        default:
+          throw 'Invalid user type: $userType';
+      }
+
+      // Check the update result
+      if (result?.nMatched == 0) {
         print('No document matched the given email.');
-      } else if (result.nModified == 0) {
+      } else if (result?.nModified == 0) {
         print('The document was matched, but no modification was made (fields might be the same).');
       } else {
         print('User fields updated successfully.');
@@ -88,22 +131,5 @@ class ProfileController extends GetxController {
     }
   }
 
-  /// Delete User
-  Future<void> deleteUser() async {
-    try {
-      final currentUserEmail = _authRepo.getUserEmail;
-      if (currentUserEmail.isNotEmpty) {
-        await _userRepo.deleteUser(currentUserEmail);
-        Helper.successSnackBar(
-            title: tCongratulations, message: 'Account has been deleted!');
-        // Optionally, you can log out the user or redirect to another screen here.
-        _authRepo.logout;
-      } else {
-        Helper.warningSnackBar(
-            title: 'Error', message: 'User cannot be deleted!');
-      }
-    } catch (e) {
-      Helper.errorSnackBar(title: 'Error', message: e.toString());
-    }
-  }
+
 }

@@ -47,25 +47,22 @@ Future<Map<String, String>> loadUserDetails() async {
     'userType': prefs.getString('userType') ?? '',
     'phoneNumber': prefs.getString('phoneNumber') ?? '',
   };
+
+
 }
 
-/// Fetch user details from the repository and save them locally
-Future<void> saveUserDetailsFromRepository(String email) async {
-  try {
-    final userDetails = await UserRepository.instance.getUserByEmail(email);
 
-    if (userDetails != null) {
-      // Save user details in SharedPreferences
-      await saveUserDetails({
-        "userEmail": userDetails['userEmail'],
-        "fullName": userDetails['fullName'],
-        "userType": userDetails['userType'], // Modify based on your schema
-        "phoneNumber": userDetails['phoneNumber'], // Modify as needed
-      });
-    } else {
-      throw 'User details not found';
-    }
-  } catch (e) {
-    throw 'Error fetching and saving user details: $e';
-  }
+
+/// Fetch user details from the repository and save them locally
+
+
+
+Future<void> saveServicesToPreferences(List<String> services) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setStringList('testServices', services);
+}
+
+Future<List<String>> getServicesFromPreferences() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getStringList('testServices') ?? [];
 }

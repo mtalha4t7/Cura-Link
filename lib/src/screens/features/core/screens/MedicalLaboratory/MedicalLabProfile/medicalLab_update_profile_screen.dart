@@ -1,4 +1,5 @@
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
+import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabControllers/lab_profile_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,7 +7,7 @@ import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:location/location.dart';
 import '../../../../../../constants/sizes.dart';
 import '../../../../../../constants/text_strings.dart';
-import '../../../controllers/profile_controller.dart';
+
 
 class MedicalLabProfileFormScreen extends StatefulWidget {
   const MedicalLabProfileFormScreen({super.key});
@@ -18,14 +19,11 @@ class MedicalLabProfileFormScreen extends StatefulWidget {
 class _MedicalLabProfileFormScreenState extends State<MedicalLabProfileFormScreen> {
   final TextEditingController phoneNoController = TextEditingController();
   final TextEditingController fullNameController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController userTypeController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
   final Location location = Location();
-  final controller = UserRepository.instance;
-  final email = FirebaseAuth.instance.currentUser?.email;
-  late String userName;
-  late String userPhone;
+  final UserRepository controller = UserRepository.instance;
+
+  String? email = FirebaseAuth.instance.currentUser?.email;
   bool isLoading = true;
 
   @override
@@ -35,68 +33,92 @@ class _MedicalLabProfileFormScreenState extends State<MedicalLabProfileFormScree
   }
 
   Future<void> _initializeUserProfile() async {
-    await _getName();
-    await _getPhone();
-    await _getLocation();
-    setState(() {
-      isLoading = false;
-    });
+    try {
+      if (email == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User is not logged in. Please log in.')),
+        );
+        return;
+      }
+      await _getName();
+      await _getPhone();
+      await _getLocation();
+    } catch (e) {
+      print('Error initializing user profile: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> _getName() async {
-    userName = (await controller.getFullNameByEmail(email!))!;
-    setState(() {
-      fullNameController.text = userName;
-    });
+    try {
+      final userNameResponse = await controller.getLabUserName(email!);
+      if (userNameResponse != null && userNameResponse is String) {
+        setState(() {
+          fullNameController.text = userNameResponse as String;
+        });
+      } else {
+        print('Failed to fetch user name or invalid data type.');
+      }
+    } catch (e) {
+      print('Error fetching user name: $e');
+    }
   }
 
   Future<void> _getPhone() async {
-    userPhone = (await controller.getPhoneNumberByEmail(email!))!;
-    setState(() {
-      phoneNoController.text = userPhone;
-    });
+    try {
+      final userPhoneResponse = await controller.getLabUserPhone(email!);
+      if (userPhoneResponse != null) {
+        setState(() {
+          phoneNoController.text = userPhoneResponse;
+        });
+      } else {
+        print('Failed to fetch phone number.');
+      }
+    } catch (e) {
+      print('Error fetching phone number: $e');
+    }
   }
 
   Future<void> _getLocation() async {
-    bool _serviceEnabled;
-    PermissionStatus _permissionGranted;
-    LocationData _locationData;
-
-    // Check if the location service is enabled
-    _serviceEnabled = await location.serviceEnabled();
-    if (!_serviceEnabled) {
-      _serviceEnabled = await location.requestService();
-      if (!_serviceEnabled) {
-        return;
+    try {
+      bool serviceEnabled = await location.serviceEnabled();
+      if (!serviceEnabled) {
+        serviceEnabled = await location.requestService();
+        if (!serviceEnabled) {
+          return;
+        }
       }
-    }
 
-    // Check if the location permission is granted
-    _permissionGranted = await location.hasPermission();
-    if (_permissionGranted == PermissionStatus.denied) {
-      _permissionGranted = await location.requestPermission();
-      if (_permissionGranted != PermissionStatus.granted) {
-        return;
+      PermissionStatus permissionGranted = await location.hasPermission();
+      if (permissionGranted == PermissionStatus.denied) {
+        permissionGranted = await location.requestPermission();
+        if (permissionGranted != PermissionStatus.granted) {
+          return;
+        }
       }
-    }
 
-    // Get the current location
-    _locationData = await location.getLocation();
-    setState(() {
-      locationController.text = '${_locationData.latitude}, ${_locationData.longitude}';
-    });
+      final locationData = await location.getLocation();
+      setState(() {
+        locationController.text = '${locationData.latitude}, ${locationData.longitude}';
+      });
+    } catch (e) {
+      print('Error fetching location: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(ProfileController());
+    final profileController = Get.put(MedicalLabProfileController());
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Profile'),
+        title: const Text('Profile'),
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : Form(
         child: Column(
           children: [
@@ -130,33 +152,39 @@ class _MedicalLabProfileFormScreenState extends State<MedicalLabProfileFormScree
               ),
             ),
             const SizedBox(height: tFormHeight),
-
-            /// -- Form Submit Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () async {
+                  if (email == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('User is not logged in.')),
+                    );
+                    return;
+                  }
+
                   Map<String, dynamic> fieldsToUpdate = {
                     'userName': fullNameController.text.trim(),
                     'userPhone': phoneNoController.text.trim(),
                     'userAddress': locationController.text.trim(),
                   };
 
-                  await controller.updateUserFields(email!, fieldsToUpdate);
-
-                  // Show snack bar message
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Profile updated successfully!'),
-                    ),
-                  );
+                  try {
+                    await profileController.updateUserFields(email!, fieldsToUpdate);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Profile updated successfully!')),
+                    );
+                  } catch (e) {
+                    print('Error updating profile: $e');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Failed to update profile.')),
+                    );
+                  }
                 },
                 child: const Text(tEditProfile),
               ),
             ),
             const SizedBox(height: tFormHeight),
-
-            /// -- Created Date and Delete Button
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

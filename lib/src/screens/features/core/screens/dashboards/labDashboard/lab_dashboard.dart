@@ -1,3 +1,4 @@
+import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabWidgets/medicalLab_appbar.dart';
 import 'package:cura_link/src/screens/features/core/screens/dashboards/widgets/appbar.dart';
 import 'package:cura_link/src/screens/features/core/screens/dashboards/widgets/banners.dart';
 import 'package:cura_link/src/screens/features/core/screens/dashboards/widgets/categories.dart';
@@ -20,7 +21,7 @@ class LabDashboard extends StatelessWidget {
 
     return SafeArea(
       child: Scaffold(
-        appBar: DashboardAppBar(isDark: isDark),
+        appBar: MedicalLabDashboardAppBar(isDark: isDark),
         /// Create a new Header
         drawer: Drawer(
           child: ListView(

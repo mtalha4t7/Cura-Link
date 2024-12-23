@@ -44,14 +44,14 @@ class _NurseProfileFormScreenState extends State<NurseProfileFormScreen> {
   }
 
   Future<void> _getName() async {
-    userName = (await controller.getFullNameByEmail(email!))!;
+    userName = (await controller.getNurseUserName(email!))!;
     setState(() {
       fullNameController.text = userName;
     });
   }
 
   Future<void> _getPhone() async {
-    userPhone = (await controller.getPhoneNumberByEmail(email!))!;
+    userPhone = (await controller.getNursePhone(email!))!;
     setState(() {
       phoneNoController.text = userPhone;
     });

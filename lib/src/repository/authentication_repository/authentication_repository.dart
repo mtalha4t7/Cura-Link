@@ -4,6 +4,7 @@ import 'package:cura_link/src/screens/features/authentication/screens/mail_verif
 import 'package:cura_link/src/screens/features/authentication/screens/on_boarding/on_boarding_screen.dart';
 import 'package:cura_link/src/screens/features/authentication/screens/welcome/welcome_screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabDashboard/medicalLab_dashboard.dart';
+import 'package:cura_link/src/screens/features/core/screens/MedicalStore/MedicalStoreDashboard/MedicalStore_Dashboard.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientDashboard/patient_dashboard.dart';
 import 'package:cura_link/src/screens/features/core/screens/dashboards/labDashboard/lab_dashboard.dart';
 import 'package:cura_link/src/screens/features/core/screens/dashboards/nurseDashboard/nurse_dashboard.dart';
@@ -17,6 +18,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../screens/features/authentication/screens/login/login_screen.dart';
+import '../../screens/features/core/screens/Nurse/NurseDashboard/Nurse_Dashboard.dart';
 
 class AuthenticationRepository extends GetxController {
   static AuthenticationRepository get instance => Get.find();
@@ -55,12 +57,29 @@ class AuthenticationRepository extends GetxController {
         final firebaseUserType = await loadUserType();
 
         // Fetch user type from MongoDB
-        final mongoUserType = await UserRepository.instance.getUserTypeFromMongoDB(user.email!);
+        final patient = await UserRepository.instance.getPatientByEmail(user.email!);
+        final nurse = await UserRepository.instance.getNurseUserByEmail(user.email!);
+        final lab = await UserRepository.instance.getLabUserByEmail(user.email!);
+        final medicalStore = await UserRepository.instance.getMedicalStoreUserByEmail(user.email!);
+
+        late final mongoUserType;
+
+        if (patient != null) {
+          mongoUserType = await UserRepository.instance.getPatientUserType(user.email!);
+        } else if (nurse != null) {
+          mongoUserType = await UserRepository.instance.getNurseUserType(user.email!);
+        } else if (lab != null) {
+          mongoUserType = await UserRepository.instance.getLabUserType(user.email!); // Corrected this line
+        } else if (medicalStore != null) {
+          mongoUserType = await UserRepository.instance.getMedicalStoreUserType(user.email!);
+        }
 
         // Check if the user type matches
         if (firebaseUserType == mongoUserType) {
           // Navigate to the corresponding dashboard based on userType
-          switch (firebaseUserType) {
+          print(mongoUserType);
+
+          switch (mongoUserType) {
             case 'Patient':
               Get.offAll(() => PatientDashboard());
               break;
@@ -71,17 +90,17 @@ class AuthenticationRepository extends GetxController {
               Get.offAll(() => NurseDashboard());
               break;
             case 'Medical-Store':
-              Get.offAll(() => ()); // Replace with the actual Medical-Store screen
+              Get.offAll(() => MedicalStoreDashboard());
               break;
             default:
-              Get.offAll(() => WelcomeScreen()); // Default screen for unexpected userType
+              Get.offAll(() => WelcomeScreen());
               break;
           }
         } else {
           // User type does not match, show options to the user
           Get.defaultDialog(
             title: "User Type Mismatch",
-            content: Text("This user is already logged in as $mongoUserType. Do you want to log in as another user press yes & No to go and select userType?"),
+            content: Text("This user is already logged in as $mongoUserType. Do you want to log in as another user? Press yes to log in again, or no to select a different user type."),
             confirm: ElevatedButton(
               onPressed: () async {
                 await logout();

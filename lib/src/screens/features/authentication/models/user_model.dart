@@ -6,6 +6,7 @@ class UserModel {
   final String email;
   final String phoneNo;
   final String? userType;
+  final String? userVerified;
 
   /// Password should not be stored in the database.
   /// Authentication will handle login/logout.
@@ -19,7 +20,9 @@ class UserModel {
     required this.fullName,
     required this.phoneNo,
     required this.userType,
+    this.userVerified,
   });
+
 
   /// Convert model to JSON structure (used for both Firebase and MongoDB)
   Map<String, dynamic> toJson() {
