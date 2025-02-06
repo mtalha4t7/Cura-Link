@@ -1,10 +1,10 @@
-import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/health_tip_card.dart';
-import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_dashboard_sidebar.dart';
-import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/quick_access_button.dart';
-import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/service_card.dart';
+import 'package:cura_link/src/screens/features/core/screens/Nurse/NurseProfile/Nurse_Profile_Screen.dart';
+import 'package:cura_link/src/screens/features/core/screens/Nurse/NurseProfile/Nurse_Update_Profile_Screen.dart';
 import 'package:flutter/material.dart';
-import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_appbar.dart';
-import '../../../../../../constants/sizes.dart';
+
+import '../../MedicalLaboratory/MedicalLabWidgets/quick_access_button.dart';
+import '../../MedicalLaboratory/MedicalLabWidgets/service_card.dart';
+
 
 class NurseDashboard extends StatelessWidget {
   const NurseDashboard({super.key});
@@ -16,51 +16,104 @@ class NurseDashboard extends StatelessWidget {
 
     return SafeArea(
       child: Scaffold(
-        appBar: PatientDashboardAppBar(isDark: isDark),
-        drawer: PatientDashboardSidebar(isDark: isDark),
+        appBar: AppBar(
+          title: Text("Nurse Dashboard", style: txtTheme.titleLarge),
+          backgroundColor: isDark ? Colors.grey[900] : Colors.blue,
+        ),
+        drawer: Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              DrawerHeader(
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.grey[800] : Colors.blue,
+                ),
+                child: const Text("Nurse Menu"),
+              ),
+              ListTile(
+                leading: const Icon(Icons.dashboard),
+                title: const Text('Dashboard'),
+                onTap: () {
+                  // Navigate to dashboard
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.book),
+                title: const Text('Bookings'),
+                onTap: () {
+                  // Navigate to bookings
+                },
+              ),
+            ],
+          ),
+        ),
         body: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(tDashboardPadding),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Welcome to Cura Link", style: txtTheme.bodyMedium),
-                Text("How can we assist you today?",
-                    style: txtTheme.displayMedium),
-                const SizedBox(height: tDashboardPadding),
+                Text("Welcome Back, Nurse!", style: txtTheme.bodyMedium),
+                const SizedBox(height: 16.0),
 
                 // Quick Access Buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     QuickAccessButton(
-                      icon: Icons.medication,
-                      label: 'Order Medicine',
+                      icon: Icons.book_online,
+                      label: 'Check Bookings',
                       onTap: () {
-                        // Order Medicine action
+                        // Navigate to bookings
                       },
                     ),
                     QuickAccessButton(
-                      icon: Icons.local_hospital,
-                      label: 'Call Nurse',
+                      icon: Icons.medical_services,
+                      label: 'Manage Services',
                       onTap: () {
-                        // Call Nurse action
+                        // Navigate to manage services
                       },
                     ),
                     QuickAccessButton(
-                      icon: Icons.science,
-                      label: 'Book Lab',
+                      icon: Icons.settings,
+                      label: 'Settings',
                       onTap: () {
-                        // Book Lab Appointment action
+                        // Open settings
                       },
                     ),
                   ],
                 ),
-                const SizedBox(height: tDashboardPadding),
+                const SizedBox(height: 16.0),
 
-                // Services Grid
+                // Bookings Section
                 const Text(
-                  "Our Services",
+                  "Current Bookings",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(
+                  height: 200,
+                  child: ListView.builder(
+                    itemCount: 5, // Replace with dynamic data
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                        leading: const Icon(Icons.person),
+                        title: Text("Booking #$index"),
+                        subtitle: Text("Details of booking $index"),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.arrow_forward),
+                          onPressed: () {
+                            // Navigate to booking details
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16.0),
+
+                // Services Section
+                const Text(
+                  "Services You Provide",
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 GridView.count(
@@ -71,53 +124,20 @@ class NurseDashboard extends StatelessWidget {
                   crossAxisSpacing: 8,
                   children: [
                     ServiceCard(
-                      icon: Icons.medical_services,
-                      title: 'Medicine Delivery',
+                      icon: Icons.local_hospital,
+                      title: 'Nursing Care',
                       onTap: () {
-                        // Navigate to Medicine Delivery
+                        // Navigate to Nursing Care details
                       },
                     ),
                     ServiceCard(
-                      icon: Icons.medical_services_sharp,
-                      title: 'Nurse Assistance',
+                      icon: Icons.healing,
+                      title: 'Wound Care',
                       onTap: () {
-                        // Navigate to Nurse Assistance
-                      },
-                    ),
-                    ServiceCard(
-                      icon: Icons.biotech,
-                      title: 'Lab Tests',
-                      onTap: () {
-                        // Navigate to Lab Tests
-                      },
-                    ),
-                    ServiceCard(
-                      icon: Icons.video_call,
-                      title: 'Virtual Consultations',
-                      onTap: () {
-                        // Navigate to Virtual Consultations
+                        // Navigate to Wound Care details
                       },
                     ),
                   ],
-                ),
-                const SizedBox(height: tDashboardPadding),
-
-                // Health Tips Section
-                const Text(
-                  "Health Tips",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(
-                  height: 120,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: const [
-                      HealthTipCard(title: "Stay\nHydrated"),
-                      HealthTipCard(title: "Eat Balanced Diet"),
-                      HealthTipCard(title: "Regular Checkups"),
-                      HealthTipCard(title: "Get Vaccinated"),
-                    ],
-                  ),
                 ),
               ],
             ),
@@ -126,15 +146,23 @@ class NurseDashboard extends StatelessWidget {
         bottomNavigationBar: BottomNavigationBar(
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.shopping_cart), label: "Orders"),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.message), label: "Messages"),
+            BottomNavigationBarItem(icon: Icon(Icons.book), label: "Bookings"),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
           ],
           onTap: (index) {
-            // Handle navigation
+            if (index == 2) {
+              // Navigate to ProfileScreen
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const NurseProfileScreen()),
+              );
+            } else {
+              // Handle other navigation
+            }
           },
+          backgroundColor: isDark ? Colors.grey[850] : Colors.white,
+          selectedItemColor: isDark ? Colors.blueAccent : Colors.blue,
+          unselectedItemColor: isDark ? Colors.white70 : Colors.black54,
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/PatientControllers/patient_profile_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,7 +7,7 @@ import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:location/location.dart';
 import '../../../../../../constants/sizes.dart';
 import '../../../../../../constants/text_strings.dart';
-import '../../../controllers/profile_controller.dart';
+
 
 class PatientProfileFormScreen extends StatefulWidget {
   const PatientProfileFormScreen({super.key});
@@ -91,7 +92,7 @@ class _PatientProfileFormScreenState extends State<PatientProfileFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(ProfileController());
+    final controller = Get.put(PatientProfileController());
 
     return Scaffold(
       appBar: AppBar(
@@ -154,42 +155,10 @@ class _PatientProfileFormScreenState extends State<PatientProfileFormScreen> {
                           ),
                         );
                       },
-                      child: const Text(tEditProfile),
+                      child: const Text("Save Changes"),
                     ),
                   ),
                   const SizedBox(height: tFormHeight),
-
-                  /// -- Created Date and Delete Button
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text.rich(
-                        TextSpan(
-                          text: tJoined,
-                          style: TextStyle(fontSize: 12),
-                          children: [
-                            TextSpan(
-                              text: tJoinedAt,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent.withOpacity(0.1),
-                          elevation: 0,
-                          foregroundColor: Colors.red,
-                          side: BorderSide.none,
-                        ),
-                        child: const Text(tDelete),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),

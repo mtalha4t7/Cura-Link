@@ -36,7 +36,7 @@ class HealthTipCard extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 10,
               color: isDarkTheme
                   ? tWhiteColor
                   : tDarkColor, // Adjust text color based on theme

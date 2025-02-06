@@ -6,8 +6,6 @@ import 'package:cura_link/src/screens/features/authentication/screens/welcome/we
 import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabDashboard/medicalLab_dashboard.dart';
 import 'package:cura_link/src/screens/features/core/screens/MedicalStore/MedicalStoreDashboard/MedicalStore_Dashboard.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientDashboard/patient_dashboard.dart';
-import 'package:cura_link/src/screens/features/core/screens/dashboards/labDashboard/lab_dashboard.dart';
-import 'package:cura_link/src/screens/features/core/screens/dashboards/nurseDashboard/nurse_dashboard.dart';
 import 'package:cura_link/src/shared%20prefrences/shared_prefrence.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';

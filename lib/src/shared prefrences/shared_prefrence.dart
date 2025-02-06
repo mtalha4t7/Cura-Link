@@ -55,7 +55,32 @@ Future<void> saveServicesToPreferences(List<String> services) async {
   await prefs.setStringList('testServices', services);
 }
 
+
 Future<List<String>> getServicesFromPreferences() async {
   final prefs = await SharedPreferences.getInstance();
   return prefs.getStringList('testServices') ?? [];
 }
+
+
+Future<void> saveEmail(String email) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('email', email);
+}
+
+
+Future<String?> loadEmail() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString('email');
+}
+
+Future<void> saveLabName(String name) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('name', name);
+}
+
+
+Future<String?> loadLabName() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString('name');
+}
+

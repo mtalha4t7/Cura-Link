@@ -1,10 +1,8 @@
-import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/health_tip_card.dart';
-import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_dashboard_sidebar.dart';
-import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/quick_access_button.dart';
-import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/service_card.dart';
+import 'package:cura_link/src/screens/features/core/screens/MedicalStore/MedicalStoreProfile/MedicalStore_Profile_Screen.dart';
 import 'package:flutter/material.dart';
-import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_appbar.dart';
 import '../../../../../../constants/sizes.dart';
+import '../../MedicalLaboratory/MedicalLabWidgets/quick_access_button.dart';
+import '../../MedicalLaboratory/MedicalLabWidgets/service_card.dart';
 
 class MedicalStoreDashboard extends StatelessWidget {
   const MedicalStoreDashboard({super.key});
@@ -16,17 +14,52 @@ class MedicalStoreDashboard extends StatelessWidget {
 
     return SafeArea(
       child: Scaffold(
-        appBar: PatientDashboardAppBar(isDark: isDark),
-        drawer: PatientDashboardSidebar(isDark: isDark),
+        appBar: AppBar(
+          title: Text("Medical Store Dashboard", style: txtTheme.titleLarge),
+          backgroundColor: isDark ? Colors.grey[900] : Colors.blue,
+        ),
+        drawer: Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              DrawerHeader(
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.grey[800] : Colors.blue,
+                ),
+                child: const Text("Medical Store Menu"),
+              ),
+              ListTile(
+                leading: const Icon(Icons.dashboard),
+                title: const Text('Dashboard'),
+                onTap: () {
+                  // Navigate to dashboard
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.inventory),
+                title: const Text('Inventory'),
+                onTap: () {
+                  // Navigate to inventory
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.settings),
+                title: const Text('Settings'),
+                onTap: () {
+                  // Navigate to settings
+                },
+              ),
+            ],
+          ),
+        ),
         body: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(tDashboardPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Welcome to Cura Link", style: txtTheme.bodyMedium),
-                Text("How can we assist you today?",
-                    style: txtTheme.displayMedium),
+                Text("Welcome Back!", style: txtTheme.bodyMedium),
+                Text("Manage your store effectively.", style: txtTheme.displayMedium),
                 const SizedBox(height: tDashboardPadding),
 
                 // Quick Access Buttons
@@ -34,33 +67,33 @@ class MedicalStoreDashboard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     QuickAccessButton(
-                      icon: Icons.medication,
-                      label: 'Order Medicine',
+                      icon: Icons.shopping_cart,
+                      label: 'View Orders',
                       onTap: () {
-                        // Order Medicine action
+                        // Navigate to orders
                       },
                     ),
                     QuickAccessButton(
-                      icon: Icons.local_hospital,
-                      label: 'Call Nurse',
+                      icon: Icons.inventory,
+                      label: 'Inventory',
                       onTap: () {
-                        // Call Nurse action
+                        // Navigate to inventory
                       },
                     ),
                     QuickAccessButton(
-                      icon: Icons.science,
-                      label: 'Book Lab',
+                      icon: Icons.add_circle_outline,
+                      label: 'Restock Items',
                       onTap: () {
-                        // Book Lab Appointment action
+                        // Navigate to restocking
                       },
                     ),
                   ],
                 ),
                 const SizedBox(height: tDashboardPadding),
 
-                // Services Grid
+                // Services Section
                 const Text(
-                  "Our Services",
+                  "Store Services",
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 GridView.count(
@@ -71,54 +104,36 @@ class MedicalStoreDashboard extends StatelessWidget {
                   crossAxisSpacing: 8,
                   children: [
                     ServiceCard(
-                      icon: Icons.medical_services,
-                      title: 'Medicine Delivery',
+                      icon: Icons.shopping_bag,
+                      title: 'Pending Orders',
                       onTap: () {
-                        // Navigate to Medicine Delivery
+                        // Navigate to pending orders
                       },
                     ),
                     ServiceCard(
-                      icon: Icons.medical_services_sharp,
-                      title: 'Nurse Assistance',
+                      icon: Icons.local_shipping,
+                      title: 'Shipped Orders',
                       onTap: () {
-                        // Navigate to Nurse Assistance
+                        // Navigate to shipped orders
                       },
                     ),
                     ServiceCard(
-                      icon: Icons.biotech,
-                      title: 'Lab Tests',
+                      icon: Icons.reorder,
+                      title: 'Restocking Requests',
                       onTap: () {
-                        // Navigate to Lab Tests
+                        // Navigate to restocking requests
                       },
                     ),
                     ServiceCard(
-                      icon: Icons.video_call,
-                      title: 'Virtual Consultations',
+                      icon: Icons.analytics,
+                      title: 'Sales Report',
                       onTap: () {
-                        // Navigate to Virtual Consultations
+                        // Navigate to sales reports
                       },
                     ),
                   ],
                 ),
                 const SizedBox(height: tDashboardPadding),
-
-                // Health Tips Section
-                const Text(
-                  "Health Tips",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(
-                  height: 120,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: const [
-                      HealthTipCard(title: "Stay\nHydrated"),
-                      HealthTipCard(title: "Eat Balanced Diet"),
-                      HealthTipCard(title: "Regular Checkups"),
-                      HealthTipCard(title: "Get Vaccinated"),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),
@@ -126,14 +141,22 @@ class MedicalStoreDashboard extends StatelessWidget {
         bottomNavigationBar: BottomNavigationBar(
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.shopping_cart), label: "Orders"),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.message), label: "Messages"),
+            BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: "Orders"),
+            BottomNavigationBarItem(icon: Icon(Icons.inventory), label: "Inventory"),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
           ],
           onTap: (index) {
-            // Handle navigation
+            if (index == 3) {
+              // Navigate to Profile Screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MedicalStoreProfileScreen()),
+              );
+            } else if (index == 1) {
+              // Navigate to Orders
+            } else if (index == 2) {
+              // Navigate to Inventory
+            }
           },
         ),
       ),

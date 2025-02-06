@@ -1,11 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
-import 'package:cura_link/src/screens/features/core/screens/Nurse/NurseProfile/Nurse_Update_Profile_Screen.dart';
+import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabProfile/medicalLab_update_profile_screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/PatientProfile/patient_all_users.dart';
-import 'package:cura_link/src/screens/features/core/screens/Patient/PatientProfile/patient_update_profile_screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/profile/widgets/profile_menu.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +20,8 @@ class NurseProfileScreen extends StatefulWidget {
   const NurseProfileScreen({super.key});
 
   @override
-  _NurseProfileScreenState createState() => _NurseProfileScreenState();
+  _NurseProfileScreenState createState() =>
+      _NurseProfileScreenState();
 }
 
 class _NurseProfileScreenState extends State<NurseProfileScreen> {
@@ -134,7 +133,7 @@ class _NurseProfileScreenState extends State<NurseProfileScreen> {
                 isFullWidth: false,
                 width: 200,
                 text: tEditProfile,
-                onPressed: () => Get.to(() => NurseProfileFormScreen()),
+                onPressed: () => Get.to(() => MedicalLabProfileFormScreen()),
               ),
               const SizedBox(height: 30),
               const Divider(),

@@ -10,7 +10,6 @@ import '../../../../../utils/animations/fade_in_animation/fade_in_animation_cont
 import '../../../../../utils/animations/fade_in_animation/fade_in_animation_model.dart';
 import '../signup/signup_screen.dart';
 
-//Wellcomescreen extends Statelesswidget
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 

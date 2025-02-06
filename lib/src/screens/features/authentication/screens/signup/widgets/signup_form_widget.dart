@@ -28,10 +28,13 @@ class SignUpFormWidget extends StatelessWidget {
               controller: controller.userName,
               validator: (value) {
                 if (value!.isEmpty) return 'Name cannot be empty';
+                if (RegExp(r'\d').hasMatch(value)) return 'Name cannot contain Numbers';
                 return null;
+
               },
               decoration: const InputDecoration(
                   label: Text(tFullName),
+                  labelStyle: TextStyle(fontFamily: 'Poppins'),
                   prefixIcon: Icon(LineAwesomeIcons.user)),
             ),
             const SizedBox(height: tFormHeight - 20),
@@ -40,18 +43,26 @@ class SignUpFormWidget extends StatelessWidget {
               validator: Helper.validateEmail,
               decoration: const InputDecoration(
                   label: Text(tEmail),
+                  labelStyle: TextStyle(fontFamily: 'Poppins'),
+                  hintText: "example@mail.com",
+                  hintStyle: TextStyle(fontSize: 14,fontFamily: 'Poppins'),
                   prefixIcon: Icon(LineAwesomeIcons.envelope)),
             ),
             const SizedBox(height: tFormHeight - 20),
             TextFormField(
               controller: controller.userPhone,
               keyboardType: TextInputType.phone,
+
+              maxLength: 11,
               validator: (value) {
                 if (value!.isEmpty) return 'Phone number cannot be empty';
                 return null;
               },
               decoration: const InputDecoration(
                   label: Text(tPhoneNo),
+                  labelStyle: TextStyle(fontFamily: 'Poppins'),
+                  hintText: "e,g 03439888369",
+                  hintStyle: TextStyle(fontSize: 14,fontFamily: 'Poppins'),
                   prefixIcon: Icon(LineAwesomeIcons.phone_solid)),
             ),
             const SizedBox(height: tFormHeight - 20),
@@ -61,7 +72,9 @@ class SignUpFormWidget extends StatelessWidget {
                 validator: Helper.validatePassword,
                 obscureText: controller.showPassword.value ? false : true,
                 decoration: InputDecoration(
+                  suffixStyle: TextStyle(fontFamily: 'Poppins'),
                   label: const Text(tPassword),
+                  labelStyle: TextStyle(fontFamily: 'Poppins'),
                   prefixIcon: const Icon(Icons.fingerprint),
                   suffixIcon: IconButton(
                     icon: controller.showPassword.value

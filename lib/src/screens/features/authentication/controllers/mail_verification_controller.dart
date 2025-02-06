@@ -35,7 +35,14 @@ class MailVerificationController extends GetxController {
       }
     });
   }
-
+  Future<void> resetPassword(String email) async {
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      Helper.successSnackBar(title: 'Password Reset', message: 'Password reset email sent to $email');
+    } catch (e) {
+      Helper.errorSnackBar(title: tOhSnap, message: e.toString());
+    }
+  }
   /// -- Manually Check if Verification Completed then Redirect
   void manuallyCheckEmailVerificationStatus() {
     FirebaseAuth.instance.currentUser?.reload();

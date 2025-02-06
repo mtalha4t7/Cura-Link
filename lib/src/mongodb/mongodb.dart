@@ -15,6 +15,7 @@ class MongoDatabase {
   static DbCollection? _medicalLabServices;
   static DbCollection? _userVerification;
   static DbCollection? _bookingsCollection;
+  static DbCollection? _patientBookingsCollection;
 
   // Connect to MongoDB and initialize the collections
   static Future<void> connect() async {
@@ -32,6 +33,7 @@ class MongoDatabase {
       _medicalLabServices = _db!.collection(LAB_SERVICES);
       _userVerification = _db!.collection(USER_VERIFICATION);
       _bookingsCollection = _db!.collection(LAB_BOOKINGS);
+      _patientBookingsCollection = _db!.collection(PATIENT_LAB_BOOKINGS);
       // Optional: Use inspect to debug the database connection
       inspect(_db);
 
@@ -50,6 +52,7 @@ class MongoDatabase {
   static DbCollection? get medicalLabServices => _medicalLabServices;
   static DbCollection? get userVerification => _userVerification;
   static DbCollection? get bookingsCollection => _bookingsCollection;
+  static DbCollection? get patientBookingsCollection => _patientBookingsCollection;
 
   // Close the MongoDB connection
   static Future<void> close() async {
@@ -63,6 +66,8 @@ class MongoDatabase {
       _medicalLabServices = null;
       _userVerification = null;
       _bookingsCollection = null;
+      _patientBookingsCollection = null;
+
       logger.i('MongoDB connection closed');
     }
   }
@@ -230,6 +235,22 @@ class MongoDatabase {
 
   static Future<void> createBookingIndexes() async {
     await createIndexes(_bookingsCollection);
+  }
+//Lab booking
+  static Future<void> insertPatientLabBooking(Map<String, dynamic> user) async {
+    await insertUser(user, _patientBookingsCollection);
+  }
+
+  static Future<Map<String, dynamic>?> findPatientBooking(String email) async {
+    return await findUser(email: email, collection: _patientBookingsCollection);
+  }
+
+  static Future<void> updatePatientBooking(Map<String, dynamic> updatedUser) async {
+    await updateUser(updatedUser, _patientBookingsCollection);
+  }
+
+  static Future<void> createPatientBookingIndexes() async {
+    await createIndexes(_patientBookingsCollection);
   }
 
   //Lab services

@@ -1,3 +1,4 @@
+import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookings/my_bookings.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/health_tip_card.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_dashboard_sidebar.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/quick_access_button.dart';
@@ -5,6 +6,7 @@ import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidge
 import 'package:flutter/material.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_appbar.dart';
 import '../../../../../../constants/sizes.dart';
+import '../LabBooking/lab_booking.dart';
 
 class PatientDashboard extends StatelessWidget {
   const PatientDashboard({super.key});
@@ -51,7 +53,12 @@ class PatientDashboard extends StatelessWidget {
                       icon: Icons.science,
                       label: 'Book Lab',
                       onTap: () {
-                        // Book Lab Appointment action
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => LabBookingScreen(),
+                          ),
+                        );
                       },
                     ),
                   ],
@@ -92,10 +99,15 @@ class PatientDashboard extends StatelessWidget {
                       },
                     ),
                     ServiceCard(
-                      icon: Icons.video_call,
-                      title: 'Virtual Consultations',
+                      icon: Icons.add_to_queue,
+                      title: 'My Bookings',
                       onTap: () {
-                        // Navigate to Virtual Consultations
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MyBookingsScreen(),
+                          ),
+                        );
                       },
                     ),
                   ],
@@ -124,6 +136,10 @@ class PatientDashboard extends StatelessWidget {
           ),
         ),
         bottomNavigationBar: BottomNavigationBar(
+          backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+          unselectedItemColor: isDark ? Colors.grey[500] : Colors.grey,
+          selectedItemColor: isDark ? Colors.white : Colors.blue,
+          type: BottomNavigationBarType.fixed,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
             BottomNavigationBarItem(

@@ -1,4 +1,5 @@
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
+import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabControllers/lab_profile_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,7 +7,6 @@ import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:location/location.dart';
 import '../../../../../../constants/sizes.dart';
 import '../../../../../../constants/text_strings.dart';
-import '../../../controllers/profile_controller.dart';
 
 class MedicalStoreProfileFormScreen extends StatefulWidget {
   const MedicalStoreProfileFormScreen({super.key});
@@ -20,14 +20,11 @@ class _MedicalStoreProfileFormScreenState
     extends State<MedicalStoreProfileFormScreen> {
   final TextEditingController phoneNoController = TextEditingController();
   final TextEditingController fullNameController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController userTypeController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
   final Location location = Location();
-  final controller = UserRepository.instance;
-  final email = FirebaseAuth.instance.currentUser?.email;
-  late String userName;
-  late String userPhone;
+  final UserRepository controller = UserRepository.instance;
+
+  String? email = FirebaseAuth.instance.currentUser?.email;
   bool isLoading = true;
 
   @override
@@ -37,163 +34,168 @@ class _MedicalStoreProfileFormScreenState
   }
 
   Future<void> _initializeUserProfile() async {
-    await _getName();
-    await _getPhone();
-    await _getLocation();
-    setState(() {
-      isLoading = false;
-    });
+    try {
+      if (email == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('User is not logged in. Please log in.')),
+        );
+        return;
+      }
+      await _getName();
+      await _getPhone();
+      await _getLocation();
+    } catch (e) {
+      print('Error initializing user profile: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> _getName() async {
-    userName = (await controller.getMedicalStoreUserName(email!))!;
-    setState(() {
-      fullNameController.text = userName;
-    });
+    try {
+      final userNameResponse = await controller.getMedicalStoreUserName(email!);
+      if (userNameResponse != null) {
+        setState(() {
+          fullNameController.text = userNameResponse;
+        });
+      } else {
+        print('Failed to fetch user name or invalid data type.');
+      }
+    } catch (e) {
+      print('Error fetching user name: $e');
+    }
   }
 
   Future<void> _getPhone() async {
-    userPhone = (await controller.getMedicalStorePhone(email!))!;
-    setState(() {
-      phoneNoController.text = userPhone;
-    });
+    try {
+      final userPhoneResponse = await controller.getMedicalStorePhone(email!);
+      if (userPhoneResponse != null) {
+        setState(() {
+          phoneNoController.text = userPhoneResponse;
+        });
+      } else {
+        print('Failed to fetch phone number.');
+      }
+    } catch (e) {
+      print('Error fetching phone number: $e');
+    }
   }
 
   Future<void> _getLocation() async {
-    bool serviceEnabled;
-    PermissionStatus permissionGranted;
-    LocationData locationData;
-
-    // Check if the location service is enabled
-    serviceEnabled = await location.serviceEnabled();
-    if (!serviceEnabled) {
-      serviceEnabled = await location.requestService();
+    try {
+      bool serviceEnabled = await location.serviceEnabled();
       if (!serviceEnabled) {
-        return;
+        serviceEnabled = await location.requestService();
+        if (!serviceEnabled) {
+          return;
+        }
       }
-    }
 
-    // Check if the location permission is granted
-    permissionGranted = await location.hasPermission();
-    if (permissionGranted == PermissionStatus.denied) {
-      permissionGranted = await location.requestPermission();
-      if (permissionGranted != PermissionStatus.granted) {
-        return;
+      PermissionStatus permissionGranted = await location.hasPermission();
+      if (permissionGranted == PermissionStatus.denied) {
+        permissionGranted = await location.requestPermission();
+        if (permissionGranted != PermissionStatus.granted) {
+          return;
+        }
       }
-    }
 
-    // Get the current location
-    locationData = await location.getLocation();
-    setState(() {
-      locationController.text =
-          '${locationData.latitude}, ${locationData.longitude}';
-    });
+      final locationData = await location.getLocation();
+      setState(() {
+        locationController.text =
+        '${locationData.latitude}, ${locationData.longitude}';
+      });
+    } catch (e) {
+      print('Error fetching location: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(ProfileController());
+    final profileController = Get.put(MedicalLabProfileController());
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Profile'),
+        title: const Text('Profile'),
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : Form(
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: fullNameController,
-                    decoration: const InputDecoration(
-                      label: Text(tFullName),
-                      prefixIcon: Icon(LineAwesomeIcons.user),
-                    ),
-                  ),
-                  const SizedBox(height: tFormHeight - 20),
-                  TextFormField(
-                    controller: phoneNoController,
-                    decoration: const InputDecoration(
-                      label: Text(tPhoneNo),
-                      prefixIcon: Icon(LineAwesomeIcons.phone_solid),
-                    ),
-                  ),
-                  const SizedBox(height: tFormHeight - 20),
-                  GestureDetector(
-                    onTap: _getLocation,
-                    child: AbsorbPointer(
-                      child: TextFormField(
-                        controller: locationController,
-                        decoration: const InputDecoration(
-                          label: Text('Location'),
-                          prefixIcon: Icon(LineAwesomeIcons.map_marked_solid),
-                        ),
-                        readOnly: true,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: tFormHeight),
-
-                  /// -- Form Submit Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        Map<String, dynamic> fieldsToUpdate = {
-                          'userName': fullNameController.text.trim(),
-                          'userPhone': phoneNoController.text.trim(),
-                          'userAddress': locationController.text.trim(),
-                        };
-
-                        await controller.updateUserFields(
-                            email!, fieldsToUpdate);
-
-                        // Show snack bar message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Profile updated successfully!'),
-                          ),
-                        );
-                      },
-                      child: const Text(tEditProfile),
-                    ),
-                  ),
-                  const SizedBox(height: tFormHeight),
-
-                  /// -- Created Date and Delete Button
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text.rich(
-                        TextSpan(
-                          text: tJoined,
-                          style: TextStyle(fontSize: 12),
-                          children: [
-                            TextSpan(
-                              text: tJoinedAt,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent.withOpacity(0.1),
-                          elevation: 0,
-                          foregroundColor: Colors.red,
-                          side: BorderSide.none,
-                        ),
-                        child: const Text(tDelete),
-                      ),
-                    ],
-                  ),
-                ],
+        child: Column(
+          children: [
+            TextFormField(
+              controller: fullNameController,
+              decoration: const InputDecoration(
+                label: Text(tFullName),
+                prefixIcon: Icon(LineAwesomeIcons.user),
               ),
             ),
+            const SizedBox(height: tFormHeight - 20),
+            TextFormField(
+              controller: phoneNoController,
+              decoration: const InputDecoration(
+                label: Text(tPhoneNo),
+                prefixIcon: Icon(LineAwesomeIcons.phone_solid),
+              ),
+            ),
+            const SizedBox(height: tFormHeight - 20),
+            GestureDetector(
+              onTap: _getLocation,
+              child: AbsorbPointer(
+                child: TextFormField(
+                  controller: locationController,
+                  decoration: const InputDecoration(
+                    label: Text('Location'),
+                    prefixIcon: Icon(LineAwesomeIcons.map_marked_solid),
+                  ),
+                  readOnly: true,
+                ),
+              ),
+            ),
+            const SizedBox(height: tFormHeight),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  if (email == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('User is not logged in.')),
+                    );
+                    return;
+                  }
+
+                  Map<String, dynamic> fieldsToUpdate = {
+                    'userName': fullNameController.text.trim(),
+                    'userPhone': phoneNoController.text.trim(),
+                    'userAddress': locationController.text.trim(),
+                  };
+
+                  try {
+                    await profileController.updateUserFields(
+                        email!, fieldsToUpdate);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Profile updated successfully!')),
+                    );
+                  } catch (e) {
+                    print('Error updating profile: $e');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Failed to update profile.')),
+                    );
+                  }
+                },
+                child: const Text(tEditProfile),
+              ),
+            ),
+            const SizedBox(height: tFormHeight),
+
+          ],
+        ),
+      ),
     );
   }
 }

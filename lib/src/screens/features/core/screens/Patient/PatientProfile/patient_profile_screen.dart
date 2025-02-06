@@ -54,7 +54,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
 
   Future<void> _loadProfileImage(String email) async {
     try {
-      final userData = await UserRepository.instance.getLabUserByEmail(email);
+      final userData = await UserRepository.instance.getPatientByEmail(email);
       if (userData != null && userData['profileImage'] != null) {
         final base64Image = userData['profileImage'] as String;
         final decodedBytes = base64Decode(base64Image);
@@ -147,11 +147,6 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 title: "Billing Details",
                 icon: LineAwesomeIcons.wallet_solid,
                 onPress: () {},
-              ),
-              ProfileMenuWidget(
-                title: "User Management",
-                icon: LineAwesomeIcons.user_check_solid,
-                onPress: () => Get.to(() => PatientAllUsers()),
               ),
               const Divider(),
               const SizedBox(height: 10),

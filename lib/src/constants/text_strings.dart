@@ -1,5 +1,43 @@
 /* -- App Text Strings -- */
 
+
+// test_services_constants.dart
+const List<String> testServices = [
+  'Blood Test',
+  'Urine Test',
+  'Liver Function Test',
+  'Thyroid Test',
+  'Lipid Profile',
+  'Cholesterol Test',
+  'Uric Acid Test',
+  'Hepatitis B Test',
+  'Hepatitis C Test',
+  'Beta hCG Test',
+  'Complete Blood Count (CBC)',
+  'Semen Analysis',
+  '24 Hours Urine Test',
+  'Body Fluids Analysis',
+  'Pleural Fluid Routine Exam',
+  'Synovial Fluid for RE',
+  '24 Hours Urine Magnesium',
+  '24 Hours Urine Micro Albumin',
+  '24 Hours Urine Protein',
+  '24 Hours Urine Uric Acid',
+  '24 Hours Urine for Urea',
+  '24 Hours Urine Creatinine',
+  '24 Hours Urine Calcium',
+  '24 Hours Urine Electrolyte',
+  'Blood Culture Bottle Charges',
+  'Gabapentin',
+  'Ascitic Fluid R/E',
+  'C.S.F Routine Examination',
+  'Fluid RE',
+  'Pleural Fluid Routine Exam',
+  'Synovial Fluid for RE',
+];
+
+
+
 //MongoDB Texts
 // ignore: constant_identifier_names
 const MONGO_URL =
@@ -13,6 +51,7 @@ const String USER_MEDICAL_STORE_COLLECTION_NAME="userMedicalStore";
 const String LAB_SERVICES="labServices";
 const String USER_VERIFICATION="userVerification";
 const String LAB_BOOKINGS="labBookings";
+const String PATIENT_LAB_BOOKINGS="patientLabBookings";
 const String ipAddress = "http://192.168.1.45:4000";
 // -- GLOBAL Texts
 const String tNo = "No";

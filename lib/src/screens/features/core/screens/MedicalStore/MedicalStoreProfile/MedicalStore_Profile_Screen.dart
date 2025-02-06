@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
+import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabProfile/medicalLab_update_profile_screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/PatientProfile/patient_all_users.dart';
-import 'package:cura_link/src/screens/features/core/screens/Patient/PatientProfile/patient_update_profile_screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/profile/widgets/profile_menu.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +15,6 @@ import '../../../../../../constants/sizes.dart';
 import '../../../../../../constants/text_strings.dart';
 import '../../../../../../mongodb/mongodb.dart';
 import '../../../../../../repository/authentication_repository/authentication_repository.dart';
-import 'MedicalStore_Update_Profile_Screen.dart';
 
 class MedicalStoreProfileScreen extends StatefulWidget {
   const MedicalStoreProfileScreen({super.key});
@@ -45,7 +43,7 @@ class _MedicalStoreProfileScreenState extends State<MedicalStoreProfileScreen> {
         email = user.email ?? '';
       });
 
-      final nameFromDB = await UserRepository().getMedicalStoreUserName(email);
+      final nameFromDB = await UserRepository().getNurseUserName(email);
       setState(() {
         name = nameFromDB ?? "No full name available";
       });
@@ -56,8 +54,7 @@ class _MedicalStoreProfileScreenState extends State<MedicalStoreProfileScreen> {
 
   Future<void> _loadProfileImage(String email) async {
     try {
-      final userData =
-          await UserRepository.instance.getMedicalStoreUserByEmail(email);
+      final userData = await UserRepository.instance.getNurseUserByEmail(email);
       if (userData != null && userData['profileImage'] != null) {
         final base64Image = userData['profileImage'] as String;
         final decodedBytes = base64Decode(base64Image);
@@ -83,7 +80,7 @@ class _MedicalStoreProfileScreenState extends State<MedicalStoreProfileScreen> {
         final base64Image = base64Encode(bytes);
 
         // Upload image to MongoDB
-        final collection = MongoDatabase.userMedicalStoreCollection;
+        final collection = MongoDatabase.userNurseCollection;
         await UserRepository.instance.uploadProfileImage(
             email: email, base64Image: base64Image, collection: collection);
 
@@ -136,7 +133,7 @@ class _MedicalStoreProfileScreenState extends State<MedicalStoreProfileScreen> {
                 isFullWidth: false,
                 width: 200,
                 text: tEditProfile,
-                onPressed: () => Get.to(() => MedicalStoreProfileFormScreen()),
+                onPressed: () => Get.to(() => MedicalLabProfileFormScreen()),
               ),
               const SizedBox(height: 30),
               const Divider(),

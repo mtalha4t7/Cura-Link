@@ -1,10 +1,9 @@
 import 'package:bson/bson.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:mongo_dart/mongo_dart.dart';
 import '../../../../../../mongodb/mongodb.dart';
 
-class BookingController {
-
+class MyBookingsController {
+  // Fetch user bookings from the MongoDB collection
   Future<List<Map<String, dynamic>>> fetchUserBookings() async {
     final user = FirebaseAuth.instance.currentUser;
     final userEmail = user?.email;
@@ -15,8 +14,8 @@ class BookingController {
 
     try {
       // Query the database for bookings tied to the user's email
-      final userBookings = await MongoDatabase.bookingsCollection
-          ?.find({'labUserEmail': userEmail}).toList();
+      final userBookings = await MongoDatabase.patientBookingsCollection
+          ?.find({'patientUserEmail': userEmail}).toList();
       if (userBookings != null) {
         return userBookings;
       }
@@ -123,16 +122,21 @@ class BookingController {
     }
   }
 
+
+  // Update the status of a booking
   Future<void> updateBookingStatus(String bookingId, String newStatus) async {
     try {
       print('Attempting to update booking ID: $bookingId to status: $newStatus');
 
+      // Convert bookingId to ObjectId
       final objectId = ObjectId.parse(bookingId);
+      final bookingIdAsString = objectId.toHexString(); // Convert to string
+
       print('Parsed ObjectId: $objectId');
 
       // Update the status in bookingsCollection
       final result = await MongoDatabase.bookingsCollection?.updateOne(
-        {'_id': objectId},
+        {'_id': objectId}, // Use ObjectId for labBookings
         {'\$set': {'status': newStatus}},
       );
 
@@ -144,14 +148,15 @@ class BookingController {
 
       // Check if a matching document exists in patientBookingsCollection
       final existingPatientBooking = await MongoDatabase.patientBookingsCollection?.findOne({
-        'bookingId': objectId.toHexString(), // Query as a string
+        'bookingId': bookingIdAsString, // Use string for patientBookings
       });
+
       print('Existing booking in patientBookings collection: $existingPatientBooking');
 
       if (existingPatientBooking != null) {
         // Update the status in patientBookingsCollection
         final updateResult = await MongoDatabase.patientBookingsCollection?.updateOne(
-          {'bookingId': objectId.toHexString()}, // Query as a string
+          {'bookingId': bookingIdAsString}, // Match as string
           {'\$set': {'status': newStatus}},
         );
 
@@ -170,7 +175,7 @@ class BookingController {
 
 
 
-  // Update the booking date
+
 // Update the booking date
   Future<void> updateBookingDate(String bookingId, String newDate) async {
     try {
@@ -218,5 +223,5 @@ class BookingController {
       print('Error updating booking date: $e');
     }
   }
-}
 
+}

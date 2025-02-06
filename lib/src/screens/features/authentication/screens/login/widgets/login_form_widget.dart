@@ -30,7 +30,9 @@ class LoginFormWidget extends StatelessWidget {
               decoration: const InputDecoration(
                   prefixIcon: Icon(LineAwesomeIcons.user),
                   labelText: tEmail,
+                  labelStyle: TextStyle(fontFamily: 'Poppins'),
                   hintText: tEmail),
+              style: TextStyle(fontFamily: 'Poppins'),
             ),
             const SizedBox(height: tFormHeight - 20),
 
@@ -46,7 +48,9 @@ class LoginFormWidget extends StatelessWidget {
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.fingerprint),
                   labelText: tPassword,
+                  labelStyle: TextStyle(fontFamily: 'Poppins'),
                   hintText: tPassword,
+                  hintStyle: TextStyle(fontFamily: 'Poppins'),
                   suffixIcon: IconButton(
                     icon: controller.showPassword.value
                         ? const Icon(LineAwesomeIcons.eye)

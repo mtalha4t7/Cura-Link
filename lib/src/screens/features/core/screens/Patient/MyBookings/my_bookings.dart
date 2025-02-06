@@ -1,16 +1,19 @@
 import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabWidgets/booking_card.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_bookings_card.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../MedicalLabControllers/lab_manage_booking_controller.dart';
 
-class ManageBookingScreen extends StatefulWidget {
-  const ManageBookingScreen({super.key});
+import '../PatientControllers/my_bookings_controller.dart';
+
+class MyBookingsScreen extends StatefulWidget {
+  const MyBookingsScreen({super.key});
 
   @override
-  _ManageBookingScreenState createState() => _ManageBookingScreenState();
+  _MyBookingsScreenState createState() => _MyBookingsScreenState();
 }
-class _ManageBookingScreenState extends State<ManageBookingScreen> {
-  final BookingController _controller = BookingController();
+
+class _MyBookingsScreenState extends State<MyBookingsScreen> {
+  final MyBookingsController _controller = MyBookingsController();
 
   // Function to format date
   String formatDate(String rawDate) {
@@ -68,7 +71,8 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
                         child: Text(
                           'No bookings found.',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: isDarkTheme ? Colors.white54 : Colors.black54,
+                            color:
+                            isDarkTheme ? Colors.white54 : Colors.black54,
                           ),
                         ),
                       );
@@ -77,54 +81,55 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
                       itemCount: bookings.length,
                       itemBuilder: (context, index) {
                         final booking = bookings[index];
-                        final price = booking['price']?.toString() ?? '0.0'; // Ensure price is String
-
-                        return BookingCard(
-                          patientName: booking['patientName'] ?? 'Unknown',
-                          testName: booking['testName'] ?? 'Unknown Test',
-                          bookingDate: formatDate(booking['bookingDate'] ?? ''),
+                        final price = booking['price']?.toString() ?? '0.0';
+                        return PatientBookingsCard(
+                          patientName: booking['patientName'],
+                          testName: booking['testName'],
+                          bookingDate: formatDate(booking['bookingDate']),
                           status: booking['status'] ?? 'Pending',
-                          price: price,
+                          price: price, // Explicitly specify the price parameter
                           isDark: isDarkTheme,
                           onAccept: () {
-                            if(booking['status']!="Modified"){
+                            if(booking['status']=="Modified"){
                               _controller.updateBookingStatus(
-                                booking['_id'].toHexString(), // Convert ObjectId to String
+                                booking['bookingId'], // MongoDB ObjectId
                                 'Accepted',
                               );
                               setState(() {});
                             }else{
                               ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Once modified, patient can accept this booking.'),
-                                    duration: const Duration(seconds: 3), // Duration of SnackBar
-                                  ),
-                              );
-                            }
-                          },
-                          onReject: () {
-                            if(booking['status']!="Accepted"){
-                              _controller.rejectAndDeleteBooking(
-                                  booking['_id'].toHexString()
-                              );
-                              setState(() {});
-                            }else{
-                              ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Booking is already accepted!'),
+                                  content: Text('You can only Accept,When booking is modified by Lab'),
                                   duration: const Duration(seconds: 3), // Duration of SnackBar
                                 ),
                               );
                             }
 
                           },
-                          onModify: () {
+                          onReject: () {
                             if(booking['status']!="Accepted"){
-                              _showModifyDialog(context, booking);
+
+                              _controller.rejectAndDeleteBooking(booking['bookingId']);
+                              setState(() {});
                             }else{
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('You cannot modify accepted Booking!'),
+                                  content: Text('Once Accepted, you cannot cancel the booking'),
+                                  duration: const Duration(seconds: 3), // Duration of SnackBar
+                                ),
+                              );
+
+                            }
+
+                          },
+                          onModify: () {
+                            if(booking['status']!="Accepted"){
+                              _showModifyDialog(context, booking);
+                            }
+                            else{
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Booking is accepted, you cannot Modify This Booking'),
                                   duration: const Duration(seconds: 3), // Duration of SnackBar
                                 ),
                               );
@@ -182,16 +187,11 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
         // Update the TextField
         modifyDateController.text = formattedDate;
 
-        // Update the booking date and set status to "Modified"
-        await _controller.updateBookingDate(
-          booking['_id'].toHexString(), // Convert ObjectId to String
+        // Confirm the changes and save
+        _controller.updateBookingDate(
+          booking['_id'], // MongoDB ObjectId
           formattedDate,
         );
-        await _controller.updateBookingStatus(
-          booking['_id'].toHexString(), // Convert ObjectId to String
-          'Modified', // Change status to "Modified"
-        );
-
         setState(() {}); // Refresh the UI after update
         Navigator.pop(context); // Close the dialog
       }

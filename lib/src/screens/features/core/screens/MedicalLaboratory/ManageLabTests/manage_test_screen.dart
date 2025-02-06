@@ -1,19 +1,21 @@
-import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabWidgets/test_service_card.dart';
 import 'package:flutter/material.dart';
+import '../../../../../../constants/text_strings.dart';
+import '../MedicalLabWidgets/test_service_card.dart';
+import '../MedicalLabWidgets/custom_button.dart';
 import 'manage_test_controller.dart';
 
 class ManageTestServicesScreen extends StatefulWidget {
   const ManageTestServicesScreen({super.key});
 
   @override
-  _ManageTestServicesScreenState createState() =>
-      _ManageTestServicesScreenState();
+  _ManageTestServicesScreenState createState() => _ManageTestServicesScreenState();
 }
 
 class _ManageTestServicesScreenState extends State<ManageTestServicesScreen> {
   final TextEditingController _serviceNameController = TextEditingController();
   final TextEditingController _prizeController = TextEditingController();
   final TestServiceController _controller = TestServiceController();
+  String _selectedTestService = '';
 
   @override
   Widget build(BuildContext context) {
@@ -43,13 +45,30 @@ class _ManageTestServicesScreenState extends State<ManageTestServicesScreen> {
             ),
             const SizedBox(height: 20),
 
-            // TextField to enter service name
-            _buildTextField(
-              controller: _serviceNameController,
-              label: 'Enter Test Service',
-              hint: 'E.g., Blood Test',
-              icon: Icons.medical_services,
-              isDark: isDarkTheme,
+            // Advanced Dropdown to select test services
+            DropdownButton<String>(
+              value: _selectedTestService.isEmpty ? null : _selectedTestService,
+              hint: Text('Select a Test Service'),
+              icon: Icon(Icons.arrow_downward),
+              iconSize: 24,
+              elevation: 16,
+              style: TextStyle(color: isDarkTheme ? Colors.white : Colors.black),
+              underline: Container(
+                height: 2,
+                color: isDarkTheme ? Colors.white70 : Colors.grey[200],
+              ),
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedTestService = newValue!;
+                  _serviceNameController.text = _selectedTestService;
+                });
+              },
+              items: testServices.map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
             ),
             const SizedBox(height: 16),
 
@@ -112,8 +131,7 @@ class _ManageTestServicesScreenState extends State<ManageTestServicesScreen> {
                         child: Text(
                           'No services added yet.',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color:
-                                isDarkTheme ? Colors.white54 : Colors.black54,
+                            color: isDarkTheme ? Colors.white54 : Colors.black54,
                           ),
                         ),
                       );
@@ -127,11 +145,36 @@ class _ManageTestServicesScreenState extends State<ManageTestServicesScreen> {
                           prize: service['prize'],
                           isDark: isDarkTheme,
                           onDelete: () {
-                            _controller
-                                .removeTestService(service['serviceName'])
-                                .then((_) {
-                              setState(() {});
-                            });
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text("Confirm Delete"),
+                                  content: const Text("Are you sure you want to delete this test service?"),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        // Dismiss the dialog
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: const Text("No"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        // Proceed with deletion
+                                        _controller.removeTestService(context, service['serviceName']).then((_) {
+                                          setState(() {});
+                                        });
+
+                                        // Dismiss the dialog
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: const Text("Yes"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
                           },
                         );
                       },

@@ -2,6 +2,7 @@ import 'package:cura_link/src/constants/image_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../../../repository/authentication_repository/authentication_repository.dart';
 import '../MedicalLabProfile/medicalLab_profile_screen.dart';
 
 class MedicalLabDashboardSidebar extends StatelessWidget {
@@ -83,7 +84,7 @@ class MedicalLabDashboardSidebar extends StatelessWidget {
                 middleText: 'Are you sure you want to log out?',
                 onConfirm: () {
                   // Perform logout
-                  Get.offAllNamed('/welcome');
+                  AuthenticationRepository.instance.logout();
                 },
                 onCancel: () {},
               );

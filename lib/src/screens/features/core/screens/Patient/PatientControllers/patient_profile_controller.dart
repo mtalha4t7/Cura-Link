@@ -1,21 +1,24 @@
+import 'package:cura_link/src/constants/text_strings.dart';
 import 'package:cura_link/src/shared%20prefrences/shared_prefrence.dart';
 import 'package:get/get.dart';
 import 'package:mongo_dart/mongo_dart.dart';
-import '../../../../constants/text_strings.dart';
-import '../../../../mongodb/mongodb.dart';
-import '../../../../repository/authentication_repository/authentication_repository.dart';
-import '../../../../repository/user_repository/user_repository.dart';
-import '../../../../utils/helper/helper_controller.dart';
-import '../../authentication/models/user_model.dart';
 
-class ProfileController extends GetxController {
-  static ProfileController get instance => Get.find();
+import '../../../../../../mongodb/models/user_model.dart';
 
-  // Repositories
+import '../../../../../../mongodb/mongodb.dart';
+import '../../../../../../repository/authentication_repository/authentication_repository.dart';
+import '../../../../../../repository/user_repository/user_repository.dart';
+import '../../../../../../utils/helper/helper_controller.dart';
+
+
+class PatientProfileController extends GetxController {
+  static PatientProfileController get instance => Get.find();
+
+  /// Repositories
   final _authRepo = AuthenticationRepository.instance;
   final _userRepo = UserRepository.instance;
 
-  // Get User Email and pass to UserRepository to fetch user record.
+  /// Get User Email and pass to UserRepository to fetch user record.
 
   Future<List<UserModel>> getAllUsers() async {
     try {
@@ -48,13 +51,13 @@ class ProfileController extends GetxController {
     try {
       String? userType = await loadUserType();
       if (userType == "Patient") {
-        await _userRepo.updatePatient(user.email, user.toJson());
+        await _userRepo.updatePatient(user.userEmail, user.toJson());
       } else if (userType == "Lab") {
-        await _userRepo.updateLabUser(user.email, user.toJson());
+        await _userRepo.updateLabUser(user.userEmail, user.toJson());
       } else if (userType == "Medical-Store") {
-        await _userRepo.updateMedicalStoreUser(user.email, user.toJson());
+        await _userRepo.updateMedicalStoreUser(user.userEmail, user.toJson());
       } else if (userType == "Nurse") {
-        await _userRepo.updateNurseUser(user.email, user.toJson());
+        await _userRepo.updateNurseUser(user.userEmail, user.toJson());
       }
 
       Helper.successSnackBar(

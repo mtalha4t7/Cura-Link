@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
-class BookingCard extends StatelessWidget {
+class PatientBookingsCard extends StatelessWidget {
   final String patientName;
   final String testName;
   final String bookingDate;
   final String status;
-  final String price; // Ensure price is String
+  final String price; // Use double for price
   final bool isDark;
   final VoidCallback onAccept;
   final VoidCallback onReject;
   final VoidCallback onModify;
 
-  const BookingCard({
+  const PatientBookingsCard({
     super.key,
     required this.patientName,
     required this.testName,
@@ -62,7 +62,7 @@ class BookingCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Price: \$$price', // Format price to 2 decimal places
+              'Price: \$$price',
               style: TextStyle(
                 fontSize: 16,
                 color: isDark ? Colors.white70 : Colors.black87,
@@ -88,9 +88,9 @@ class BookingCard extends StatelessWidget {
                   textColor: Colors.white,
                   onPressed: onAccept,
                 ),
-                // Custom Reject Button
+                // Custom Cancel Button
                 CustomButton(
-                  text: 'Reject',
+                  text: 'Cancel',
                   backgroundColor: Colors.red,
                   textColor: Colors.white,
                   onPressed: onReject,
@@ -146,13 +146,13 @@ class CustomButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16), // Reduced padding
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.circular(20), // Adjusted radius for smaller buttons
+          borderRadius: BorderRadius.circular(20), // Adjusted border radius
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.2),
               spreadRadius: 1,
               blurRadius: 3,
-              offset: Offset(0, 1), // Slightly reduced shadow offset
+              offset: Offset(0, 1), // Subtle shadow adjustment
             ),
           ],
         ),

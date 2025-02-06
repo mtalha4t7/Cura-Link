@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-
-import '../../../../../../constants/sizes.dart';
+import 'package:flutter/services.dart';
+import '../ManageBooking/ManageBooking.dart';
 import '../ManageLabTests/manage_test_screen.dart';
 import '../MedicalLabControllers/lab_dashboard_controller.dart';
 import '../MedicalLabWidgets/health_tip_card.dart';
 import '../MedicalLabWidgets/medicalLab_appbar.dart';
 import '../MedicalLabWidgets/medicalLab_dashboard_sidebar.dart';
+import '../MedicalLabWidgets/nic_input_formatter.dart';
 import '../MedicalLabWidgets/service_card.dart';
-
 
 class MedicalLabDashboard extends StatefulWidget {
   const MedicalLabDashboard({super.key});
@@ -15,10 +15,9 @@ class MedicalLabDashboard extends StatefulWidget {
   @override
   _MedicalLabDashboardState createState() => _MedicalLabDashboardState();
 }
-
 class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
-  late DashboardController _controller; // Controller instance
-  bool isVerified = true;
+  late DashboardController _controller;
+  bool isVerified = false;
 
   @override
   void initState() {
@@ -27,8 +26,8 @@ class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
     _checkUserVerification();
   }
 
-  // Method to check user verification status
-  void _checkUserVerification() {
+  /// Dynamically check user verification status
+  void _checkUserVerification() async {
     _controller.checkUserVerification((status) {
       setState(() {
         isVerified = status;
@@ -36,14 +35,19 @@ class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
     });
   }
 
-  // Method to verify the user based on NIC and License
+  /// Verify the user and update status
   void _verifyUser(String nic, String license) {
-    _controller.verifyUser(nic, license, (verificationSuccess) {
+    _controller.verifyUser(nic, license, context, (verificationSuccess) {
       if (verificationSuccess) {
+        setState(() {
+          isVerified = true;
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("User verified successfully!")),
         );
       } else {
+        // Add additional checks for different failure reasons
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("NIC and License verification failed.")),
         );
@@ -51,7 +55,8 @@ class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
     });
   }
 
-  // Method to show verification dialog
+
+  /// Show verification dialog
   void _showVerificationDialog() {
     final nicController = TextEditingController();
     final licenseController = TextEditingController();
@@ -59,31 +64,83 @@ class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Verify Your Account"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nicController,
-              decoration: const InputDecoration(labelText: "NIC"),
-            ),
-            TextField(
-              controller: licenseController,
-              decoration: const InputDecoration(labelText: "License Number"),
-            ),
-          ],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16), // Rounded corners
+        ),
+        title: const Text(
+          "Verify Your Account",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nicController,
+                decoration: InputDecoration(
+                  labelText: "ID Card (NIC)",
+                  labelStyle: TextStyle(fontSize: 15),
+                  hintText: "e.g., 15201-2808169-3",
+                  hintStyle: TextStyle(fontSize: 14),
+                  prefixIcon: const Icon(Icons.credit_card),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                ),
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  NICInputFormatter(), // Custom formatter retained
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: licenseController,
+                decoration: InputDecoration(
+                  labelText: "License Number",
+                  labelStyle: TextStyle(fontSize: 15),
+                  hintText: "Enter your license number",
+                  hintStyle: TextStyle(fontSize: 14),
+                  prefixIcon: const Icon(Icons.badge),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                ),
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                maxLength: 10,
+
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text("Cancel"),
+            child: const Text(
+              "Cancel",
+              style: TextStyle(color: Colors.red),
+            ),
           ),
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             onPressed: () {
               final nic = nicController.text.trim();
               final license = licenseController.text.trim();
+              String cleanNic = nic.replaceAll('-', '');
               Navigator.of(context).pop();
-              _verifyUser(nic, license);
+              _verifyUser(cleanNic, license);
             },
             child: const Text("Verify"),
           ),
@@ -103,7 +160,7 @@ class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
         drawer: MedicalLabDashboardSidebar(isDark: isDark),
         body: Column(
           children: [
-            // Show verification alert if user is not verified
+            // Verification alert
             if (!isVerified)
               GestureDetector(
                 onTap: _showVerificationDialog,
@@ -121,30 +178,45 @@ class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.all(tDashboardPadding),
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text("Welcome to Cura Link Lab", style: txtTheme.bodyMedium),
                       Text("How can we assist you today?", style: txtTheme.displayMedium),
-                      const SizedBox(height: tDashboardPadding),
+                      const SizedBox(height: 16),
                       const Text(
                         "Recent Bookings",
                         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                       SizedBox(
                         height: 120,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          children: const [
-                            HealthTipCard(title: "Patient 1 - Blood Test Booking"),
-                            HealthTipCard(title: "Patient 2 - COVID-19 Test Booking"),
-                            HealthTipCard(title: "Patient 3 - X-Ray Booking"),
-                            HealthTipCard(title: "Patient 4 - MRI Booking"),
-                          ],
+                        child: FutureBuilder<List<Map<String, dynamic>>>(
+                          future: _controller.fetchRecentBookings(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(child: CircularProgressIndicator());
+                            } else if (snapshot.hasError) {
+                              return Center(child: Text('Error: ${snapshot.error}'));
+                            } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                              final bookings = snapshot.data!;
+                              return ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: bookings.length,
+                                itemBuilder: (context, index) {
+                                  final booking = bookings[index];
+                                  final title =
+                                      '${booking['patientName']} - ${booking['testName']} - ${booking['bookingDate']}';
+                                  return HealthTipCard(title: title);
+                                },
+                              );
+                            } else {
+                              return const Center(child: Text('No recent bookings.'));
+                            }
+                          },
                         ),
                       ),
-                      const SizedBox(height: tDashboardPadding),
+                      const SizedBox(height: 16),
                       const Text(
                         "Lab Services",
                         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -163,7 +235,7 @@ class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ManageTestServicesScreen(),
+                                  builder: (context) => const ManageTestServicesScreen(),
                                 ),
                               );
                             },
@@ -171,7 +243,14 @@ class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
                           ServiceCard(
                             icon: Icons.schedule,
                             title: 'Manage Booking',
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ManageBookingScreen(),
+                                ),
+                              );
+                            },
                           ),
                           ServiceCard(
                             icon: Icons.chat,
@@ -185,23 +264,6 @@ class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: tDashboardPadding),
-                      const Text(
-                        "Lab Announcements",
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(
-                        height: 120,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          children: const [
-                            HealthTipCard(title: "New COVID-19 Panel Test"),
-                            HealthTipCard(title: "Special Discounts on Packages"),
-                            HealthTipCard(title: "Extended Lab Hours"),
-                            HealthTipCard(title: "Get Reports Online"),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -214,16 +276,11 @@ class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
           selectedItemColor: isDark ? Colors.blue[300] : Colors.blue,
           unselectedItemColor: isDark ? Colors.white70 : Colors.black54,
           items: const [
-            BottomNavigationBarItem(
-                icon: Icon(Icons.dashboard), label: "Dashboard"),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.analytics), label: "Reports"),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.calendar_today), label: "Appointments"),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.person), label: "Profile"),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.chat), label: "Chat"),
+            BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: "Dashboard"),
+            BottomNavigationBarItem(icon: Icon(Icons.analytics), label: "Reports"),
+            BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: "Appointments"),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+            BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Chat"),
           ],
           onTap: (index) {},
         ),

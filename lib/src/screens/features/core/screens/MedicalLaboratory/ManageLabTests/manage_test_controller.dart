@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import '../../../../../../mongodb/mongodb.dart';
 
 class TestServiceController {
@@ -63,7 +64,8 @@ class TestServiceController {
   }
 
   // Remove a service from the new collection
-  Future<void> removeTestService(String serviceName) async {
+  Future<void> removeTestService(BuildContext context,
+      String serviceName) async {
     final user = FirebaseAuth.instance.currentUser;
     final userEmail = user?.email;
 
@@ -79,16 +81,47 @@ class TestServiceController {
       });
 
       if (userService != null) {
-        // Remove the service from the new collection
+        // Remove the service from the collection
         await MongoDatabase.medicalLabServices?.deleteOne({
           'userEmail': userEmail,
           'serviceName': serviceName,
         });
 
+        // Show snackbar indicating success
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Test service "$serviceName" has been successfully deleted.'),
+            duration: const Duration(seconds: 3),
+            backgroundColor: Colors.green,
+          ),
+        );
+
         print('Service removed successfully.');
+      } else {
+        // Show snackbar indicating service not found
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Test service "$serviceName" not found.'),
+            duration: const Duration(seconds: 3),
+            backgroundColor: Colors.orange,
+          ),
+        );
+
+        print('Service not found.');
       }
     } catch (e) {
+      // Show snackbar indicating error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error removing test service: $e'),
+          duration: const Duration(seconds: 3),
+          backgroundColor: Colors.red,
+        ),
+      );
+
       print('Error removing service: $e');
     }
   }
+
 }

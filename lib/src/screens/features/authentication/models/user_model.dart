@@ -7,6 +7,7 @@ class UserModel {
   final String phoneNo;
   final String? userType;
   final String? userVerified;
+  final String? profileImage;
 
   /// Password should not be stored in the database.
   /// Authentication will handle login/logout.
@@ -15,6 +16,7 @@ class UserModel {
   /// Constructor
   const UserModel({
     this.id,
+    this.profileImage,
     required this.email,
     this.password,
     required this.fullName,
