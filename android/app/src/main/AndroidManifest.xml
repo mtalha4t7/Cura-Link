@@ -9,7 +9,8 @@
     <application
         android:label="cura_link"
         android:enableOnBackInvokedCallback="true"
-        android:name="${applicationName}">
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher" >
 
         <activity
             android:name=".MainActivity"
