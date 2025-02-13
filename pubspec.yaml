@@ -101,24 +101,22 @@ flutter_native_splash:
   image: assets/images/appLogoSplashLight.png  # Light mode logo
   color_dark: "#121212"  # Background color for dark mode
   image_dark: assets/images/appLogoSplashDark.png  # Dark mode logo
-
+  
   android_12:
     image: assets/images/appLogoSplashLight.png
     icon_background_color: "#ffffff"
     image_dark: assets/images/appLogoSplashDark.png  # Fixed incorrect image reference
     icon_background_color_dark: "#121212"
+    
 
-  fullscreen: true
 
 
 flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/images/appLogo.png"  # Used for non-adaptive icons (Android <12)
-
   adaptive_icon_foreground: "assets/images/appLogo.png"  # Foreground image (same logo)
-  adaptive_icon_background: "#173D53FF"  # Background color (change to your brand color)
-
+  adaptive_icon_background: "#1C506EFF"  # Background color (change to your brand color)
   round_icon: true
 
 
