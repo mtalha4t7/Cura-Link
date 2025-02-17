@@ -1,7 +1,7 @@
 import 'package:cura_link/src/utils/app_bindings.dart';
 import 'package:cura_link/src/utils/theme/theme.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'package:get/get.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -14,7 +14,10 @@ class App extends StatelessWidget {
       theme: TAppTheme.lightTheme,
       darkTheme: TAppTheme.darkTheme,
       debugShowCheckedModeBanner: false,
-      home: const Scaffold(body: Center(child: CircularProgressIndicator())),
+      home: const Scaffold(
+        body: Center(
+            child: CircularProgressIndicator()), // ✅ Initial loading screen
+      ),
     );
   }
 }

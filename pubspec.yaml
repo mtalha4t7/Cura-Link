@@ -96,6 +96,7 @@ dependencies:
   flutter_launcher_icons: ^0.14.2
   location: ^7.0.1
   intl: ^0.20.1
+  connectivity_plus: ^6.1.3
 flutter_native_splash:
   color: "#ffffff"  # Background color for light mode
   image: assets/images/appLogoSplashLight.png  # Light mode logo

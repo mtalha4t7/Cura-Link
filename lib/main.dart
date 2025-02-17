@@ -1,3 +1,4 @@
+import 'package:cura_link/src/network_manager.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -10,10 +11,8 @@ import 'package:cura_link/src/repository/authentication_repository/authenticatio
 
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-
-  await GetStorage.init();
-
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  await GetStorage.init();
 
   // Initialize MongoDB
   await MongoDatabase.connect();
@@ -21,6 +20,8 @@ Future<void> main() async {
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)
       .then((_) => Get.put(AuthenticationRepository()));
+  Get.put(NetworkManager());
 
   runApp(const App());
+  FlutterNativeSplash.remove();
 }
