@@ -1,4 +1,7 @@
+import 'dart:developer';
+
 import 'package:cura_link/src/mongodb/mongodb.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:image_picker/image_picker.dart';
@@ -78,8 +81,7 @@ class UserRepository extends GetxController {
     return null;
   }
 
-  Future<List<Map<String, dynamic>>?> getAllUsersFromAllCollections(
-      String name) async {
+  Future<List<Map<String, dynamic>>?> getAllUsersFromAllCollections() async {
     List<DbCollection?> collections = [
       _patientCollection,
       _labCollection,
@@ -127,6 +129,41 @@ class UserRepository extends GetxController {
     } catch (e) {
       print('Error creating user: $e');
       throw 'Error creating user: $e';
+    }
+  }
+
+  Future<void> updateActiveStatus(bool isActive) async {
+    try {
+      final userEmail = FirebaseAuth.instance.currentUser?.email;
+      if (userEmail == null) return;
+
+      List<DbCollection?> collections = [
+        _patientCollection,
+        _labCollection,
+        _nurseCollection,
+        _medicalStoreCollection
+      ];
+
+      for (DbCollection? collection in collections) {
+        if (collection == null) continue;
+
+        // Check if user exists in this collection
+        final user = await collection.findOne({'email': userEmail});
+        if (user != null) {
+          await collection.updateOne(
+            {'email': userEmail},
+            {
+              '\$set': {'isActive': isActive}
+            },
+          );
+          log('User active status updated in ${collection.collectionName} to: $isActive');
+          return; // Exit after updating the first matching collection
+        }
+      }
+
+      log('User not found in any collection');
+    } catch (e) {
+      log('Error updating active status: $e');
     }
   }
 
