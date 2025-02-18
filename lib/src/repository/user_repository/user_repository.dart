@@ -10,8 +10,8 @@ class UserRepository extends GetxController {
   /// Upload profile image for a specific user type
   Future<void> uploadProfileImage(
       {required String email,
-        required String base64Image,
-        required DbCollection? collection}) async {
+      required String base64Image,
+      required DbCollection? collection}) async {
     try {
       print('Attempting to update profile image for: $email');
 
@@ -35,7 +35,8 @@ class UserRepository extends GetxController {
         modify.set('profileImage', base64Image),
       );
 
-      print('Update Result - Matched: ${result?.nMatched}, Modified: ${result?.nModified}');
+      print(
+          'Update Result - Matched: ${result?.nMatched}, Modified: ${result?.nModified}');
     } catch (e) {
       print('Error uploading profile image: $e');
     }
@@ -58,9 +59,67 @@ class UserRepository extends GetxController {
     }
   }
 
+  Future<Map<String, dynamic>?> getUserByName(String name) async {
+    List<DbCollection?> collections = [
+      _patientCollection,
+      _labCollection,
+      _nurseCollection,
+      _medicalStoreCollection
+    ];
+
+    for (var collection in collections) {
+      if (collection != null) {
+        final user = await collection.findOne(where.eq('userName', name));
+        if (user != null) {
+          return user;
+        }
+      }
+    }
+    return null;
+  }
+
+  Future<List<Map<String, dynamic>>?> getAllUsers(String name) async {
+    List<DbCollection?> collections = [
+      _patientCollection,
+      _labCollection,
+      _nurseCollection,
+      _medicalStoreCollection
+    ];
+
+    for (var collection in collections) {
+      if (collection != null) {
+        final user = await collection.find().toList();
+        return user;
+      }
+    }
+    return null;
+  }
+
+  /// Fetch a user by email from all collections
+  Future<Map<String, dynamic>?> getUserByEmailFromAllCollections(
+      String email) async {
+    List<DbCollection?> collections = [
+      _patientCollection,
+      _labCollection,
+      _nurseCollection,
+      _medicalStoreCollection
+    ];
+
+    for (var collection in collections) {
+      if (collection != null) {
+        final user = await collection.findOne(where.eq('userEmail', email));
+        if (user != null) {
+          return user;
+        }
+      }
+    }
+    return null;
+  }
+
   /// Create a new user in a specific collection
   Future<void> createUser(
-      {required Map<String, dynamic> userData, required DbCollection? collection}) async {
+      {required Map<String, dynamic> userData,
+      required DbCollection? collection}) async {
     try {
       await MongoDatabase.insertUser(userData, collection);
       print('User created successfully in ${collection?.collectionName}');
@@ -74,7 +133,8 @@ class UserRepository extends GetxController {
   Future<Map<String, dynamic>?> getUserByEmail(
       {required String email, required DbCollection? collection}) async {
     try {
-      final user = await MongoDatabase.findUser(email: email, collection: collection);
+      final user =
+          await MongoDatabase.findUser(email: email, collection: collection);
       return user;
     } catch (e) {
       print('Error fetching user: $e');
@@ -85,10 +145,11 @@ class UserRepository extends GetxController {
   /// Update user details in a specific collection
   Future<void> updateUser(
       {required String email,
-        required Map<String, dynamic> updatedData,
-        required DbCollection? collection}) async {
+      required Map<String, dynamic> updatedData,
+      required DbCollection? collection}) async {
     try {
-      final user = await MongoDatabase.findUser(email: email, collection: collection);
+      final user =
+          await MongoDatabase.findUser(email: email, collection: collection);
       if (user != null) {
         await MongoDatabase.updateUser({...user, ...updatedData}, collection);
         print('User updated successfully in ${collection?.collectionName}');
@@ -118,7 +179,8 @@ class UserRepository extends GetxController {
   }
 
   /// Get all users from a specific collection
-  Future<List<Map<String, dynamic>>> getAllUsers(DbCollection? collection) async {
+  Future<List<Map<String, dynamic>>> getAllUsers(
+      DbCollection? collection) async {
     try {
       final users = await collection?.find().toList() ?? [];
       return users;
@@ -132,7 +194,8 @@ class UserRepository extends GetxController {
   Future<bool> userExists(
       {required String email, required DbCollection? collection}) async {
     try {
-      final user = await MongoDatabase.findUser(email: email, collection: collection);
+      final user =
+          await MongoDatabase.findUser(email: email, collection: collection);
       return user != null;
     } catch (e) {
       print('Error checking if user exists: $e');
@@ -140,9 +203,11 @@ class UserRepository extends GetxController {
     }
   }
 
-  Future<String?> getFullNameByEmail(  {required String email, required DbCollection? collection}) async {
+  Future<String?> getFullNameByEmail(
+      {required String email, required DbCollection? collection}) async {
     try {
-      final user = await MongoDatabase.findUser(email: email,collection: collection);
+      final user =
+          await MongoDatabase.findUser(email: email, collection: collection);
       if (user != null && user['userName'] is String) {
         return user['userName'] as String;
       }
@@ -152,9 +217,12 @@ class UserRepository extends GetxController {
       throw Exception('Failed to fetch user name');
     }
   }
-  Future<String?> getPhoneNumberByEmail(  {required String email, required DbCollection? collection}) async {
+
+  Future<String?> getPhoneNumberByEmail(
+      {required String email, required DbCollection? collection}) async {
     try {
-      final user = await MongoDatabase.findUser(email: email,collection: collection);
+      final user =
+          await MongoDatabase.findUser(email: email, collection: collection);
       if (user != null && user['userPhone'] is String) {
         return user['userPhone'] as String;
       }
@@ -165,9 +233,11 @@ class UserRepository extends GetxController {
     }
   }
 
-  Future<String?> getUserTypeFromMongoDB(  {required String email, required DbCollection? collection}) async {
+  Future<String?> getUserTypeFromMongoDB(
+      {required String email, required DbCollection? collection}) async {
     try {
-      final user = await MongoDatabase.findUser(email: email,collection: collection);
+      final user =
+          await MongoDatabase.findUser(email: email, collection: collection);
       if (user != null && user['userType'] is String) {
         return user['userType'] as String;
       }
@@ -178,10 +248,11 @@ class UserRepository extends GetxController {
     }
   }
 
-
-  Future<int?> getVerification(  {required String email, required DbCollection? collection}) async {
+  Future<int?> getVerification(
+      {required String email, required DbCollection? collection}) async {
     try {
-      final user = await MongoDatabase.findUser(email: email,collection: collection);
+      final user =
+          await MongoDatabase.findUser(email: email, collection: collection);
       if (user != null && user['userVerified'] is int) {
         return user['userVerified'] as int;
       }
@@ -194,8 +265,6 @@ class UserRepository extends GetxController {
 
   /// Fetch a user by their email
 
-
-
   DbCollection? get _patientCollection => MongoDatabase.userPatientCollection;
 
   Future<void> createPatient(Map<String, dynamic> data) =>
@@ -205,11 +274,13 @@ class UserRepository extends GetxController {
       getUserByEmail(email: email, collection: _patientCollection);
 
   Future<void> updatePatient(String email, Map<String, dynamic> updatedData) =>
-      updateUser(email: email, updatedData: updatedData, collection: _patientCollection);
+      updateUser(
+          email: email,
+          updatedData: updatedData,
+          collection: _patientCollection);
 
   Future<void> deletePatient(String email) =>
       deleteUser(email: email, collection: _patientCollection);
-
 
   Future<List<Map<String, dynamic>>> getAllPatients() =>
       getAllUsers(_patientCollection);
@@ -220,13 +291,11 @@ class UserRepository extends GetxController {
   Future<String?> getPatientUserType(String email) =>
       getUserTypeFromMongoDB(email: email, collection: _patientCollection);
 
-
   Future<String?> getPatientUserName(String email) =>
       getFullNameByEmail(email: email, collection: _patientCollection);
 
   Future<String?> getPatientUserPhone(String email) =>
       getPhoneNumberByEmail(email: email, collection: _patientCollection);
-
 
   // Lab
   DbCollection? get _labCollection => MongoDatabase.userLabCollection;
@@ -238,7 +307,8 @@ class UserRepository extends GetxController {
       getUserByEmail(email: email, collection: _labCollection);
 
   Future<void> updateLabUser(String email, Map<String, dynamic> updatedData) =>
-      updateUser(email: email, updatedData: updatedData, collection: _labCollection);
+      updateUser(
+          email: email, updatedData: updatedData, collection: _labCollection);
 
   Future<void> deleteLabUser(String email) =>
       deleteUser(email: email, collection: _labCollection);
@@ -249,21 +319,17 @@ class UserRepository extends GetxController {
   Future<bool> labUserExists(String email) =>
       userExists(email: email, collection: _labCollection);
 
-
   Future<String?> getLabUserType(String email) =>
       getUserTypeFromMongoDB(email: email, collection: _labCollection);
 
   Future<int?> getLabVerification(String email) =>
       getVerification(email: email, collection: _labCollection);
 
-
   Future<String?> getLabUserName(String email) =>
       getFullNameByEmail(email: email, collection: _labCollection);
 
   Future<String?> getLabUserPhone(String email) =>
       getPhoneNumberByEmail(email: email, collection: _labCollection);
-
-
 
   // Nurse
   DbCollection? get _nurseCollection => MongoDatabase.userNurseCollection;
@@ -274,8 +340,10 @@ class UserRepository extends GetxController {
   Future<Map<String, dynamic>?> getNurseUserByEmail(String email) =>
       getUserByEmail(email: email, collection: _nurseCollection);
 
-  Future<void> updateNurseUser(String email, Map<String, dynamic> updatedData) =>
-      updateUser(email: email, updatedData: updatedData, collection: _nurseCollection);
+  Future<void> updateNurseUser(
+          String email, Map<String, dynamic> updatedData) =>
+      updateUser(
+          email: email, updatedData: updatedData, collection: _nurseCollection);
 
   Future<void> deleteNurseUser(String email) =>
       deleteUser(email: email, collection: _nurseCollection);
@@ -286,10 +354,8 @@ class UserRepository extends GetxController {
   Future<bool> nurseUserExists(String email) =>
       userExists(email: email, collection: _nurseCollection);
 
-
   Future<String?> getNurseUserType(String email) =>
       getUserTypeFromMongoDB(email: email, collection: _nurseCollection);
-
 
   Future<String?> getNurseUserName(String email) =>
       getFullNameByEmail(email: email, collection: _nurseCollection);
@@ -297,9 +363,9 @@ class UserRepository extends GetxController {
   Future<String?> getNursePhone(String email) =>
       getPhoneNumberByEmail(email: email, collection: _nurseCollection);
 
-
   // Medical Store
-  DbCollection? get _medicalStoreCollection => MongoDatabase.userMedicalStoreCollection;
+  DbCollection? get _medicalStoreCollection =>
+      MongoDatabase.userMedicalStoreCollection;
 
   Future<void> createMedicalStoreUser(Map<String, dynamic> data) =>
       createUser(userData: data, collection: _medicalStoreCollection);
@@ -307,8 +373,12 @@ class UserRepository extends GetxController {
   Future<Map<String, dynamic>?> getMedicalStoreUserByEmail(String email) =>
       getUserByEmail(email: email, collection: _medicalStoreCollection);
 
-  Future<void> updateMedicalStoreUser(String email, Map<String, dynamic> updatedData) =>
-      updateUser(email: email, updatedData: updatedData, collection: _medicalStoreCollection);
+  Future<void> updateMedicalStoreUser(
+          String email, Map<String, dynamic> updatedData) =>
+      updateUser(
+          email: email,
+          updatedData: updatedData,
+          collection: _medicalStoreCollection);
 
   Future<void> deleteMedicalStoreUser(String email) =>
       deleteUser(email: email, collection: _medicalStoreCollection);
@@ -320,17 +390,13 @@ class UserRepository extends GetxController {
       userExists(email: email, collection: _medicalStoreCollection);
 
   Future<String?> getMedicalStoreUserType(String email) =>
-      getUserTypeFromMongoDB(email: email, collection: _nurseCollection);
-
+      getUserTypeFromMongoDB(email: email, collection: _medicalStoreCollection);
 
   Future<String?> getMedicalStoreUserName(String email) =>
-      getFullNameByEmail(email: email, collection: _nurseCollection);
+      getFullNameByEmail(email: email, collection: _medicalStoreCollection);
 
   Future<String?> getMedicalStorePhone(String email) =>
       getPhoneNumberByEmail(email: email, collection: _nurseCollection);
 
-
   DbCollection? get _verificationCollection => MongoDatabase.userVerification;
-
-
 }
