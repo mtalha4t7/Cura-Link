@@ -1,10 +1,14 @@
 import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookings/my_bookings.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/PatientChat/chat_home.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/PatientProfile/patient_profile_screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/health_tip_card.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_dashboard_sidebar.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/quick_access_button.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/service_card.dart';
 import 'package:flutter/material.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_appbar.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import '../../../../../../constants/sizes.dart';
 import '../LabBooking/lab_booking.dart';
 
@@ -149,7 +153,20 @@ class PatientDashboard extends StatelessWidget {
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
           ],
           onTap: (index) {
-            // Handle navigation
+            switch (index) {
+              case 0:
+                Get.to(() => PatientDashboard());
+                break;
+              case 1:
+                // Get.to(() => OrdersScreen());
+                break;
+              case 2:
+                Get.to(() => HomeScreen());
+                break;
+              case 3:
+                Get.to(() => PatientProfileScreen());
+                break;
+            }
           },
         ),
       ),
