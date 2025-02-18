@@ -78,7 +78,8 @@ class UserRepository extends GetxController {
     return null;
   }
 
-  Future<List<Map<String, dynamic>>?> getAllUsers(String name) async {
+  Future<List<Map<String, dynamic>>?> getAllUsersFromAllCollections(
+      String name) async {
     List<DbCollection?> collections = [
       _patientCollection,
       _labCollection,
