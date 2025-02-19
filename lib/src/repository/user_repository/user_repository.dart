@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'package:cura_link/src/mongodb/mongodb.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,6 +21,8 @@ class UserRepository extends GetxController {
       // Query to find the current profile
       final query = {'userEmail': email};
       final currentProfile = await collection?.findOne(query);
+      final col = MongoDatabase.users;
+      final usersProfile = await col?.findOne(query);
 
       if (currentProfile == null) {
         print('No document found for email: $email');
@@ -33,6 +36,10 @@ class UserRepository extends GetxController {
 
       // Update the profile image
       final result = await collection?.updateOne(
+        query,
+        modify.set('profileImage', base64Image),
+      );
+      final result1 = await col?.updateOne(
         query,
         modify.set('profileImage', base64Image),
       );
@@ -212,6 +219,33 @@ class UserRepository extends GetxController {
     } catch (e) {
       print('Error fetching users: $e');
       throw 'Error fetching users: $e';
+    }
+  }
+
+  final StreamController<List<Map<String, dynamic>>> _usersController =
+      StreamController<List<Map<String, dynamic>>>.broadcast();
+
+  String currentUserEmail = FirebaseAuth.instance.currentUser!.email
+      .toString(); // Replace with the actual logged-in user's email
+
+  Stream<List<Map<String, dynamic>>> getAllUsers1() {
+    _fetchUsers(); // Fetch users initially
+    return _usersController.stream;
+  }
+
+  Future<void> _fetchUsers() async {
+    try {
+      var collection = MongoDatabase.users;
+      final users = await collection?.find().toList() ?? [];
+
+      // Filter out the current user
+      final filteredUsers =
+          users.where((user) => user['userEmail'] != currentUserEmail).toList();
+
+      _usersController.add(filteredUsers); // Emit filtered data
+    } catch (e) {
+      print('Error fetching users: $e');
+      _usersController.addError('Error fetching users: $e');
     }
   }
 

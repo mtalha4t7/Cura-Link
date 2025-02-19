@@ -8,7 +8,6 @@ import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidge
 import 'package:flutter/material.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_appbar.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import '../../../../../../constants/sizes.dart';
 import '../LabBooking/lab_booking.dart';
 
@@ -161,7 +160,7 @@ class PatientDashboard extends StatelessWidget {
                 // Get.to(() => OrdersScreen());
                 break;
               case 2:
-                Get.to(() => HomeScreen());
+                Get.to(() => ChatHomeScreen());
                 break;
               case 3:
                 Get.to(() => PatientProfileScreen());

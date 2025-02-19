@@ -16,6 +16,7 @@ class MongoDatabase {
   static DbCollection? _userVerification;
   static DbCollection? _bookingsCollection;
   static DbCollection? _patientBookingsCollection;
+  static DbCollection? _users;
 
   // Connect to MongoDB and initialize the collections
   static Future<void> connect() async {
@@ -34,6 +35,8 @@ class MongoDatabase {
       _userVerification = _db!.collection(USER_VERIFICATION);
       _bookingsCollection = _db!.collection(LAB_BOOKINGS);
       _patientBookingsCollection = _db!.collection(PATIENT_LAB_BOOKINGS);
+      _users = _db!.collection(USERS);
+
       // Optional: Use inspect to debug the database connection
       inspect(_db);
 
@@ -54,6 +57,7 @@ class MongoDatabase {
   static DbCollection? get bookingsCollection => _bookingsCollection;
   static DbCollection? get patientBookingsCollection =>
       _patientBookingsCollection;
+  static DbCollection? get users => _users;
 
   // Close the MongoDB connection
   static Future<void> close() async {
@@ -68,6 +72,7 @@ class MongoDatabase {
       _userVerification = null;
       _bookingsCollection = null;
       _patientBookingsCollection = null;
+      _users = null;
 
       logger.i('MongoDB connection closed');
     }
@@ -272,7 +277,7 @@ class MongoDatabase {
     await createIndexes(_bookingsCollection);
   }
 
-//Lab booking
+//Patient booking
   static Future<void> insertPatientLabBooking(Map<String, dynamic> user) async {
     await insertUser(user, _patientBookingsCollection);
   }
