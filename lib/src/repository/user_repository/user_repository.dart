@@ -1,6 +1,8 @@
 import 'dart:developer';
 
 import 'package:cura_link/src/mongodb/mongodb.dart';
+import 'package:cura_link/src/screens/features/authentication/models/chat_user_model.dart';
+import 'package:cura_link/src/screens/features/authentication/models/user_model_mongodb.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:mongo_dart/mongo_dart.dart';
@@ -81,21 +83,9 @@ class UserRepository extends GetxController {
     return null;
   }
 
-  Future<List<Map<String, dynamic>>?> getAllUsersFromAllCollections() async {
-    List<DbCollection?> collections = [
-      _patientCollection,
-      _labCollection,
-      _nurseCollection,
-      _medicalStoreCollection
-    ];
-
-    for (var collection in collections) {
-      if (collection != null) {
-        final user = await collection.find().toList();
-        return user;
-      }
-    }
-    return null;
+  Future<List<Map<String, dynamic>>> getAllUsersFromAllCollections() async {
+    List<Map<String, dynamic>> allUsers = await MongoDatabase.getAllUsers();
+    return allUsers;
   }
 
   /// Fetch a user by email from all collections

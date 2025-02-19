@@ -52,7 +52,8 @@ class MongoDatabase {
   static DbCollection? get medicalLabServices => _medicalLabServices;
   static DbCollection? get userVerification => _userVerification;
   static DbCollection? get bookingsCollection => _bookingsCollection;
-  static DbCollection? get patientBookingsCollection => _patientBookingsCollection;
+  static DbCollection? get patientBookingsCollection =>
+      _patientBookingsCollection;
 
   // Close the MongoDB connection
   static Future<void> close() async {
@@ -69,6 +70,40 @@ class MongoDatabase {
       _patientBookingsCollection = null;
 
       logger.i('MongoDB connection closed');
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getAllUsers() async {
+    try {
+      if (_db == null) {
+        throw Exception('Database connection is not established');
+      }
+
+      List<Map<String, dynamic>> allUsers = [];
+
+      // List of all collections
+      List<DbCollection?> collections = [
+        _userPatientCollection,
+        _userLabCollection,
+        _userNurseCollection,
+        _userMedicalStoreCollection,
+        _medicalLabServices,
+        _userVerification
+      ];
+
+      for (var collection in collections) {
+        if (collection != null) {
+          var users = await collection.find().toList();
+          allUsers.addAll(users.map(
+              (doc) => doc as Map<String, dynamic>)); // Ensure correct casting
+        }
+      }
+
+      logger.i('Fetched all users successfully');
+      return allUsers;
+    } catch (e, stackTrace) {
+      logger.e('Error fetching all users', error: e, stackTrace: stackTrace);
+      return [];
     }
   }
 
@@ -236,6 +271,7 @@ class MongoDatabase {
   static Future<void> createBookingIndexes() async {
     await createIndexes(_bookingsCollection);
   }
+
 //Lab booking
   static Future<void> insertPatientLabBooking(Map<String, dynamic> user) async {
     await insertUser(user, _patientBookingsCollection);
@@ -245,7 +281,8 @@ class MongoDatabase {
     return await findUser(email: email, collection: _patientBookingsCollection);
   }
 
-  static Future<void> updatePatientBooking(Map<String, dynamic> updatedUser) async {
+  static Future<void> updatePatientBooking(
+      Map<String, dynamic> updatedUser) async {
     await updateUser(updatedUser, _patientBookingsCollection);
   }
 

@@ -33,9 +33,10 @@ class UserModelMongoDB {
   }
 
   /// Factory constructor to create an object from a Map
+
   factory UserModelMongoDB.fromDataMap(Map<String, dynamic> dataMap) {
     return UserModelMongoDB(
-      userId: dataMap['userId'] as String?,
+      userId: dataMap['_id']?.toString(), // Convert ObjectId to String
       userName: dataMap['userName'] as String?,
       userEmail: dataMap['userEmail'] as String?,
       userAddress: dataMap['userAddress'] as String?,

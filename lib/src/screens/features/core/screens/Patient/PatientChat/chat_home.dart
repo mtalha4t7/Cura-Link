@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
 import 'package:cura_link/src/screens/features/authentication/models/chat_user_model.dart';
 import 'package:cura_link/src/widget/chat_user_card.dart';
@@ -44,9 +43,13 @@ class _HomeScreenState extends State<HomeScreen> {
   // Fetch users from MongoDB and update UI
   Future<void> _loadUsers() async {
     try {
-      final users = await _userRepository.getAllUsersFromAllCollections();
+      final users = await _userRepository.getAllUsersFromAllCollections() ?? [];
+
       setState(() {
-        _usersList = users!.cast<ChatUserModelMongoDB>();
+        _usersList = users
+            .map((user) =>
+                ChatUserModelMongoDB.fromDataMap(user as Map<String, dynamic>))
+            .toList();
         _isLoading = false;
       });
     } catch (e) {
@@ -72,18 +75,6 @@ class _HomeScreenState extends State<HomeScreen> {
           FocusScope.of(context).unfocus, // Hide keyboard when tapped outside
       child: Scaffold(
         appBar: AppBar(
-          // leading: IconButton(
-          //   // tooltip: 'View Profile',
-          //   // onPressed: () {
-          //   //   Navigator.push(
-          //   //     context,
-          //   //     MaterialPageRoute(
-          //   //       builder: (_) => ProfileScreen(),
-          //   //     ),
-          //   //   );
-          //   // },
-          //   // icon: const ProfileImage(size: 32),
-          // ),
           title: _isSearching
               ? TextField(
                   decoration: const InputDecoration(
@@ -125,12 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.only(bottom: 10),
           child: FloatingActionButton(
             backgroundColor: Colors.white,
-            onPressed: () {
-              // Navigator.push(
-              //   context,
-              //   MaterialPageRoute(builder: (_) => const AiScreen()),
-              // );
-            },
+            onPressed: () {},
             child: Lottie.asset('assets/lottie/ai.json', width: 40),
           ),
         ),
