@@ -1,8 +1,5 @@
 import 'dart:developer';
-
 import 'package:cura_link/src/mongodb/mongodb.dart';
-import 'package:cura_link/src/screens/features/authentication/models/chat_user_model.dart';
-import 'package:cura_link/src/screens/features/authentication/models/user_model_mongodb.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:mongo_dart/mongo_dart.dart';
