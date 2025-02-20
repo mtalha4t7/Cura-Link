@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:cura_link/src/screens/features/core/screens/Patient/PatientChat/chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cura_link/src/screens/features/authentication/models/chat_user_model.dart';
 import 'package:cura_link/src/constants/colors.dart';
@@ -48,7 +49,15 @@ class _ChatUserCardState extends State<ChatUserCard> {
           ? const Color.fromARGB(255, 31, 38, 41)
           : tServiceCardLightBg, // Background based on mode
       child: InkWell(
-        onTap: () {},
+        onTap: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ChatScreen(
+                  user: widget.user,
+                ),
+              ));
+        },
         child: ListTile(
           leading: CircleAvatar(
             radius: 25,

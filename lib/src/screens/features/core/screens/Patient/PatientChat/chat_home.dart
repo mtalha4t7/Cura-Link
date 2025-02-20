@@ -11,6 +11,42 @@ class ChatHomeScreen extends StatefulWidget {
 }
 
 class _ChatHomeScreenState extends State<ChatHomeScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  List<ChatUserModelMongoDB> _allUsers = [];
+  List<ChatUserModelMongoDB> _filteredUsers = [];
+  bool _isSearching = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUsers();
+  }
+
+  /// Fetch users from the stream and store them locally for filtering
+  void _loadUsers() {
+    UserRepository.instance.getAllUsers1().listen((userData) {
+      setState(() {
+        _allUsers = userData
+            .map((userMap) => ChatUserModelMongoDB.fromMap(userMap))
+            .toList();
+        _filteredUsers = _allUsers; // Initially, show all users
+      });
+    }, onError: (error) {
+      print("Error fetching users: $error");
+    });
+  }
+
+  /// Filters users based on search input
+  void _filterUsers(String query) {
+    setState(() {
+      _filteredUsers = _allUsers
+          .where((user) =>
+              user.userName!.toLowerCase().contains(query.toLowerCase()) ||
+              user.userEmail!.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final txtTheme = Theme.of(context).textTheme;
@@ -20,14 +56,35 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
       appBar: AppBar(
         centerTitle: true,
         elevation: 1,
-        title: Text(
-          "Cura Chat",
-          style: txtTheme.titleMedium?.copyWith(fontWeight: FontWeight.w500),
-        ),
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                onChanged: _filterUsers,
+                autofocus: true,
+                style: txtTheme.titleMedium?.copyWith(color: Colors.white),
+                decoration: const InputDecoration(
+                  hintText: "Search users...",
+                  hintStyle: TextStyle(color: Colors.white70),
+                  border: InputBorder.none,
+                ),
+              )
+            : Text(
+                "Cura Chat",
+                style:
+                    txtTheme.titleMedium?.copyWith(fontWeight: FontWeight.w500),
+              ),
         actions: [
           IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.search),
+            onPressed: () {
+              setState(() {
+                _isSearching = !_isSearching;
+                if (!_isSearching) {
+                  _searchController.clear();
+                  _filteredUsers = _allUsers;
+                }
+              });
+            },
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
           ),
           IconButton(
             onPressed: () {},
@@ -43,45 +100,21 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
           child: const Icon(Icons.add_comment_rounded, color: Colors.white),
         ),
       ),
-      body: StreamBuilder(
-        stream: UserRepository.instance.getAllUsers1(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No users found'));
-          }
-
-          List<Map<String, dynamic>> users = snapshot.data!;
-
-          if (users.isEmpty) {
-            return const Center(
+      body: _filteredUsers.isEmpty
+          ? const Center(
               child: Text(
-                "There are no connections for chat",
+                "No users found",
                 style: TextStyle(fontSize: 18),
               ),
-            );
-          } else {
-            return ListView.builder(
-              padding: EdgeInsets.only(top: 8),
-              itemCount: users.length,
-              physics: BouncingScrollPhysics(),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.only(top: 8),
+              itemCount: _filteredUsers.length,
+              physics: const BouncingScrollPhysics(),
               itemBuilder: (context, index) {
-                var userMap = users[index];
-                ChatUserModelMongoDB user =
-                    ChatUserModelMongoDB.fromMap(userMap);
-                return ChatUserCard(user: user);
+                return ChatUserCard(user: _filteredUsers[index]);
               },
-            );
-          }
-        },
-      ),
+            ),
     );
   }
 }
