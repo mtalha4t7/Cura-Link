@@ -1,6 +1,6 @@
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
 import 'package:cura_link/src/screens/features/authentication/models/chat_user_model.dart';
-import 'package:cura_link/src/widget/chat_user_card.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/PatientChat/widgets/chat_user_card.dart';
 import 'package:flutter/material.dart';
 
 class ChatHomeScreen extends StatefulWidget {

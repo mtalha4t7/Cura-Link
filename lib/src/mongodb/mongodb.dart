@@ -17,6 +17,7 @@ class MongoDatabase {
   static DbCollection? _bookingsCollection;
   static DbCollection? _patientBookingsCollection;
   static DbCollection? _users;
+  static DbCollection? _messagesCollection;
 
   // Connect to MongoDB and initialize the collections
   static Future<void> connect() async {
@@ -36,6 +37,7 @@ class MongoDatabase {
       _bookingsCollection = _db!.collection(LAB_BOOKINGS);
       _patientBookingsCollection = _db!.collection(PATIENT_LAB_BOOKINGS);
       _users = _db!.collection(USERS);
+      _messagesCollection = _db!.collection(MESSAGES_COLLECTION_NAME);
 
       // Optional: Use inspect to debug the database connection
       inspect(_db);
@@ -58,6 +60,7 @@ class MongoDatabase {
   static DbCollection? get patientBookingsCollection =>
       _patientBookingsCollection;
   static DbCollection? get users => _users;
+  static DbCollection? get messagesCollection => _messagesCollection;
 
   // Close the MongoDB connection
   static Future<void> close() async {
@@ -73,8 +76,139 @@ class MongoDatabase {
       _bookingsCollection = null;
       _patientBookingsCollection = null;
       _users = null;
+      _messagesCollection = null;
 
       logger.i('MongoDB connection closed');
+    }
+  }
+
+  //get all  messages globally
+
+  static Future<List<Map<String, dynamic>>> getAllMessages() async {
+    try {
+      final messages = await _messagesCollection
+          ?.find(where.sortBy('timestamp', descending: true))
+          .toList();
+
+      return messages?.map((doc) => doc).toList() ?? [];
+    } catch (e, stackTrace) {
+      logger.e('Error fetching all messages', error: e, stackTrace: stackTrace);
+      return [];
+    }
+  }
+
+// Insert a new message
+  static Future<void> insertMessage(Map<String, dynamic> message) async {
+    try {
+      if (message.isEmpty ||
+          !message.containsKey('fromId') ||
+          !message.containsKey('toId')) {
+        throw Exception('Invalid message data: Missing required fields');
+      }
+
+      // Add timestamp if missing
+      if (!message.containsKey('sent')) {
+        message['sent'] = DateTime.now().millisecondsSinceEpoch.toString();
+      }
+
+      await _messagesCollection?.insertOne(message);
+      logger.i('Message inserted successfully');
+    } catch (e, stackTrace) {
+      logger.e('Error inserting message', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
+  // Fetch messages for a specific user
+  static Future<List<Map<String, dynamic>>> findMessagesByUser(
+      String userId) async {
+    try {
+      var messages = await _messagesCollection
+          ?.find(where.raw({
+            "\$or": [
+              {"fromId": userId},
+              {"toId": userId}
+            ]
+          }).sortBy('sent', descending: true))
+          .toList();
+
+      return messages?.map((doc) => doc).toList() ?? [];
+    } catch (e, stackTrace) {
+      logger.e('Error fetching messages', error: e, stackTrace: stackTrace);
+      return [];
+    }
+  }
+
+  // Update a message (e.g., mark as read)
+  static Future<void> updateMessage(
+      String messageId, Map<String, dynamic> updatedFields) async {
+    try {
+      // Validate ObjectId by attempting to parse it
+      ObjectId id;
+      try {
+        id = ObjectId.parse(messageId);
+      } catch (e) {
+        throw Exception('Invalid message ID format');
+      }
+
+      // Create a ModifierBuilder instance
+      final modifier = ModifierBuilder();
+      updatedFields.forEach((key, value) {
+        modifier.set(key, value);
+      });
+
+      // Perform the update operation
+      final result = await _messagesCollection?.updateOne(
+        where.id(id), // Use the parsed ObjectId
+        modifier,
+      );
+
+      if (result?.isSuccess == true) {
+        logger.i('Message updated successfully');
+      } else {
+        logger.w('Message update failed or no changes made');
+      }
+    } catch (e, stackTrace) {
+      logger.e('Error updating message', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
+  // Delete a message
+  static Future<void> deleteMessage(String messageId) async {
+    try {
+      // Validate ObjectId by attempting to parse it
+      ObjectId id;
+      try {
+        id = ObjectId.parse(messageId);
+      } catch (e) {
+        throw Exception('Invalid message ID format');
+      }
+
+      // Perform the delete operation
+      final result = await _messagesCollection?.deleteOne(where.id(id));
+
+      if (result?.isSuccess == true) {
+        logger.i('Message deleted successfully');
+      } else {
+        logger.w('Message deletion failed or message not found');
+      }
+    } catch (e, stackTrace) {
+      logger.e('Error deleting message', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
+  // Create indexes for messages collection
+  static Future<void> createMessagesIndexes() async {
+    try {
+      await _messagesCollection?.createIndex(keys: {'sent': 1});
+      await _messagesCollection?.createIndex(keys: {'fromId': 1, 'toId': 1});
+      logger.i('Indexes created successfully for messages collection');
+    } catch (e, stackTrace) {
+      logger.e('Error creating messages indexes',
+          error: e, stackTrace: stackTrace);
+      rethrow;
     }
   }
 
@@ -99,8 +233,7 @@ class MongoDatabase {
       for (var collection in collections) {
         if (collection != null) {
           var users = await collection.find().toList();
-          allUsers.addAll(users.map(
-              (doc) => doc as Map<String, dynamic>)); // Ensure correct casting
+          allUsers.addAll(users.map((doc) => doc)); // Ensure correct casting
         }
       }
 

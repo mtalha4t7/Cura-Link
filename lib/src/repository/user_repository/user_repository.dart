@@ -68,6 +68,11 @@ class UserRepository extends GetxController {
     }
   }
 
+  Future<String?> getCurrentUser() async {
+    final currentUser = FirebaseAuth.instance.currentUser?.email;
+    return currentUser;
+  }
+
   Future<Map<String, dynamic>?> getUserByName(String name) async {
     List<DbCollection?> collections = [
       _patientCollection,
@@ -222,6 +227,8 @@ class UserRepository extends GetxController {
     }
   }
 
+//getting all users
+
   final StreamController<List<Map<String, dynamic>>> _usersController =
       StreamController<List<Map<String, dynamic>>>.broadcast();
 
@@ -246,6 +253,27 @@ class UserRepository extends GetxController {
     } catch (e) {
       print('Error fetching users: $e');
       _usersController.addError('Error fetching users: $e');
+    }
+  }
+
+  //get all messages globally
+  final StreamController<List<Map<String, dynamic>>> _messagesController =
+      StreamController<List<Map<String, dynamic>>>.broadcast();
+
+  Stream<List<Map<String, dynamic>>> getAllMessagesStream() {
+    _fetchMessages(); // Fetch messages initially
+    return _messagesController.stream;
+  }
+
+  Future<void> _fetchMessages() async {
+    try {
+      var collection = MongoDatabase.messagesCollection;
+      final messages = await collection?.find().toList() ?? [];
+
+      _messagesController.add(messages); // Emit data to the stream
+    } catch (e) {
+      print('Error fetching messages: $e');
+      _messagesController.addError('Error fetching messages: $e');
     }
   }
 
