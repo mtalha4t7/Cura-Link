@@ -68,7 +68,7 @@ class _LabBookingScreenState extends State<LabBookingScreen> {
                       itemCount: users.length,
                       itemBuilder: (context, index) {
                         final user = users[index];
-                        print("User Selected: ${user.fullName}, Email: ${user.email}");
+                        print("User Selected: ${user.fullName}, Email: ${User.email}");
                         return UserCard(user: user, isDark: isDarkTheme);
                       },
                     );
