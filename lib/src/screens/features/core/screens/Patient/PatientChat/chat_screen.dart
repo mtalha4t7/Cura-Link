@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
 import 'package:cura_link/src/screens/features/authentication/models/chat_user_model.dart';
@@ -28,8 +29,27 @@ class _ChatScreenState extends State<ChatScreen> {
   /// Fetch currently logged-in user's email
   Future<void> _fetchLoggedInUserEmail() async {
     loggedInUserEmail = await UserRepository.instance.getCurrentUser();
-    debugPrint("Logged-in user email: $loggedInUserEmail"); // ✅ Debug print
+    debugPrint("Logged-in user email: $loggedInUserEmail");
     setState(() {});
+  }
+
+  /// Convert profile image from Base64 if needed
+  ImageProvider? _getProfileImage() {
+    if (widget.user.profileImage == null || widget.user.profileImage!.isEmpty) {
+      return null;
+    }
+
+    try {
+      if (widget.user.profileImage!.startsWith("http")) {
+        return NetworkImage(widget.user.profileImage!);
+      } else {
+        Uint8List bytes = base64Decode(widget.user.profileImage!);
+        return MemoryImage(bytes);
+      }
+    } catch (e) {
+      debugPrint("Error decoding profile image: $e");
+      return null;
+    }
   }
 
   @override
@@ -46,9 +66,7 @@ class _ChatScreenState extends State<ChatScreen> {
           title: Row(
             children: [
               IconButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
+                onPressed: () => Navigator.pop(context),
                 icon: Icon(
                   Icons.arrow_back,
                   color: isDarkMode ? tWhiteColor : Colors.black54,
@@ -56,10 +74,8 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
               CircleAvatar(
                 backgroundColor: Colors.grey[300],
-                backgroundImage: widget.user.profileImage != null
-                    ? MemoryImage(widget.user.profileImage! as Uint8List)
-                    : null,
-                child: widget.user.profileImage == null
+                backgroundImage: _getProfileImage(),
+                child: _getProfileImage() == null
                     ? Icon(Icons.person, color: tWhiteColor)
                     : null,
               ),
@@ -90,8 +106,7 @@ class _ChatScreenState extends State<ChatScreen> {
               child: StreamBuilder<List<Message>>(
                 stream: UserRepository.instance.getAllMessagesStream().map(
                   (snapshot) {
-                    debugPrint(
-                        "Fetched raw messages: $snapshot"); // ✅ Check raw JSON data
+                    debugPrint("Fetched raw messages: $snapshot");
                     return snapshot
                         .map((json) => Message.fromJson(json))
                         .toList();
@@ -99,46 +114,47 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
+                    return const Center(child: CircularProgressIndicator());
                   }
 
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    debugPrint("No messages found."); // ✅ Debug check if empty
-                    return Center(child: Text("No messages yet."));
+                    debugPrint("No messages found.");
+                    return const Center(child: Text("No messages yet."));
                   }
 
                   List<Message> messages = snapshot.data!;
-                  debugPrint(
-                      "Parsed messages: ${messages.map((m) => m.toJson()).toList()}"); // ✅ Debug parsed messages
 
-                  // Sorting messages by timestamp
+                  // Sorting messages by timestamp (newest first)
                   messages.sort((a, b) {
                     try {
-                      DateTime aTime = a.sent is int
-                          ? DateTime.fromMillisecondsSinceEpoch(a.sent as int)
-                          : DateTime.parse(a.sent);
-                      DateTime bTime = b.sent is int
-                          ? DateTime.fromMillisecondsSinceEpoch(b.sent as int)
-                          : DateTime.parse(b.sent);
-                      return aTime.compareTo(bTime);
+                      DateTime aTime = DateTime.tryParse(a.sent) ??
+                          DateTime.fromMillisecondsSinceEpoch(a.sent as int);
+                      DateTime bTime = DateTime.tryParse(b.sent) ??
+                          DateTime.fromMillisecondsSinceEpoch(b.sent as int);
+                      return bTime.compareTo(aTime); // Descending order
                     } catch (e) {
-                      debugPrint("Sorting error: $e"); // ✅ Debug sorting issues
+                      debugPrint("Sorting error: $e");
                       return 0;
                     }
+                  });
+
+                  // Scroll to the latest message
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _scrollController
+                        .jumpTo(_scrollController.position.minScrollExtent);
                   });
 
                   return ListView.builder(
                     controller: _scrollController,
                     itemCount: messages.length,
+                    reverse: true, // Auto-scroll to latest message
                     itemBuilder: (context, index) {
                       final message = messages[index];
-                      debugPrint(
-                          "Rendering message: ${message.toJson()}"); // ✅ Debug message before rendering
+                      debugPrint("Rendering message: ${message.toJson()}");
 
                       return ChatMessageCard(
                         message: message,
-                        isFromCurrentUser: message.fromId ==
-                            loggedInUserEmail, // ✅ Compare email correctly
+                        isFromCurrentUser: message.fromId == loggedInUserEmail,
                       );
                     },
                   );

@@ -59,7 +59,8 @@ class _LabBookingScreenState extends State<LabBookingScreen> {
                         child: Text(
                           'No Users found',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: isDarkTheme ? Colors.white54 : Colors.black54,
+                            color:
+                                isDarkTheme ? Colors.white54 : Colors.black54,
                           ),
                         ),
                       );
@@ -68,7 +69,8 @@ class _LabBookingScreenState extends State<LabBookingScreen> {
                       itemCount: users.length,
                       itemBuilder: (context, index) {
                         final user = users[index];
-                        print("User Selected: ${user.fullName}, Email: ${User.email}");
+                        print(
+                            "User Selected: ${user.fullName}, Email: ${user.email}");
                         return UserCard(user: user, isDark: isDarkTheme);
                       },
                     );
