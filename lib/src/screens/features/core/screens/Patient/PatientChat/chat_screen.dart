@@ -7,6 +7,7 @@ import 'package:cura_link/src/screens/features/core/screens/Patient/PatientChat/
 import 'package:cura_link/src/screens/features/core/screens/Patient/PatientChat/widgets/chat_message_card.dart';
 import 'package:flutter/material.dart';
 import 'package:cura_link/src/constants/colors.dart';
+import 'package:intl/intl.dart'; // For date formatting
 
 class ChatScreen extends StatefulWidget {
   final ChatUserModelMongoDB user;
@@ -35,7 +36,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
   /// Send a message to the database
   void _sendMessage(String messageText) async {
-
     if (messageText.trim().isEmpty || loggedInUserEmail == null) return;
     final message = Message(
       toId: widget.user.userEmail.toString(),
@@ -81,6 +81,44 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  /// Format the last active timestamp into a user-friendly string
+  String _formatLastActive(String? lastActive) {
+    if (lastActive == null || lastActive.isEmpty) {
+      return "Last seen not available";
+    }
+
+    try {
+      // Parse the lastActive value into a DateTime object
+      DateTime dateTime;
+      if (lastActive.contains(RegExp(r'^\d+$'))) {
+        // If lastActive is a timestamp (e.g., "1672531200000")
+        dateTime = DateTime.fromMillisecondsSinceEpoch(int.parse(lastActive));
+      } else {
+        // If lastActive is an ISO string (e.g., "2023-01-01T12:00:00Z")
+        dateTime = DateTime.parse(lastActive);
+      }
+
+      // Format the DateTime object
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final messageDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
+
+      if (messageDate.isAtSameMomentAs(today)) {
+        // If the user was active today, show only the time
+        return "Last seen today at ${DateFormat('h:mm a').format(dateTime)}";
+      } else if (messageDate.isAfter(today.subtract(const Duration(days: 1)))) {
+        // If the user was active yesterday, show "Yesterday"
+        return "Last seen yesterday at ${DateFormat('h:mm a').format(dateTime)}";
+      } else {
+        // Otherwise, show the full date and time
+        return "Last seen on ${DateFormat('MMM d, yyyy h:mm a').format(dateTime)}";
+      }
+    } catch (e) {
+      debugPrint("Error formatting last active: $e");
+      return "Last seen not available";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -121,7 +159,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                   Text(
-                    widget.user.userLastActive ?? "Last seen not available",
+                    _formatLastActive(widget.user.userLastActive), // Use formatted date
                     style: TextStyle(color: Colors.black54, fontSize: 13),
                   ),
                 ],

@@ -153,6 +153,24 @@ class UserRepository extends GetxController {
       // Handle the error appropriately, e.g., show a snackbar or log it
     }
   }
+  Future<void> updateUserLastActive(String userEmail) async {
+    try {
+      final collection = MongoDatabase.users;
+      if (collection != null) {
+        await collection.updateOne(
+          {'userEmail': userEmail}, // Filter by user email
+          {
+            '\$set': {
+              'userLastActive': DateTime.now().millisecondsSinceEpoch, // Update timestamp
+            },
+          },
+        );
+      }
+    } catch (e) {
+      print("Error updating user last active: $e");
+      throw e;
+    }
+  }
 
   Future<void> updateActiveStatus(bool isActive) async {
     try {

@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:ffi';
+import 'package:mongo_dart/mongo_dart.dart'; // Import mongo_dart for Int64
 
 class ChatUserModelMongoDB {
   String? userId;
@@ -10,7 +12,7 @@ class ChatUserModelMongoDB {
   String? userAbout;
   String? userCreatedAt;
   bool? userIsOnline;
-  String? userLastActive;
+  String? userLastActive; // Changed to String
   String? userPushToken;
 
   ChatUserModelMongoDB({
@@ -47,17 +49,19 @@ class ChatUserModelMongoDB {
   /// Factory constructor to create an object from a Map
   factory ChatUserModelMongoDB.fromMap(Map<String, dynamic> map) {
     return ChatUserModelMongoDB(
-      userId: map['userId'] as String?,
-      userName: map['userName'] as String? ?? 'Unknown',
-      userEmail: map['userEmail'] as String? ?? 'No Email',
-      userPhone: map['userPhone'] as String?,
-      userImage: map['userImage'] as String?,
-      profileImage: map['profileImage'] as String?, // Added in fromMap method
-      userAbout: map['userAbout'] as String? ?? 'No bio available',
-      userCreatedAt: map['userCreatedAt'] as String?,
+      userId: map['userId']?.toString(), // Ensure it's a String
+      userName: map['userName']?.toString() ?? 'Unknown',
+      userEmail: map['userEmail']?.toString() ?? 'No Email',
+      userPhone: map['userPhone']?.toString(),
+      userImage: map['userImage']?.toString(),
+      profileImage: map['profileImage']?.toString(), // Ensure it's a String
+      userAbout: map['userAbout']?.toString() ?? 'No bio available',
+      userCreatedAt: map['userCreatedAt']?.toString(),
       userIsOnline: map['userIsOnline'] as bool?,
-      userLastActive: map['userLastActive'] as String?,
-      userPushToken: map['userPushToken'] as String?,
+      userLastActive: map['userLastActive'] is Int64
+          ? map['userLastActive'].toString() // Convert Int64 to String
+          : map['userLastActive']?.toString(), // Fallback to String
+      userPushToken: map['userPushToken']?.toString(),
     );
   }
 

@@ -18,13 +18,28 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
   List<ChatUserModelMongoDB> _filteredUsers = [];
   bool _isSearching = false;
 
-  // Stream subscription to manage the user data stream
+  // Stream suflutterbscription to manage the user data stream
   StreamSubscription? _userStreamSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadUsers();
+    _updateUserLastActive();
+  }
+
+  void _updateUserLastActive() async {
+    try {
+      // Get the current user's email (assuming it's stored in a variable)
+      final currentUserEmail = UserRepository.instance.currentUserEmail;
+
+      if (currentUserEmail != null) {
+        // Update the user's last active timestamp
+        await UserRepository.instance.updateUserLastActive(currentUserEmail);
+      }
+    } catch (e) {
+      print("Error updating user last active: $e");
+    }
   }
 
   /// Fetch users from the stream and store them locally for filtering
