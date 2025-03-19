@@ -33,6 +33,35 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {});
   }
 
+  /// Send a message to the database
+  void _sendMessage(String messageText) async {
+
+    if (messageText.trim().isEmpty || loggedInUserEmail == null) return;
+    final message = Message(
+      toId: widget.user.userEmail.toString(),
+      fromId: loggedInUserEmail!,
+      msg: messageText.trim(),
+      read: "false",
+      type: Type.text,
+      sent: DateTime.now().millisecondsSinceEpoch.toString(),
+    );
+
+    // Send message to backend/database
+    await UserRepository.instance.sendMessageToDatabase(message);
+
+    // Scroll to bottom after sending a message
+    _scrollToBottom();
+  }
+
+  /// Scroll to the latest message
+  void _scrollToBottom() {
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollController.position.minScrollExtent);
+      }
+    });
+  }
+
   /// Convert profile image from Base64 if needed
   ImageProvider? _getProfileImage() {
     if (widget.user.profileImage == null || widget.user.profileImage!.isEmpty) {
@@ -104,8 +133,8 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             Expanded(
               child: StreamBuilder<List<Message>>(
-                stream: UserRepository.instance.getAllMessagesStream().map(
-                  (snapshot) {
+                stream: UserRepository.instance.getAllMessagesStream(widget.user.userEmail.toString()).map(
+                      (snapshot) {
                     debugPrint("Fetched raw messages: $snapshot");
                     return snapshot
                         .map((json) => Message.fromJson(json))
@@ -128,20 +157,14 @@ class _ChatScreenState extends State<ChatScreen> {
                   messages.sort((a, b) {
                     try {
                       DateTime aTime = DateTime.tryParse(a.sent) ??
-                          DateTime.fromMillisecondsSinceEpoch(a.sent as int);
+                          DateTime.fromMillisecondsSinceEpoch(int.parse(a.sent));
                       DateTime bTime = DateTime.tryParse(b.sent) ??
-                          DateTime.fromMillisecondsSinceEpoch(b.sent as int);
+                          DateTime.fromMillisecondsSinceEpoch(int.parse(b.sent));
                       return bTime.compareTo(aTime); // Descending order
                     } catch (e) {
                       debugPrint("Sorting error: $e");
                       return 0;
                     }
-                  });
-
-                  // Scroll to the latest message
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    _scrollController
-                        .jumpTo(_scrollController.position.minScrollExtent);
                   });
 
                   return ListView.builder(
@@ -161,7 +184,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 },
               ),
             ),
-            chatInput(),
+            ChatInput(onSendMessage: _sendMessage)
           ],
         ),
       ),

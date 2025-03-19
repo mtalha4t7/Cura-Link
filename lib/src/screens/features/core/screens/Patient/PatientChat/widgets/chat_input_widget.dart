@@ -1,8 +1,24 @@
-import 'package:cura_link/src/constants/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:cura_link/src/constants/colors.dart';
 
-class chatInput extends StatelessWidget {
-  const chatInput({super.key});
+class ChatInput extends StatefulWidget {
+  final Function(String) onSendMessage; // Callback to send message
+
+  const ChatInput({super.key, required this.onSendMessage});
+
+  @override
+  _ChatInputState createState() => _ChatInputState();
+}
+
+class _ChatInputState extends State<ChatInput> {
+  final TextEditingController _controller = TextEditingController();
+
+  void _sendMessage() {
+    if (_controller.text.trim().isNotEmpty) {
+      widget.onSendMessage(_controller.text.trim());
+      _controller.clear(); // Clear input field after sending
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,25 +40,25 @@ class chatInput extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () {}, // Handle emoji button action
                     icon: Icon(
                       Icons.emoji_emotions,
-                      color: isDarkMode ? tAccentColor : tAccentColor,
+                      color: tAccentColor,
                     ),
                   ),
                   Expanded(
                     child: TextField(
+                      controller: _controller,
                       keyboardType: TextInputType.multiline,
                       maxLines: null,
                       style: TextStyle(
-                        fontSize: 16, // Ensure consistent text size
+                        fontSize: 16,
                         color: isDarkMode ? Colors.white : Colors.black,
                       ),
                       decoration: InputDecoration(
                         hintText: 'Type something...',
                         hintStyle: TextStyle(
-                          decoration: TextDecoration.none,
-                          fontSize: 12, // Explicitly setting hint text size
+                          fontSize: 12,
                           color: isDarkMode ? Colors.blueAccent : Colors.black,
                         ),
                         border: InputBorder.none,
@@ -50,18 +66,18 @@ class chatInput extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () {}, // Handle image selection
                     icon: Icon(
                       Icons.image,
-                      color: isDarkMode ? tPrimaryColor : tPrimaryColor,
+                      color: tPrimaryColor,
                       size: 25,
                     ),
                   ),
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () {}, // Handle camera button action
                     icon: Icon(
                       Icons.camera_alt_rounded,
-                      color: isDarkMode ? tPrimaryColor : tPrimaryColor,
+                      color: tPrimaryColor,
                       size: 25,
                     ),
                   ),
@@ -71,7 +87,7 @@ class chatInput extends StatelessWidget {
           ),
           MaterialButton(
             padding: const EdgeInsets.all(10),
-            onPressed: () {},
+            onPressed: _sendMessage,
             shape: const CircleBorder(),
             color: Colors.green,
             child: Icon(

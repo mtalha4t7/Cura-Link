@@ -6,6 +6,8 @@ import 'package:get/get.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../screens/features/authentication/models/message_model.dart';
+
 class UserRepository extends GetxController {
   static UserRepository get instance => Get.find();
   final ImagePicker _picker = ImagePicker();
@@ -131,6 +133,27 @@ class UserRepository extends GetxController {
     }
   }
 
+  Future<void> sendMessageToDatabase(Message message) async {
+    try {
+      var collection = MongoDatabase.messagesCollection;
+      if (collection != null) {
+        // Convert the message to a JSON map
+        final messageMap = message.toJson();
+
+        // Insert the message into the collection
+        await collection.insertOne(messageMap);
+
+        // Optionally, you can fetch the latest messages after sending a new one
+        _fetchMessages(message.toId);
+      } else {
+        throw Exception("Messages collection is not initialized");
+      }
+    } catch (e) {
+      print('Error sending message: $e');
+      // Handle the error appropriately, e.g., show a snackbar or log it
+    }
+  }
+
   Future<void> updateActiveStatus(bool isActive) async {
     try {
       final userEmail = FirebaseAuth.instance.currentUser?.email;
@@ -247,9 +270,8 @@ class UserRepository extends GetxController {
 
       // Filter out the current user
       final filteredUsers =
-          users.where((user) => user['userEmail'] != currentUserEmail).toList();
-
-      _usersController.add(filteredUsers); // Emit filtered data
+          users.where((user) => user['userEmail'] != currentUserEmail);
+      _usersController.add(filteredUsers.toList()); // Emit filtered data
     } catch (e) {
       print('Error fetching users: $e');
       _usersController.addError('Error fetching users: $e');
@@ -260,15 +282,22 @@ class UserRepository extends GetxController {
   final StreamController<List<Map<String, dynamic>>> _messagesController =
       StreamController<List<Map<String, dynamic>>>.broadcast();
 
-  Stream<List<Map<String, dynamic>>> getAllMessagesStream() {
-    _fetchMessages(); // Fetch messages initially
+  Stream<List<Map<String, dynamic>>> getAllMessagesStream(String to) {
+    _fetchMessages(to); // Fetch messages initially
     return _messagesController.stream;
   }
 
-  Future<void> _fetchMessages() async {
+  Future<void> _fetchMessages(String to) async {
     try {
       var collection = MongoDatabase.messagesCollection;
-      final messages = await collection?.find().toList() ?? [];
+      final messages = await collection
+          ?.find({
+        '\$or': [
+          {'fromId': currentUserEmail, 'toId': to},
+          {'fromId': to, 'toId': currentUserEmail},
+        ]
+      })
+          .toList() ?? [];
 
       _messagesController.add(messages); // Emit data to the stream
     } catch (e) {
