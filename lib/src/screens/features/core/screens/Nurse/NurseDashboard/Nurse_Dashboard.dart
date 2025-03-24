@@ -41,7 +41,7 @@ class NurseDashboard extends StatelessWidget {
                 leading: const Icon(Icons.book),
                 title: const Text('Bookings'),
                 onTap: () {
-                  // Navigate to bookings
+
                 },
               ),
             ],
@@ -151,7 +151,7 @@ class NurseDashboard extends StatelessWidget {
           ],
           onTap: (index) {
             if (index == 2) {
-              // Navigate to ProfileScreen
+              
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const NurseProfileScreen()),
