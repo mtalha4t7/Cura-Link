@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+// Renamed to MessageType to avoid conflict with MongoDB's Type
+enum MessageType { text, image }
+
 class Message {
   Message({
     required this.toId,
@@ -14,24 +17,57 @@ class Message {
   final String msg;
   final String read;
   final String fromId;
-  final Type type;
-  final String sent; // Can be int (timestamp) or String (ISO date)
+  final MessageType type;
+  final String sent;
 
-  /// ✅ Fix: Improved fromJson method
   factory Message.fromJson(Map<String, dynamic> json) {
-    debugPrint("Parsing message: $json"); // Log incoming JSON
+    try {
+      debugPrint("Parsing message: $json");
 
-    return Message(
-      toId: json['toId']?.toString() ?? "",
-      msg: json['msg']?.toString() ?? "",
-      read: json['read']?.toString() ?? "",
-      type: json['type'] == Type.image.name ? Type.image : Type.text,
-      fromId: json['fromId']?.toString() ?? "",
-      sent: json['sent'] is int
-          ? DateTime.fromMillisecondsSinceEpoch(json['sent'])
-              .toString() // Convert int timestamp to String
-          : json['sent']?.toString() ?? "",
-    );
+      // Handle type conversion safely
+      MessageType messageType;
+      if (json['type'] == 'image') {
+        messageType = MessageType.image;
+      } else {
+        messageType = MessageType.text; // Default to text
+      }
+
+      // Handle sent timestamp conversion
+      String sentTimestamp;
+      if (json['sent'] is int) {
+        sentTimestamp = json['sent'].toString();
+      } else if (json['sent'] is String) {
+        // Try parsing ISO string if needed
+        try {
+          DateTime.parse(json['sent']);
+          sentTimestamp = json['sent'];
+        } catch (e) {
+          sentTimestamp = DateTime.now().millisecondsSinceEpoch.toString();
+        }
+      } else {
+        sentTimestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      }
+
+      return Message(
+        toId: json['toId']?.toString() ?? "",
+        msg: json['msg']?.toString() ?? "",
+        read: json['read']?.toString() ?? "false",
+        type: messageType,
+        fromId: json['fromId']?.toString() ?? "",
+        sent: sentTimestamp,
+      );
+    } catch (e) {
+      debugPrint("Error parsing message: $e");
+      // Return a default message if parsing fails
+      return Message(
+        toId: "",
+        msg: "",
+        read: "false",
+        type: MessageType.text,
+        fromId: "",
+        sent: DateTime.now().millisecondsSinceEpoch.toString(),
+      );
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -41,9 +77,7 @@ class Message {
       'read': read,
       'type': type.name,
       'fromId': fromId,
-      'sent': sent, // Store timestamp correctly
+      'sent': sent,
     };
   }
 }
-
-enum Type { text, image }

@@ -7,6 +7,7 @@ import 'package:cura_link/src/screens/features/core/screens/Patient/PatientChat/
 import 'package:cura_link/src/screens/features/core/screens/Patient/PatientChat/widgets/chat_message_card.dart';
 import 'package:flutter/material.dart';
 import 'package:cura_link/src/constants/colors.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart'; // For date formatting
 
 class ChatScreen extends StatefulWidget {
@@ -34,6 +35,20 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {});
   }
 
+  void _sendImage(XFile imageFile) async {
+    if (loggedInUserEmail == null) return;
+
+    // You'll need to implement this method in your UserRepository
+    await UserRepository.instance.sendImageMessage(
+      toId: widget.user.userEmail.toString(),
+      fromId: loggedInUserEmail!,
+      imageFile: imageFile,
+    );
+
+    _scrollToBottom();
+  }
+
+
   /// Send a message to the database
   void _sendMessage(String messageText) async {
     if (messageText.trim().isEmpty || loggedInUserEmail == null) return;
@@ -42,7 +57,7 @@ class _ChatScreenState extends State<ChatScreen> {
       fromId: loggedInUserEmail!,
       msg: messageText.trim(),
       read: "false",
-      type: Type.text,
+      type: MessageType.text,
       sent: DateTime.now().millisecondsSinceEpoch.toString(),
     );
 

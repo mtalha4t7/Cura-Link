@@ -1,7 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer';
+import 'dart:typed_data';
 import 'package:cura_link/src/mongodb/mongodb.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:get/get.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:image_picker/image_picker.dart';
@@ -533,4 +537,97 @@ class UserRepository extends GetxController {
       getPhoneNumberByEmail(email: email, collection: _nurseCollection);
 
   DbCollection? get _verificationCollection => MongoDatabase.userVerification;
+
+  Future<void> sendImageMessage({
+    required String toId,
+    required String fromId,
+    required XFile imageFile,
+  }) async {
+    try {
+      final collection = MongoDatabase.messagesCollection;
+      if (collection == null) {
+        throw Exception("Messages collection is not initialized");
+      }
+
+      // Read and compress the image
+      final imageBytes = await imageFile.readAsBytes();
+      final compressedBytes = await _compressImage(imageBytes); // Implement compression
+      final imageBase64 = base64Encode(compressedBytes);
+
+      // Create message
+      final message = Message(
+        toId: toId,
+        fromId: fromId,
+        msg: imageBase64,
+        read: "false",
+        type: MessageType.image, // Using the renamed enum
+        sent: DateTime.now().millisecondsSinceEpoch.toString(),
+      );
+
+      await collection.insertOne(message.toJson());
+      await updateUserLastActive(fromId);
+      _fetchMessages(toId);
+
+    } catch (e) {
+      debugPrint('Image send error: $e');
+      throw Exception('Image send failed: ${e.toString()}');
+    }
+  }
+
+
+  Future<Uint8List> _compressImage(Uint8List bytes) async {
+    try {
+      // Skip compression if image is already small (under 1MB)
+      if (bytes.lengthInBytes < 1024 * 1024) {
+        return bytes;
+      }
+
+      // Get the original image dimensions
+      final originalImage = await decodeImageFromList(bytes);
+      final originalWidth = originalImage.width.toDouble();
+      final originalHeight = originalImage.height.toDouble();
+
+      // Calculate target dimensions while maintaining aspect ratio
+      const maxDimension = 1920.0; // Max width or height
+      double width = originalWidth;
+      double height = originalHeight;
+
+      if (width > height && width > maxDimension) {
+        height = (height * maxDimension / width);
+        width = maxDimension;
+      } else if (height > maxDimension) {
+        width = (width * maxDimension / height);
+        height = maxDimension;
+      }
+
+      // Perform the compression
+      final result = await FlutterImageCompress.compressWithList(
+        bytes,
+        minWidth: width.toInt(),
+        minHeight: height.toInt(),
+        quality: 85, // Quality percentage (0-100)
+        format: CompressFormat.jpeg, // Or CompressFormat.png
+        rotate: 0, // Rotation angle if needed
+      );
+
+      // If compression fails, return original but log warning
+      if (result == null || result.isEmpty) {
+        debugPrint('Image compression failed - using original image');
+        return bytes;
+      }
+
+      // Verify the compressed size is reasonable
+      if (result.lengthInBytes > bytes.lengthInBytes) {
+        debugPrint('Compressed image larger than original - using original');
+        return bytes;
+      }
+
+      return result;
+    } catch (e) {
+      debugPrint('Image compression error: $e');
+      return bytes; // Fallback to original if compression fails
+    }
+  }
+
 }
+
