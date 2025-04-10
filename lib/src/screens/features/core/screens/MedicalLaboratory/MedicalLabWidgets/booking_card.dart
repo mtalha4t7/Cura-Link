@@ -62,7 +62,7 @@ class BookingCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Price: \$$price', // Format price to 2 decimal places
+              'Price: \$$price',
               style: TextStyle(
                 fontSize: 16,
                 color: isDark ? Colors.white70 : Colors.black87,
@@ -78,32 +78,32 @@ class BookingCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                // Custom Accept Button
-                CustomButton(
-                  text: 'Accept',
-                  backgroundColor: Colors.green,
-                  textColor: Colors.white,
-                  onPressed: onAccept,
-                ),
-                // Custom Reject Button
-                CustomButton(
-                  text: 'Reject',
-                  backgroundColor: Colors.red,
-                  textColor: Colors.white,
-                  onPressed: onReject,
-                ),
-                // Custom Modify Button
-                CustomButton(
-                  text: 'Modify',
-                  backgroundColor: Colors.blue,
-                  textColor: Colors.white,
-                  onPressed: onModify,
-                ),
-              ],
-            ),
+
+            // ✅ Show buttons only when status is Pending or Modified
+            if (status == 'Pending' || status == 'Modified')
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  CustomButton(
+                    text: 'Accept',
+                    backgroundColor: Colors.green,
+                    textColor: Colors.white,
+                    onPressed: onAccept,
+                  ),
+                  CustomButton(
+                    text: 'Reject',
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    onPressed: onReject,
+                  ),
+                  CustomButton(
+                    text: 'Modify',
+                    backgroundColor: Colors.blue,
+                    textColor: Colors.white,
+                    onPressed: onModify,
+                  ),
+                ],
+              ),
           ],
         ),
       ),
@@ -118,6 +118,8 @@ class BookingCard extends StatelessWidget {
         return Colors.red;
       case 'pending':
         return isDark ? Colors.orangeAccent : Colors.orange;
+      case 'modified':
+        return isDark ? Colors.amberAccent : Colors.amber;
       default:
         return isDark ? Colors.white70 : Colors.black54;
     }
@@ -143,16 +145,16 @@ class CustomButton extends StatelessWidget {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16), // Reduced padding
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.circular(20), // Adjusted radius for smaller buttons
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.2),
               spreadRadius: 1,
               blurRadius: 3,
-              offset: Offset(0, 1), // Slightly reduced shadow offset
+              offset: const Offset(0, 1),
             ),
           ],
         ),
@@ -160,7 +162,7 @@ class CustomButton extends StatelessWidget {
           text,
           style: TextStyle(
             color: textColor,
-            fontSize: 14, // Reduced font size
+            fontSize: 14,
             fontWeight: FontWeight.bold,
           ),
         ),
