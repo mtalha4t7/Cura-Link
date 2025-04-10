@@ -1,0 +1,2 @@
+C:/Users/OCS/Documents/GitHub/Cura-Link/android/app/.cxx/Debug/5a4m1767/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/OCS/Documents/GitHub/Cura-Link/android/app/.cxx/Debug/5a4m1767/arm64-v8a/CMakeFiles/rebuild_cache.dir
