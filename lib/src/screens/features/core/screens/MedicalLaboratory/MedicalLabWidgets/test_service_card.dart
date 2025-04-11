@@ -5,52 +5,55 @@ class TestServiceCard extends StatelessWidget {
   final double prize;
   final bool isDark;
   final VoidCallback onDelete;
+  final VoidCallback onEdit;
 
   const TestServiceCard({
-    super.key,
+    Key? key,
     required this.serviceName,
     required this.prize,
     required this.isDark,
     required this.onDelete,
-  });
+    required this.onEdit,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: isDark ? Colors.grey[850] : Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: isDark ? Colors.grey[900] : Colors.white,
       elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       margin: const EdgeInsets.symmetric(vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        title: Text(
+          serviceName,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
+        ),
+        subtitle: Text(
+          'Rs ${prize.toStringAsFixed(2)}',
+          style: TextStyle(
+            color: isDark ? Colors.white70 : Colors.black54,
+          ),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    serviceName,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Prize: ${prize.toStringAsFixed(2)} RS',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: isDark ? Colors.white70 : Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
+            // Edit icon
+            IconButton(
+              icon: Icon(Icons.edit, color: isDark ? Colors.orangeAccent : Colors.blue),
+              onPressed: onEdit,
+              tooltip: 'Edit Service',
             ),
+            // Delete icon
             IconButton(
               icon: Icon(Icons.delete, color: Colors.red),
               onPressed: onDelete,
+              tooltip: 'Delete Service',
             ),
           ],
         ),

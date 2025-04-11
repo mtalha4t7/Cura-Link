@@ -44,8 +44,6 @@ class _ManageTestServicesScreenState extends State<ManageTestServicesScreen> {
               ),
             ),
             const SizedBox(height: 20),
-
-            // Advanced Dropdown to select test services
             DropdownButton<String>(
               value: _selectedTestService.isEmpty ? null : _selectedTestService,
               hint: Text('Select a Test Service'),
@@ -71,8 +69,6 @@ class _ManageTestServicesScreenState extends State<ManageTestServicesScreen> {
               }).toList(),
             ),
             const SizedBox(height: 16),
-
-            // TextField to enter prize
             _buildTextField(
               controller: _prizeController,
               label: 'Enter Prize Amount',
@@ -82,8 +78,6 @@ class _ManageTestServicesScreenState extends State<ManageTestServicesScreen> {
               isDark: isDarkTheme,
             ),
             const SizedBox(height: 16),
-
-            // Add Service Button
             CustomButton(
               text: 'Add Service',
               isDark: isDarkTheme,
@@ -112,8 +106,6 @@ class _ManageTestServicesScreenState extends State<ManageTestServicesScreen> {
               },
             ),
             const SizedBox(height: 16),
-
-            // List of Services
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: _controller.fetchUserServices(),
@@ -154,19 +146,15 @@ class _ManageTestServicesScreenState extends State<ManageTestServicesScreen> {
                                   actions: [
                                     TextButton(
                                       onPressed: () {
-                                        // Dismiss the dialog
                                         Navigator.of(context).pop();
                                       },
                                       child: const Text("No"),
                                     ),
                                     TextButton(
                                       onPressed: () {
-                                        // Proceed with deletion
                                         _controller.removeTestService(context, service['serviceName']).then((_) {
                                           setState(() {});
                                         });
-
-                                        // Dismiss the dialog
                                         Navigator.of(context).pop();
                                       },
                                       child: const Text("Yes"),
@@ -175,6 +163,9 @@ class _ManageTestServicesScreenState extends State<ManageTestServicesScreen> {
                                 );
                               },
                             );
+                          },
+                          onEdit: () {
+                            _showEditServiceDialog(service['serviceName'], service['prize']);
                           },
                         );
                       },
@@ -188,6 +179,89 @@ class _ManageTestServicesScreenState extends State<ManageTestServicesScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showEditServiceDialog(String oldServiceName, double oldPrize) {
+    final TextEditingController editNameController = TextEditingController(text: oldServiceName);
+    final TextEditingController editPrizeController = TextEditingController(text: oldPrize.toString());
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Edit Test Service"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: editNameController,
+                decoration: const InputDecoration(labelText: "Service Name"),
+                autofocus: true,
+              ),
+              TextField(
+                controller: editPrizeController,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: "Price"),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final newName = editNameController.text.trim();
+                final newPrize = double.tryParse(editPrizeController.text.trim());
+
+                if (newName.isEmpty || newPrize == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Please enter valid values'),
+                      backgroundColor: Colors.red.shade400,
+                    ),
+                  );
+                  return;
+                }
+
+                try {
+                  await _controller.editTestService(
+                    oldServiceName: oldServiceName,
+                    newName: newName,
+                    newPrize: newPrize,
+                  );
+
+                  // Clear fields and refresh data
+                  _serviceNameController.clear();
+                  _prizeController.clear();
+                  setState(() {
+                    _selectedTestService = '';
+                  });
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('"$newName" updated successfully'),
+                      backgroundColor: Colors.green.shade600,
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error updating service: ${e.toString()}'),
+                      backgroundColor: Colors.red.shade600,
+                    ),
+                  );
+                } finally {
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text("Save Changes"),
+            ),
+          ],
+        );
+      },
     );
   }
 
