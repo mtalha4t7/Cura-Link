@@ -1,5 +1,3 @@
-
-// Simple emoji picker implementation (you might want to use a package like emoji_picker_flutter instead)
 import 'package:flutter/material.dart';
 
 class EmojiPicker extends StatelessWidget {

@@ -74,6 +74,9 @@ class UserRepository extends GetxController {
     }
   }
 
+
+
+
   Future<String?> getCurrentUser() async {
     final currentUser = FirebaseAuth.instance.currentUser?.email;
     return currentUser;

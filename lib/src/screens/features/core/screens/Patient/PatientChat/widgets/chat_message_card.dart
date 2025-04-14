@@ -1,12 +1,14 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:cura_link/src/constants/colors.dart';
 import 'package:cura_link/src/screens/features/authentication/models/message_model.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // For date formatting
+import 'package:intl/intl.dart';
 
 class ChatMessageCard extends StatelessWidget {
   final Message message;
   final bool isFromCurrentUser;
-
   const ChatMessageCard({
     super.key,
     required this.message,
@@ -29,33 +31,25 @@ class ChatMessageCard extends StatelessWidget {
     );
   }
 
-  // Helper function to format the message.sent timestamp
   String _formatMessageSent(String sent) {
     try {
-      // Parse the sent value into a DateTime object
       DateTime dateTime;
       if (sent.contains(RegExp(r'^\d+$'))) {
-        // If sent is a timestamp (e.g., "1672531200000")
         dateTime = DateTime.fromMillisecondsSinceEpoch(int.parse(sent));
       } else {
-        // If sent is an ISO string (e.g., "2023-01-01T12:00:00Z")
         dateTime = DateTime.parse(sent);
       }
 
-      // Format the DateTime object
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final messageDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
 
       if (messageDate.isBefore(today)) {
-        // Show date and time for older messages
-        return DateFormat('MMM d, yyyy h:mm a').format(dateTime); // Example: "Jan 1, 2023 12:00 PM"
+        return DateFormat('MMM d, yyyy h:mm a').format(dateTime);
       } else {
-        // Show only time for today's messages
-        return DateFormat('h:mm a').format(dateTime); // Example: "12:00 PM"
+        return DateFormat('h:mm a').format(dateTime);
       }
     } catch (e) {
-      // Fallback in case of parsing errors
       return sent;
     }
   }
@@ -78,23 +72,15 @@ class ChatMessageCard extends StatelessWidget {
                   bottomRight: Radius.circular(20),
                 ),
               ),
-              constraints: BoxConstraints(
-                maxWidth: 250, // Adjusts width dynamically
-              ),
-              child: Text(
-                message.msg,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isDarkMode ? tWhiteColor : tDarkColor,
-                ),
-              ),
+              constraints: BoxConstraints(maxWidth: 250),
+              child: _buildMessageContent(isDarkMode),
             ),
           ),
         ),
         Padding(
           padding: const EdgeInsets.only(right: 12, bottom: 5),
           child: Text(
-            _formatMessageSent(message.sent), // Use formatted date
+            _formatMessageSent(message.sent),
             style: TextStyle(
               fontSize: 10,
               color: isDarkMode ? Colors.blue : Colors.black54,
@@ -112,7 +98,7 @@ class ChatMessageCard extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(left: 12, bottom: 5),
           child: Text(
-            _formatMessageSent(message.sent), // Use formatted date
+            _formatMessageSent(message.sent),
             style: TextStyle(
               fontSize: 10,
               color: isDarkMode ? Colors.blue : Colors.black54,
@@ -133,20 +119,44 @@ class ChatMessageCard extends StatelessWidget {
                   bottomLeft: Radius.circular(20),
                 ),
               ),
-              constraints: BoxConstraints(
-                maxWidth: 250, // Adjusts width dynamically
-              ),
-              child: Text(
-                message.msg,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isDarkMode ? tDarkColor : tWhiteColor,
-                ),
-              ),
+              constraints: BoxConstraints(maxWidth: 250),
+              child: _buildMessageContent(isDarkMode),
             ),
           ),
         ),
       ],
     );
+  }
+
+  Widget _buildMessageContent(bool isDarkMode) {
+    if (message.type == MessageType.image) {
+      try {
+        Uint8List imageBytes = base64Decode(message.msg);
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.memory(
+            imageBytes,
+            width: 200,
+            fit: BoxFit.cover,
+          ),
+        );
+      } catch (e) {
+        return Text(
+          "Invalid image data",
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.red,
+          ),
+        );
+      }
+    } else {
+      return Text(
+        message.msg,
+        style: TextStyle(
+          fontSize: 14,
+          color: isDarkMode ? tWhiteColor : tDarkColor,
+        ),
+      );
+    }
   }
 }
