@@ -33,8 +33,8 @@ class _ShowLabServicesState extends State<ShowLabServices> {
   Future<void> _initializePatientName() async {
     if (email != null) {
       _patientName = (await UserRepository().getPatientUserName(email!)) ?? "Unknown";
-    setState(() {}); // Update the state once the patient name is loaded
-  }
+      setState(() {}); // Update the state once the patient name is loaded
+    }
   }
 
 
@@ -134,15 +134,15 @@ class _ShowLabServicesState extends State<ShowLabServices> {
                   trailing: IconButton(
                     icon: Icon(FontAwesomeIcons.cartPlus),
                     onPressed: () async {
-                     final checkTestBooking= await _addBookingController.checkBookingWithSameTestName(service['serviceName']);
-                     if(checkTestBooking){
-                       ScaffoldMessenger.of(context).showSnackBar(
-                         SnackBar(content: Text('You already Booked ${service['serviceName']} please cancel last one to proceed!')),
-                       );
-                     }else{
-                       _selectDateTimeAndBook(service);
-                     }
-                   // Open calendar and time picker
+                      final checkTestBooking= await _addBookingController.checkBookingWithSameTestName(service['serviceName']);
+                      if(checkTestBooking){
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('You already Booked ${service['serviceName']} please cancel last one to proceed!')),
+                        );
+                      }else{
+                        _selectDateTimeAndBook(service);
+                      }
+                      // Open calendar and time picker
                     },
                   ),
                   onTap: () {

@@ -1,6 +1,8 @@
+import 'package:bson/bson.dart';
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/LabBooking/temp_userModel.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import '../../../../../../mongodb/mongodb.dart';
 import '../../../../../../shared prefrences/shared_prefrence.dart';
 import '../../../../../../utils/helper/helper_controller.dart';
@@ -132,21 +134,38 @@ class PatientLabBookingController {
   // Fetch all users from the MongoDB collection
   Future<List<ShowLabUserModel>> fetchAllUsers() async {
     try {
-      // Fetching all users from the collection
-      final userCollection = await _userRepo.getAllUsers(
-          MongoDatabase.userLabCollection);
+      debugPrint("Fetching users from lab collection...");
+      final userCollection = await _userRepo.getAllUsers(MongoDatabase.userLabCollection);
+      debugPrint("Received ${userCollection.length} raw user records");
 
-      // Filtering users with userVerified == "1"
-      List<ShowLabUserModel> allUsers = userCollection
-          .where((user) => user['userVerified'] == '1')
+      final List<ShowLabUserModel> allUsers = userCollection
+          .where((user) =>
+      user != null &&
+          user['userVerified'] == '1' &&
+          user['userAddress'] != null &&
+          user['userName'] != null
+      )
           .map((user) {
-        return ShowLabUserModel.fromJson(user);
-      }).toList();
+        try {
+          // Convert ObjectId to String if needed
+          final modifiedUser = Map<String, dynamic>.from(user);
+          if (modifiedUser['_id'] != null && modifiedUser['_id'] is ObjectId) {
+            modifiedUser['_id'] = modifiedUser['_id'].toString();
+          }
+          return ShowLabUserModel.fromJson(modifiedUser);
+        } catch (e) {
+          debugPrint("Error parsing user: $e");
+          return null;
+        }
+      })
+          .whereType<ShowLabUserModel>()
+          .toList();
 
+      debugPrint("Returning ${allUsers.length} verified labs");
       return allUsers;
     } catch (e) {
-      print('Error fetching users: $e');
-      return [];
+      debugPrint("Error in fetchAllUsers: $e");
+      rethrow;
     }
   }
 
