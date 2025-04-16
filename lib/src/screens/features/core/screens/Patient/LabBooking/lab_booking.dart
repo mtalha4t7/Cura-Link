@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:matcher/expect.dart';
 import '../PatientControllers/lab_booking_controller.dart';
 import '../patientWidgets/lab_users_card.dart';
 import 'temp_userModel.dart';
@@ -42,6 +45,14 @@ class _LabBookingScreenState extends State<LabBookingScreen> {
     setState(() {
       _isDarkMode = brightness == Brightness.dark;
     });
+  }
+
+  Future<void> _setMapStyle() async {
+    final stylePath = _isDarkMode
+        ? 'assets/mapThemes/dark_style.json'
+        : 'assets/mapThemes/light_style.json';
+    final styleString = await rootBundle.loadString(stylePath);
+    _mapController.setMapStyle(styleString);
   }
 
   Future<void> _initializeData() async {
@@ -82,32 +93,22 @@ class _LabBookingScreenState extends State<LabBookingScreen> {
 
   Future<void> _loadLabs() async {
     try {
-      debugPrint("Starting lab loading...");
       final List<ShowLabUserModel> labs = await _controller.fetchAllUsers();
-      debugPrint("Fetched ${labs.length} labs");
-
       setState(() {
         _labs = labs;
         _hasLabs = labs.isNotEmpty;
       });
 
       if (_hasLabs) {
-        debugPrint("Finding nearest lab among ${labs.length} options...");
         await _findNearestLab();
-        debugPrint("Nearest lab found: ${_nearestLab?.userName}");
         await _updateMarkers();
-        debugPrint("Markers updated");
-      } else {
-        debugPrint("No labs available");
       }
     } catch (e) {
-      debugPrint("Error loading labs: $e");
       setState(() {
         _locationError = 'Failed to load labs. Please try again.';
       });
     } finally {
       setState(() => _isLoading = false);
-      debugPrint("Lab loading completed");
     }
   }
 
@@ -145,18 +146,18 @@ class _LabBookingScreenState extends State<LabBookingScreen> {
       try {
         final labLocation = await _geocodeAddress(lab.userAddress);
         _markers.add(
-            Marker(
-              markerId: MarkerId(lab.id.toString()),
-              position: labLocation,
-              icon: lab.id == _nearestLab?.id
-                  ? await _createCustomIcon(Icons.local_hospital, Colors.green, size: 180.0)
-                  : await _createCustomIcon(Icons.local_hospital, Colors.blue, size: 160.0),
-              infoWindow: InfoWindow(
-                title: lab.userName,
-                snippet: lab.userAddress,
-              ),
-              onTap: () => _showLabDetails(lab),
-            )
+          Marker(
+            markerId: MarkerId(lab.id.toString()),
+            position: labLocation,
+            icon: lab.id == _nearestLab?.id
+                ? await _createCustomIcon(Icons.local_hospital, Colors.green, size: 180.0)
+                : await _createCustomIcon(Icons.local_hospital, Colors.green, size: 160.0),
+            infoWindow: InfoWindow(
+              title: lab.userName,
+              snippet: lab.userAddress,
+            ),
+            onTap: () => _showLabDetails(lab),
+          ),
         );
       } catch (e) {
         debugPrint("Error adding marker for ${lab.userName}: $e");
@@ -164,14 +165,14 @@ class _LabBookingScreenState extends State<LabBookingScreen> {
     }
     setState(() {});
   }
+
   Future<BitmapDescriptor> _createCustomIcon(IconData icon, Color color, {double size = 100.0}) async {
     final pictureRecorder = ui.PictureRecorder();
     final canvas = Canvas(pictureRecorder);
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
 
-    // Increase the font size to make the icon bigger
     final textStyle = TextStyle(
-      fontSize: size * 0.6,  // Adjust this ratio as needed
+      fontSize: size * 0.6,
       fontFamily: icon.fontFamily,
       color: color,
     );
@@ -182,7 +183,7 @@ class _LabBookingScreenState extends State<LabBookingScreen> {
     );
 
     textPainter.layout();
-    textPainter.paint(canvas, Offset(size * 0.2, size * 0.2));  // Center the icon
+    textPainter.paint(canvas, Offset(size * 0.2, size * 0.2));
 
     final picture = pictureRecorder.endRecording();
     final image = await picture.toImage(size.toInt(), size.toInt());
@@ -252,7 +253,8 @@ class _LabBookingScreenState extends State<LabBookingScreen> {
       _currentLocation!.longitude,
       _markers.firstWhere((m) => m.markerId.value == lab.id.toString()).position.latitude,
       _markers.firstWhere((m) => m.markerId.value == lab.id.toString()).position.longitude,
-    ) / 1000;
+    ) /
+        1000;
 
     showModalBottomSheet(
       context: context,
@@ -269,12 +271,10 @@ class _LabBookingScreenState extends State<LabBookingScreen> {
                 onTap: () {
                   saveEmail(lab.userEmail);
                   Navigator.pop(context);
-                  debugPrint("Selected Lab: ${lab.userName}");
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ShowLabServices(),
-
                     ),
                   );
                 },
@@ -288,7 +288,9 @@ class _LabBookingScreenState extends State<LabBookingScreen> {
                       const Icon(Icons.directions, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        '${distance.toStringAsFixed(1)} km away',
+                        distance < 1
+                            ? '${(distance * 1000).toStringAsFixed(0)} meters away'
+                            : '${distance.toStringAsFixed(1)} km away',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -352,8 +354,10 @@ class _LabBookingScreenState extends State<LabBookingScreen> {
       body: Stack(
         children: [
           GoogleMap(
+            mapType: MapType.normal,
             onMapCreated: (controller) {
               _mapController = controller;
+              _setMapStyle(); // Apply theme here
               if (_currentLocation != null) {
                 _mapController.animateCamera(
                   CameraUpdate.newLatLngZoom(_currentLocation!, 14),

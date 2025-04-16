@@ -191,4 +191,6 @@ flutter:
     - assets/images/welcome_images/
     - assets/images/forget_password/
     - assets/images/on_boarding_images/
+    - assets/mapThemes/light_style.json
+    - assets/mapThemes/dark_style.json
 
