@@ -290,7 +290,7 @@ class _LabBookingScreenState extends State<LabBookingScreen> {
                       Text(
                         distance < 1
                             ? '${(distance * 1000).toStringAsFixed(0)} meters away'
-                            : '${distance.toStringAsFixed(1)} km away',
+                            : '${distance.toStringAsFixed(1)} Kms away',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
