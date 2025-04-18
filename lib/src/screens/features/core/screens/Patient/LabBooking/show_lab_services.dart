@@ -17,7 +17,7 @@ class _ShowLabServicesState extends State<ShowLabServices> {
   late ShowTestServiceController _controller;
   late PatientLabBookingController _addBookingController;
   late Future<List<Map<String, dynamic>>> _services;
-  late String? email; // Make email nullable
+  late String? email; // to Make email nullable
   late String _patientName;
 
   @override
