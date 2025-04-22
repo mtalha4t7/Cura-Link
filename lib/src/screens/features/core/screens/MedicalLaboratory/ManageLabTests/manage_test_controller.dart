@@ -37,8 +37,11 @@ class TestServiceController {
 
     try {
       final existingService = await MongoDatabase.medicalLabServices?.findOne({
+        'userEmail': userEmail,
         'serviceName': serviceName,
       });
+
+
 
       if (existingService == null) {
         await MongoDatabase.medicalLabServices?.insertOne({

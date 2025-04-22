@@ -21,7 +21,7 @@ class Helper extends GetxController {
     String pattern = r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$';
     RegExp regex = RegExp(pattern);
     if (!regex.hasMatch(value)) {
-      return 'Password must be 8 characters, with an uppercase letter, number and symbol';
+      return 'Password must be 8 characters, with an uppercase letter,\n number and symbol';
     }
     return null;
   }
