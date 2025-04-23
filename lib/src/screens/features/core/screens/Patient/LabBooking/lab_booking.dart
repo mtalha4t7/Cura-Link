@@ -270,6 +270,7 @@ class _LabBookingScreenState extends State<LabBookingScreen> {
                 isDark: _isDarkMode,
                 onTap: () {
                   saveEmail(lab.userEmail);
+                   saveName(lab.userName);
                   Navigator.pop(context);
                   Navigator.push(
                     context,

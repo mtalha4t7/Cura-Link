@@ -83,7 +83,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                         final booking = bookings[index];
                         final price = booking['price']?.toString() ?? '0.0';
                         return PatientBookingsCard(
-                          patientName: booking['patientName'],
+                          LabUserName: booking['labUserName'],
                           testName: booking['testName'],
                           bookingDate: formatDate(booking['bookingDate']),
                           status: booking['status'] ?? 'Pending',
@@ -104,7 +104,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                                 ),
                               );
                             }
-
                           },
                           onReject: () {
                             if(booking['status']!="Accepted"){

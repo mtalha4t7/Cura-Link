@@ -25,6 +25,17 @@ class MyBookingsController {
 
     return [];
   }
+  Future<int> fetchUnreadBookingsCount() async {
+    try {
+      final bookings = await fetchUserBookings();
+      final unreadCount = bookings.where((booking) =>
+      booking['status'] == 'Pending' || booking['status'] == 'Modified').length;
+      return unreadCount;
+    } catch (e) {
+      print('Error fetching unread bookings count: $e');
+      return 0;
+    }
+  }
 
   // Add a new booking to the MongoDB collection
   Future<void> addBooking(

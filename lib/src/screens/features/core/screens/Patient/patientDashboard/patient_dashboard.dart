@@ -10,9 +10,17 @@ import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidge
 import 'package:get/get.dart';
 import '../../../../../../constants/sizes.dart';
 import '../LabBooking/lab_booking.dart';
+import '../PatientControllers/my_bookings_controller.dart';
 
-class PatientDashboard extends StatelessWidget {
+class PatientDashboard extends StatefulWidget {
   const PatientDashboard({super.key});
+
+  @override
+  State<PatientDashboard> createState() => _PatientDashboardState();
+}
+
+class _PatientDashboardState extends State<PatientDashboard> {
+  final MyBookingsController _controller = MyBookingsController();
 
   @override
   Widget build(BuildContext context) {
@@ -30,8 +38,7 @@ class PatientDashboard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text("Welcome to Cura Link", style: txtTheme.bodyMedium),
-                Text("How can we assist you today?",
-                    style: txtTheme.displayMedium),
+                Text("How can we assist you today?", style: txtTheme.displayMedium),
                 const SizedBox(height: tDashboardPadding),
 
                 // Quick Access Buttons
@@ -41,27 +48,19 @@ class PatientDashboard extends StatelessWidget {
                     QuickAccessButton(
                       icon: Icons.medication,
                       label: 'Order Medicine',
-                      onTap: () {
-                        // Order Medicine action
-                      },
+                      onTap: () {},
                     ),
                     QuickAccessButton(
                       icon: Icons.local_hospital,
                       label: 'Call Nurse',
-                      onTap: () {
-                        // Call Nurse action
-                      },
+                      onTap: () {},
                     ),
                     QuickAccessButton(
                       icon: Icons.science,
                       label: 'Book Lab',
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => LabBookingScreen(),
-                          ),
-                        );
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) => LabBookingScreen()));
                       },
                     ),
                   ],
@@ -69,59 +68,51 @@ class PatientDashboard extends StatelessWidget {
                 const SizedBox(height: tDashboardPadding),
 
                 // Services Grid
-                const Text(
-                  "Our Services",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                const Text("Our Services", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                FutureBuilder<int>(
+                  future: _controller.fetchUnreadBookingsCount(),
+                  builder: (context, snapshot) {
+                    final unreadCount = snapshot.data ?? 0;
+                    return GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      children: [
+                        ServiceCard(
+                          icon: Icons.medical_services,
+                          title: 'Medicine Delivery',
+                          onTap: () {},
+                        ),
+                        ServiceCard(
+                          icon: Icons.medical_services_sharp,
+                          title: 'Nurse Assistance',
+                          onTap: () {},
+                        ),
+                        ServiceCard(
+                          icon: Icons.biotech,
+                          title: 'Lab Tests',
+                          onTap: () {},
+                        ),
+                        ServiceCard(
+                          icon: Icons.add_to_queue,
+                          title: 'My Bookings',
+                          showBadge: unreadCount > 0,
+                          onTap: () {
+                            Navigator.push(context,
+                                MaterialPageRoute(builder: (context) => MyBookingsScreen()));
+                          },
+                        ),
+                      ],
+                    );
+                  },
                 ),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  children: [
-                    ServiceCard(
-                      icon: Icons.medical_services,
-                      title: 'Medicine Delivery',
-                      onTap: () {
-                        // Navigate to Medicine Delivery
-                      },
-                    ),
-                    ServiceCard(
-                      icon: Icons.medical_services_sharp,
-                      title: 'Nurse Assistance',
-                      onTap: () {
-                        // Navigate to Nurse Assistance
-                      },
-                    ),
-                    ServiceCard(
-                      icon: Icons.biotech,
-                      title: 'Lab Tests',
-                      onTap: () {
-                        // Navigate to Lab Tests
-                      },
-                    ),
-                    ServiceCard(
-                      icon: Icons.add_to_queue,
-                      title: 'My Bookings',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MyBookingsScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
+
                 const SizedBox(height: tDashboardPadding),
 
                 // Health Tips Section
-                const Text(
-                  "Health Tips",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
+                const Text("Health Tips", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 SizedBox(
                   height: 120,
                   child: ListView(
@@ -145,19 +136,16 @@ class PatientDashboard extends StatelessWidget {
           type: BottomNavigationBarType.fixed,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.shopping_cart), label: "Orders"),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.message), label: "Messages"),
+            BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: "Orders"),
+            BottomNavigationBarItem(icon: Icon(Icons.message), label: "Messages"),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
           ],
           onTap: (index) {
             switch (index) {
               case 0:
-                Get.to(() => PatientDashboard());
+                Get.to(() => const PatientDashboard());
                 break;
               case 1:
-                // Get.to(() => OrdersScreen());
                 break;
               case 2:
                 Get.to(() => ChatHomeScreen());

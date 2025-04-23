@@ -82,7 +82,7 @@ class _ShowLabServicesState extends State<ShowLabServices> {
 
     // Confirm booking
     await _addBookingController.addBooking(
-      _patientName, // patientName as service name
+      _patientName,
       service['serviceName'],
       price,
       selectedDateTime.toIso8601String(), // selected date and time

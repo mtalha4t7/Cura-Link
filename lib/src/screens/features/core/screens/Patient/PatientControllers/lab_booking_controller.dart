@@ -13,6 +13,9 @@ class PatientLabBookingController {
   final _userRepo = UserRepository();
 
 
+
+
+
   // Add a new booking to the MongoDB collection
   Future<void> addBooking(String patientName,
       String testName,
@@ -22,6 +25,8 @@ class PatientLabBookingController {
     final patientUserEmail = user?.email;
 
     final userEmail = await loadEmail();
+    final userName = await loadName();
+
 
     if (userEmail == null) {
       print("Error: User not logged in.");
@@ -41,6 +46,7 @@ class PatientLabBookingController {
         // Insert the booking into the main bookings collection with the price
         final result = await MongoDatabase.bookingsCollection?.insertOne({
           'labUserEmail': userEmail,
+          'labUserName' : userName,
           'patientUserEmail': patientUserEmail,
           'patientName': patientName,
           'testName': testName,
