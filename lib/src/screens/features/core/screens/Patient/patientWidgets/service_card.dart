@@ -5,14 +5,14 @@ class ServiceCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
-  final bool showBadge; // <-- new param
+  final bool showBadge;
 
   const ServiceCard({
     super.key,
     required this.icon,
     required this.title,
     required this.onTap,
-    this.showBadge = false, // default false
+    this.showBadge = false,
   });
 
   @override
@@ -21,52 +21,60 @@ class ServiceCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: isDarkTheme ? tServiceCardDarkBg : tServiceCardLightBg,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isDarkTheme ? tServiceCardDarkBorder : tServiceCardLightBorder,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDarkTheme ? tServiceCardDarkBg : tServiceCardLightBg,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDarkTheme ? tServiceCardDarkBorder : tServiceCardLightBorder,
+          ),
+        ),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      icon,
+                      size: 40,
+                      color: isDarkTheme ? tServiceCardDarkIcon : tServiceCardLightIcon,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: isDarkTheme ? tWhiteColor : tDarkColor,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 40,
-                  color: isDarkTheme ? tServiceCardDarkIcon : tServiceCardLightIcon,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: isDarkTheme ? tWhiteColor : tDarkColor,
+            if (showBadge)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isDarkTheme ? tServiceCardDarkBg : tServiceCardLightBg,
+                      width: 2,
+                    ),
                   ),
                 ),
-              ],
-            ),
-          ),
-          if (showBadge)
-            Positioned(
-              right: 10,
-              top: 10,
-              child: Container(
-                width: 14,
-                height: 14,
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -1,8 +1,17 @@
 import 'package:bson/bson.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get/get.dart';
 import '../../../../../../mongodb/mongodb.dart';
 
-class MyBookingsController {
+class MyBookingsController extends GetxController {
+
+  var unreadCount = 0.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchUnreadBookingsCount();
+  }
   // Fetch user bookings from the MongoDB collection
   Future<List<Map<String, dynamic>>> fetchUserBookings() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -25,15 +34,15 @@ class MyBookingsController {
 
     return [];
   }
-  Future<int> fetchUnreadBookingsCount() async {
+  Future<void> fetchUnreadBookingsCount() async {
     try {
       final bookings = await fetchUserBookings();
-      final unreadCount = bookings.where((booking) =>
+      final count = bookings.where((booking) =>
       booking['status'] == 'Pending' || booking['status'] == 'Modified').length;
-      return unreadCount;
+      unreadCount.value = count;
     } catch (e) {
       print('Error fetching unread bookings count: $e');
-      return 0;
+      unreadCount.value = 0;
     }
   }
 

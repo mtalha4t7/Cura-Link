@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class PatientBookingsCard extends StatelessWidget {
-  final String LabUserName;
+  final String labUserName;
   final String testName;
   final String bookingDate;
   final String status;
@@ -13,7 +13,7 @@ class PatientBookingsCard extends StatelessWidget {
 
   const PatientBookingsCard({
     super.key,
-    required this.LabUserName,
+    required this.labUserName,
     required this.testName,
     required this.bookingDate,
     required this.status,
@@ -37,7 +37,7 @@ class PatientBookingsCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Patient: $LabUserName',
+              'Lab: $labUserName',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,

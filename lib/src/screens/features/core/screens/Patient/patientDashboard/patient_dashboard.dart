@@ -20,7 +20,13 @@ class PatientDashboard extends StatefulWidget {
 }
 
 class _PatientDashboardState extends State<PatientDashboard> {
-  final MyBookingsController _controller = MyBookingsController();
+  final MyBookingsController _controller = Get.put(MyBookingsController());
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _controller.fetchUnreadBookingsCount();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,22 +51,14 @@ class _PatientDashboardState extends State<PatientDashboard> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    QuickAccessButton(
-                      icon: Icons.medication,
-                      label: 'Order Medicine',
-                      onTap: () {},
-                    ),
-                    QuickAccessButton(
-                      icon: Icons.local_hospital,
-                      label: 'Call Nurse',
-                      onTap: () {},
-                    ),
+                    QuickAccessButton(icon: Icons.medication, label: 'Order Medicine', onTap: () {}),
+                    QuickAccessButton(icon: Icons.local_hospital, label: 'Call Nurse', onTap: () {}),
                     QuickAccessButton(
                       icon: Icons.science,
                       label: 'Book Lab',
                       onTap: () {
-                        Navigator.push(context,
-                            MaterialPageRoute(builder: (context) => LabBookingScreen()));
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => LabBookingScreen()))
+                            .then((_) => _controller.fetchUnreadBookingsCount());
                       },
                     ),
                   ],
@@ -69,45 +67,31 @@ class _PatientDashboardState extends State<PatientDashboard> {
 
                 // Services Grid
                 const Text("Our Services", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                FutureBuilder<int>(
-                  future: _controller.fetchUnreadBookingsCount(),
-                  builder: (context, snapshot) {
-                    final unreadCount = snapshot.data ?? 0;
-                    return GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                      children: [
-                        ServiceCard(
-                          icon: Icons.medical_services,
-                          title: 'Medicine Delivery',
-                          onTap: () {},
-                        ),
-                        ServiceCard(
-                          icon: Icons.medical_services_sharp,
-                          title: 'Nurse Assistance',
-                          onTap: () {},
-                        ),
-                        ServiceCard(
-                          icon: Icons.biotech,
-                          title: 'Lab Tests',
-                          onTap: () {},
-                        ),
-                        ServiceCard(
-                          icon: Icons.add_to_queue,
-                          title: 'My Bookings',
-                          showBadge: unreadCount > 0,
-                          onTap: () {
-                            Navigator.push(context,
-                                MaterialPageRoute(builder: (context) => MyBookingsScreen()));
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                ),
+
+                Obx(() {
+                  return GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    childAspectRatio: 1,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    children: [
+                      ServiceCard(icon: Icons.medical_services, title: 'Medicine Delivery', onTap: () {}),
+                      ServiceCard(icon: Icons.medical_services_sharp, title: 'Nurse Assistance', onTap: () {}),
+                      ServiceCard(icon: Icons.biotech, title: 'Lab Tests', onTap: () {}),
+                      ServiceCard(
+                        icon: Icons.add_to_queue,
+                        title: 'My Bookings',
+                        showBadge: _controller.unreadCount.value > 0,
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => MyBookingsScreen()))
+                              .then((_) => _controller.fetchUnreadBookingsCount());
+                        },
+                      ),
+                    ],
+                  );
+                }),
 
                 const SizedBox(height: tDashboardPadding),
 

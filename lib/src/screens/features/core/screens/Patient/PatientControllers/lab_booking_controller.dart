@@ -64,6 +64,7 @@ class PatientLabBookingController {
               'bookingId': bookingId,
               // Use the generated _id from bookingsCollection as bookingId
               'patientUserEmail': patientUserEmail,
+              'labUserName' : userName,
               'patientName': patientName,
               'testName': testName,
               'bookingDate': bookingDate,

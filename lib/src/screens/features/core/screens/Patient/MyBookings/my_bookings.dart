@@ -83,11 +83,11 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                         final booking = bookings[index];
                         final price = booking['price']?.toString() ?? '0.0';
                         return PatientBookingsCard(
-                          LabUserName: booking['labUserName'],
-                          testName: booking['testName'],
-                          bookingDate: formatDate(booking['bookingDate']),
+                          labUserName: booking['labUserName'] ?? 'Unknown Lab',
+                          testName: booking['testName'] ?? 'Unknown Test',
+                          bookingDate: formatDate(booking['bookingDate'] ?? DateTime.now().toString()),
                           status: booking['status'] ?? 'Pending',
-                          price: price, // Explicitly specify the price parameter
+                          price: price,
                           isDark: isDarkTheme,
                           onAccept: () {
                             if(booking['status']=="Modified"){
