@@ -47,7 +47,7 @@ class PatientDashboardAppBar extends StatelessWidget
           margin: const EdgeInsets.only(right: 20, top: 7),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
-            color: isDark ? tSecondaryColor : tCardBgColor,
+            color: isDark ? Colors.black12 : Colors.white12,
           ),
           child: IconButton(
             onPressed: navigateToProfile,
