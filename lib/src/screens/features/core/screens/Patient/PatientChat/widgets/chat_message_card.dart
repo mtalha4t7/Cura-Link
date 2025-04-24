@@ -55,62 +55,57 @@ class ChatMessageCard extends StatelessWidget {
   }
 
   Widget _blueMessage(bool isDarkMode) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              padding: EdgeInsets.all(12),
-              margin: EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-              decoration: BoxDecoration(
-                color: isDarkMode ? tDarkColor : tPrimaryColor.withOpacity(0.2),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
-                ),
-              ),
-              constraints: BoxConstraints(maxWidth: 250),
-              child: _buildMessageContent(isDarkMode),
-            ),
-          ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+      Flexible(
+      child: Container(
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(left: 12, right: 6),
+      decoration: BoxDecoration(
+        color: isDarkMode ? tDarkColor : tPrimaryColor.withOpacity(0.2),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+          bottomRight: Radius.circular(20),
         ),
-        Padding(
-          padding: const EdgeInsets.only(right: 12, bottom: 5),
-          child: Text(
-            _formatMessageSent(message.sent),
-            style: TextStyle(
-              fontSize: 10,
-              color: isDarkMode ? Colors.blue : Colors.black54,
-            ),
-          ),
-        ),
-      ],
+      ),
+      child: _buildMessageContent(isDarkMode),
+    ),
+    ),
+    Padding(
+    padding: const EdgeInsets.only(right: 12, bottom: 5),
+    child: Text(
+    _formatMessageSent(message.sent),
+    style: TextStyle(fontSize: 10, color: isDarkMode ? Colors.blue : Colors.black54),
+    ),
+    ),
+          ],
+      ),
     );
   }
 
   Widget _greenMessage(bool isDarkMode) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 12, bottom: 5),
-          child: Text(
-            _formatMessageSent(message.sent),
-            style: TextStyle(
-              fontSize: 10,
-              color: isDarkMode ? Colors.blue : Colors.black54,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 12, bottom: 5),
+            child: Text(
+              _formatMessageSent(message.sent),
+              style: TextStyle(fontSize: 10, color: isDarkMode ? Colors.blue : Colors.black54),
             ),
           ),
-        ),
-        Expanded(
-          child: Align(
-            alignment: Alignment.centerRight,
+          Flexible(
             child: Container(
-              padding: EdgeInsets.all(12),
-              margin: EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(left: 6, right: 12),
               decoration: BoxDecoration(
                 color: isDarkMode ? tAccentColor : Colors.green[300],
                 borderRadius: const BorderRadius.only(
@@ -119,12 +114,11 @@ class ChatMessageCard extends StatelessWidget {
                   bottomLeft: Radius.circular(20),
                 ),
               ),
-              constraints: BoxConstraints(maxWidth: 250),
               child: _buildMessageContent(isDarkMode),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

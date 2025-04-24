@@ -63,13 +63,15 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.minScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
     });
   }
 
@@ -120,11 +122,9 @@ class _ChatScreenState extends State<ChatScreen> {
   List<Message> _sortMessages(List<Message> messages) {
     try {
       messages.sort((a, b) {
-        DateTime aTime = DateTime.tryParse(a.sent) ??
-            DateTime.fromMillisecondsSinceEpoch(int.parse(a.sent));
-        DateTime bTime = DateTime.tryParse(b.sent) ??
-            DateTime.fromMillisecondsSinceEpoch(int.parse(b.sent));
-        return aTime.compareTo(bTime); // Oldest first
+        final aTime = DateTime.parse(a.sent);
+        final bTime = DateTime.parse(b.sent);
+        return aTime.compareTo(bTime);
       });
     } catch (e) {
       debugPrint("Error sorting messages: $e");
@@ -191,21 +191,26 @@ class _ChatScreenState extends State<ChatScreen> {
               child: StreamBuilder<List<Message>>(
                 stream: UserRepository.instance
                     .getAllMessagesStream(widget.user.userEmail.toString())
-                    .map((snapshot) => _sortMessages(
-                  snapshot.map(Message.fromJson).toList(),
-                )),
+                    .map((snapshot) {
+                  return _sortMessages(snapshot.map(Message.fromJson).toList());
+                  //return sorted.reversed.toList();
+                }),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return const Center(child: Text("No messages yet"));
                   }
 
+                  final messages = snapshot.data!;
+
+                  // Scroll when messages length changes
+                  WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+
                   return ListView.builder(
                     controller: _scrollController,
-                    reverse: true, // Builds from bottom
                     padding: const EdgeInsets.all(8),
-                    itemCount: snapshot.data!.length,
+                    itemCount: messages.length,
                     itemBuilder: (context, index) {
-                      final message = snapshot.data![index];
+                      final message = messages[index];
                       return ChatMessageCard(
                         message: message,
                         isFromCurrentUser: message.fromId == loggedInUserEmail,
