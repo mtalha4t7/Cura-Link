@@ -10,6 +10,7 @@ class PatientBookingsCard extends StatelessWidget {
   final VoidCallback onAccept;
   final VoidCallback onReject;
   final VoidCallback onModify;
+  final VoidCallback onMessage; // New callback for opening chat
 
   const PatientBookingsCard({
     super.key,
@@ -22,6 +23,7 @@ class PatientBookingsCard extends StatelessWidget {
     required this.onAccept,
     required this.onReject,
     required this.onModify,
+    required this.onMessage, // Accept the new callback
   });
 
   @override
@@ -78,29 +80,39 @@ class PatientBookingsCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-
-
+            // Buttons layout
             if (status == 'Pending' || status == 'Modified')
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  CustomButton(
-                    text: 'Accept',
-                    backgroundColor: Colors.green,
-                    textColor: Colors.white,
-                    onPressed: onAccept,
-                  ),
-                  CustomButton(
-                    text: 'Reject',
-                    backgroundColor: Colors.red,
-                    textColor: Colors.white,
-                    onPressed: onReject,
-                  ),
-                  CustomButton(
-                    text: 'Modify',
-                    backgroundColor: Colors.blue,
-                    textColor: Colors.white,
-                    onPressed: onModify,
+                  // First, the Chat button with icon
+                  MessageButton(onPressed: onMessage),
+
+                  const SizedBox(height: 12), // Line break between Chat and other buttons
+
+                  // Then the other buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      CustomButton(
+                        text: 'Accept',
+                        backgroundColor: Colors.green,
+                        textColor: Colors.white,
+                        onPressed: onAccept,
+                      ),
+                      CustomButton(
+                        text: 'Reject',
+                        backgroundColor: Colors.red,
+                        textColor: Colors.white,
+                        onPressed: onReject,
+                      ),
+                      CustomButton(
+                        text: 'Modify',
+                        backgroundColor: Colors.blue,
+                        textColor: Colors.white,
+                        onPressed: onModify,
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -165,6 +177,53 @@ class CustomButton extends StatelessWidget {
             fontSize: 14,
             fontWeight: FontWeight.bold,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class MessageButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const MessageButton({super.key, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.black26,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              spreadRadius: 1,
+              blurRadius: 3,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.chat,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Chat',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
       ),
     );

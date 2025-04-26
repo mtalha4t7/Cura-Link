@@ -137,6 +137,9 @@ class _ChatScreenState extends State<ChatScreen> {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
 
+    // Fetch profile image once
+    final profileImage = _getProfileImage();
+
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
@@ -154,8 +157,8 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
               CircleAvatar(
                 backgroundColor: Colors.grey[300],
-                backgroundImage: _getProfileImage(),
-                child: _getProfileImage() == null
+                backgroundImage: profileImage,
+                child: profileImage == null
                     ? Icon(Icons.person, color: tWhiteColor)
                     : null,
               ),
@@ -193,7 +196,6 @@ class _ChatScreenState extends State<ChatScreen> {
                     .getAllMessagesStream(widget.user.userEmail.toString())
                     .map((snapshot) {
                   return _sortMessages(snapshot.map(Message.fromJson).toList());
-                  //return sorted.reversed.toList();
                 }),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {

@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
 import 'package:cura_link/src/screens/features/authentication/models/chat_user_model.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/PatientChat/widgets/chat_user_card.dart';
@@ -17,8 +16,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
   List<ChatUserModelMongoDB> _allUsers = [];
   List<ChatUserModelMongoDB> _filteredUsers = [];
   bool _isSearching = false;
-
-  // Stream suflutterbscription to manage the user data stream
+  bool _isLoading = true; // Add this flag for loading state
   StreamSubscription? _userStreamSubscription;
 
   @override
@@ -26,47 +24,53 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
     super.initState();
     _loadUsers();
     _updateUserLastActive();
+    _setupMessageListener();
+  }
+
+  void _setupMessageListener() {
+    UserRepository.instance.getNewMessagesStream().listen((_) {
+      _loadUsers();
+    });
   }
 
   void _updateUserLastActive() async {
     try {
-      // Get the current user's email (assuming it's stored in a variable)
-      final currentUserEmail = UserRepository.instance.currentUserEmail;
-
+      final currentUserEmail = await UserRepository.instance.getCurrentUser();
       if (currentUserEmail != null) {
-        // Update the user's last active timestamp
         await UserRepository.instance.updateUserLastActive(currentUserEmail);
       }
     } catch (e) {
-      print("Error updating user last active: $e");
+      print("Error updating last active: $e");
     }
   }
 
-  /// Fetch users from the stream and store them locally for filtering
   void _loadUsers() {
-    // Cancel any existing subscription to avoid multiple subscriptions
     _userStreamSubscription?.cancel();
 
-    // Listen to the stream and update the state
-    _userStreamSubscription = UserRepository.instance.getAllUsers1().listen(
-          (userData) {
-        if (mounted) {
-          // Check if the widget is still mounted before calling setState
-          setState(() {
-            _allUsers = userData
-                .map((userMap) => ChatUserModelMongoDB.fromMap(userMap))
-                .toList();
-            _filteredUsers = _allUsers; // Initially, show all users
-          });
-        }
-      },
-      onError: (error) {
-        print("Error fetching users: $error");
-      },
-    );
+    setState(() {
+      _isLoading = true; // Start loading
+    });
+
+    _userStreamSubscription = UserRepository.instance
+        .getChatUsersWithMessages()
+        .listen((userData) {
+      if (mounted) {
+        setState(() {
+          _allUsers = userData
+              .map((userMap) => ChatUserModelMongoDB.fromMap(userMap))
+              .toList();
+          _filteredUsers = _allUsers;
+          _isLoading = false; // Stop loading after data is loaded
+        });
+      }
+    }, onError: (error) {
+      print("Error fetching users: $error");
+      setState(() {
+        _isLoading = false; // Stop loading if there's an error
+      });
+    });
   }
 
-  /// Filters users based on search input
   void _filterUsers(String query) {
     setState(() {
       _filteredUsers = _allUsers
@@ -79,7 +83,6 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
 
   @override
   void dispose() {
-    // Cancel the stream subscription when the widget is disposed
     _userStreamSubscription?.cancel();
     _searchController.dispose();
     super.dispose();
@@ -108,8 +111,10 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
         )
             : Text(
           "Cura Chat",
-          style:
-          txtTheme.titleMedium?.copyWith(fontWeight: FontWeight.w500),
+          style: txtTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w500,
+            color: Colors.white,
+          ),
         ),
         actions: [
           IconButton(
@@ -122,36 +127,58 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                 }
               });
             },
-            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            icon: Icon(
+              _isSearching ? Icons.close : Icons.search,
+              color: Colors.white,
+            ),
           ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.more_vert),
-          )
         ],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: FloatingActionButton(
-          onPressed: () {},
-          backgroundColor: theme.primaryColor,
-          child: const Icon(Icons.add_comment_rounded, color: Colors.white),
-        ),
-      ),
-      body: _filteredUsers.isEmpty
-          ? const Center(
-        child: Text(
-          "No users found",
-          style: TextStyle(fontSize: 18),
+      body: _isLoading
+          ? Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
         ),
       )
-          : ListView.builder(
-        padding: const EdgeInsets.only(top: 8),
-        itemCount: _filteredUsers.length,
-        physics: const BouncingScrollPhysics(),
-        itemBuilder: (context, index) {
-          return ChatUserCard(user: _filteredUsers[index]);
+          : _filteredUsers.isEmpty
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.message,
+              size: 64,
+              color: theme.primaryColor.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "No conversations yet",
+              style: txtTheme.titleMedium?.copyWith(
+                color: theme.disabledColor,
+              ),
+            ),
+          ],
+        ),
+      )
+          : RefreshIndicator(
+        onRefresh: () async {
+          await UserRepository.instance.fetchChatUsers;
         },
+        child: ListView.builder(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          itemCount: _filteredUsers.length,
+          physics: const AlwaysScrollableScrollPhysics(),
+          itemBuilder: (context, index) {
+            return ChatUserCard(user: _filteredUsers[index]);
+          },
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Implement new chat functionality
+        },
+        backgroundColor: theme.primaryColor,
+        child: const Icon(Icons.chat, color: Colors.white),
       ),
     );
   }

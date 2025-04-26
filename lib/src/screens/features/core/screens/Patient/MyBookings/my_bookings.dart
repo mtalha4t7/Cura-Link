@@ -3,6 +3,10 @@ import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidge
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../../mongodb/mongodb.dart';
+import '../../../../../../repository/user_repository/user_repository.dart';
+import '../../../../authentication/models/chat_user_model.dart';
+import '../PatientChat/chat_screen.dart';
 import '../PatientControllers/my_bookings_controller.dart';
 
 class MyBookingsScreen extends StatefulWidget {
@@ -135,6 +139,28 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                             }
 
                           },
+                          onMessage: () async {
+                            final userEmail =  booking['labUserEmail']?.toString();
+                                print(userEmail);
+                            if (userEmail == null) return;
+
+                            final user = await fetchUserData(userEmail);
+                            if (user != null && context.mounted) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChatScreen(user: user),
+                                ),
+                              );
+                            } else if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('User data not found.'),
+                                  duration: Duration(seconds: 3),
+                                ),
+                              );
+                            }
+                          },
                         );
                       },
                     );
@@ -148,6 +174,16 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         ),
       ),
     );
+  }
+
+  Future<ChatUserModelMongoDB?> fetchUserData(String email) async {
+    try {
+      final userData = await UserRepository.instance.getUserByEmailFromAllCollections(email);
+      return userData != null ? ChatUserModelMongoDB.fromMap(userData) : null;
+    } catch (e) {
+      debugPrint('Error fetching user data: $e');
+      return null;
+    }
   }
 
   void _showModifyDialog(BuildContext context, Map<String, dynamic> booking) async {

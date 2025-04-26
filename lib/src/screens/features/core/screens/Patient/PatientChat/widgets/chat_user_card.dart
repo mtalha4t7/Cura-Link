@@ -1,103 +1,235 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:cura_link/src/screens/features/core/screens/Patient/PatientChat/chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cura_link/src/screens/features/authentication/models/chat_user_model.dart';
-import 'package:cura_link/src/constants/colors.dart';
+import 'package:intl/intl.dart';
+import 'package:cura_link/src/repository/user_repository/user_repository.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/PatientChat/chat_screen.dart';
 
-class ChatUserCard extends StatefulWidget {
+class ChatUserCard extends StatelessWidget {
   final ChatUserModelMongoDB user;
+  final VoidCallback? onTap;
 
-  const ChatUserCard({super.key, required this.user});
+  const ChatUserCard({
+    Key? key,
+    required this.user,
+    this.onTap,
+  }) : super(key: key);
 
-  @override
-  _ChatUserCardState createState() => _ChatUserCardState();
-}
+  String _formatMessageTime(String? time) {
+    if (time == null) return '';
 
-class _ChatUserCardState extends State<ChatUserCard> {
-  Uint8List? profileImageBytes;
+    try {
+      DateTime dateTime;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadProfileImage();
+      if (RegExp(r'^\d+$').hasMatch(time)) {
+        final timestamp = int.parse(time);
+        dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
+      } else {
+        dateTime = DateTime.parse(time);
+      }
+
+      final now = DateTime.now();
+      final difference = now.difference(dateTime);
+
+      if (difference.inDays == 0) {
+        return DateFormat('h:mm a').format(dateTime);
+      } else if (difference.inDays == 1) {
+        return 'Yesterday';
+      } else if (difference.inDays < 7) {
+        return DateFormat('EEEE').format(dateTime);
+      } else {
+        return DateFormat('MMM d').format(dateTime);
+      }
+    } catch (e) {
+      debugPrint('Error formatting time: $e');
+      return '';
+    }
   }
 
-  /// Loads and decodes the Base64 profile image
-  void _loadProfileImage() {
-    if (widget.user.profileImage != null &&
-        widget.user.profileImage!.isNotEmpty) {
-      try {
-        profileImageBytes = base64Decode(widget.user.profileImage!);
-        setState(() {}); // Update UI after decoding
-      } catch (e) {
-        print("Error decoding profile image: $e");
+  ImageProvider? _getProfileImage() {
+    if (user.profileImage == null || user.profileImage!.isEmpty) {
+      return null;
+    }
+    try {
+      if (user.profileImage!.startsWith("http")) {
+        return NetworkImage(user.profileImage!);
+      } else {
+        Uint8List bytes = base64Decode(user.profileImage!);
+        return MemoryImage(bytes);
       }
+    } catch (e) {
+      debugPrint("Error decoding profile image: $e");
+      return null;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
+    final isDark = theme.brightness == Brightness.dark;
+
+    final Color surfaceColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final Color textColor = isDark ? Colors.white : Colors.black87;
+    final Color textSecondaryColor = isDark ? Colors.white70 : Colors.black54;
+    final Color primaryColor = const Color(0xFF2979FF);
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-      elevation: 0.5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      color: isDarkMode
-          ? const Color.fromARGB(255, 31, 38, 41)
-          : tServiceCardLightBg, // Background based on mode
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      elevation: 0,
+      color: surfaceColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: InkWell(
-        onTap: () {
-          Navigator.push(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () async {
+          final currentUserEmail = await UserRepository.instance.getCurrentUser();
+          if (currentUserEmail != null && user.userEmail != null) {
+            await UserRepository.instance.markMessagesAsRead(
+              currentUserEmail,
+              user.userEmail!,
+            );
+          }
+
+          if (onTap != null) {
+            onTap!();
+          } else {
+            Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => ChatScreen(
-                  user: widget.user,
-                ),
-              ));
+              MaterialPageRoute(builder: (_) => ChatScreen(user: user)),
+            );
+          }
         },
-        child: ListTile(
-          leading: CircleAvatar(
-            radius: 25,
-            backgroundColor: Colors.grey[300],
-            backgroundImage: profileImageBytes != null
-                ? MemoryImage(profileImageBytes!) // Load from memory
-                : null,
-            child: profileImageBytes == null
-                ? Icon(Icons.person,
-                    color: tWhiteColor, size: 30) // Default icon
-                : null,
-          ),
-          title: Text(
-            widget.user.userName ?? 'Unknown User',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color:
-                  isDarkMode ? tWhiteColor : tDarkColor, // Adaptive text color
-            ),
-          ),
-          subtitle: Text(
-            widget.user.userAbout ?? 'No status available',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: isDarkMode
-                  ? Colors.grey[400]
-                  : tDarkColor.withOpacity(0.7), // Subtitle color
-            ),
-          ),
-          trailing: Text(
-            "03:00 AM",
-            style: TextStyle(
-              color: isDarkMode
-                  ? Colors.grey[400]
-                  : Colors.grey.shade600, // Time color based on mode
-              fontSize: 12,
-            ),
+        splashColor: primaryColor.withOpacity(0.1),
+        highlightColor: primaryColor.withOpacity(0.05),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              _buildUserAvatar(theme, surfaceColor),
+              const SizedBox(width: 16),
+              Expanded(child: _buildUserInfo(theme, textColor, textSecondaryColor, primaryColor)),
+            ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildUserAvatar(ThemeData theme, Color surfaceColor) {
+    final imageProvider = _getProfileImage();
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: theme.colorScheme.secondary.withOpacity(0.1),
+          ),
+          child: ClipOval(
+            child: imageProvider != null
+                ? Image(
+              image: imageProvider,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Icon(
+                  Icons.person,
+                  size: 24,
+                  color: theme.iconTheme.color?.withOpacity(0.6),
+                );
+              },
+            )
+                : Icon(
+              Icons.person,
+              size: 24,
+              color: theme.iconTheme.color?.withOpacity(0.6),
+            ),
+          ),
+        ),
+        if (user.userIsOnline == true)
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: Colors.green,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: surfaceColor,
+                  width: 2,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildUserInfo(ThemeData theme, Color textColor, Color textSecondaryColor, Color primaryColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                user.userName ?? 'Unknown',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: textColor,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Text(
+              _formatMessageTime(user.lastMessageTime),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: textSecondaryColor,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                user.lastMessage ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: textSecondaryColor,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            if (user.unreadCount > 0)
+              Container(
+                margin: const EdgeInsets.only(left: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: primaryColor,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  user.unreadCount > 9 ? '9+' : '${user.unreadCount}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }

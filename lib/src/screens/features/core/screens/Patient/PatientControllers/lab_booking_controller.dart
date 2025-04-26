@@ -62,8 +62,8 @@ class PatientLabBookingController {
             // Insert the booking into the patient bookings collection with the bookingId
             await MongoDatabase.patientBookingsCollection?.insertOne({
               'bookingId': bookingId,
-              // Use the generated _id from bookingsCollection as bookingId
               'patientUserEmail': patientUserEmail,
+              'labUserEmail': userEmail,
               'labUserName' : userName,
               'patientName': patientName,
               'testName': testName,
