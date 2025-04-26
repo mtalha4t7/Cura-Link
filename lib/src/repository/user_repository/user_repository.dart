@@ -290,13 +290,33 @@ class UserRepository extends GetxController {
 
   Future<void> _fetchUsers() async {
     try {
-      var collection = MongoDatabase.users;
-      final users = await collection?.find().toList() ?? [];
+      var userCollection = MongoDatabase.users;
+      var messageCollection = MongoDatabase.messagesCollection;
 
-      // Filter out the current user
-      final filteredUsers =
-          users.where((user) => user['userEmail'] != currentUserEmail);
-      _usersController.add(filteredUsers.toList()); // Emit filtered data
+      final users = await userCollection?.find().toList() ?? [];
+
+      // Filter out the current user first
+      final otherUsers = users.where((user) => user['userEmail'] != currentUserEmail).toList();
+
+      List<Map<String, dynamic>> usersWithChats = [];
+
+      // Check for existing messages for each user
+      for (var user in otherUsers) {
+        final userEmail = user['userEmail'];
+
+        final messageCount = await messageCollection?.count({
+          '\$or': [
+            {'fromId': currentUserEmail, 'toId': userEmail},
+            {'fromId': userEmail, 'toId': currentUserEmail},
+          ]
+        }) ?? 0;
+
+        if (messageCount > 0) {
+          usersWithChats.add(user);
+        }
+      }
+
+      _usersController.add(usersWithChats); // Emit filtered data
     } catch (e) {
       print('Error fetching users: $e');
       _usersController.addError('Error fetching users: $e');
