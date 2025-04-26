@@ -69,7 +69,6 @@ class PatientLabBookingController {
               'testName': testName,
               'bookingDate': bookingDate,
               'price': price,
-              // Store price in the patient booking
               'status': 'Pending',
               // Initialize with a default status
             });
