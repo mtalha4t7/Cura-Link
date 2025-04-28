@@ -18,6 +18,7 @@ class MongoDatabase {
   static DbCollection? _patientBookingsCollection;
   static DbCollection? _users;
   static DbCollection? _messagesCollection;
+  static DbCollection? _labRating;
 
   // Connect to MongoDB and initialize the collections
   static Future<void> connect() async {
@@ -38,6 +39,7 @@ class MongoDatabase {
       _patientBookingsCollection = _db!.collection(PATIENT_LAB_BOOKINGS);
       _users = _db!.collection(USERS);
       _messagesCollection = _db!.collection(MESSAGES_COLLECTION_NAME);
+      _labRating = _db!.collection(LAB_RATING_COLLECTION);
 
       // Optional: Use inspect to debug the database connection
       inspect(_db);
@@ -61,7 +63,7 @@ class MongoDatabase {
       _patientBookingsCollection;
   static DbCollection? get users => _users;
   static DbCollection? get messagesCollection => _messagesCollection;
-
+  static DbCollection? get labRating => _labRating;
   // Close the MongoDB connection
   static Future<void> close() async {
     if (_db != null) {
@@ -77,8 +79,116 @@ class MongoDatabase {
       _patientBookingsCollection = null;
       _users = null;
       _messagesCollection = null;
+      _labRating= null;
 
       logger.i('MongoDB connection closed');
+    }
+  }
+
+
+
+
+// ========== LAB RATING FUNCTIONS ==========
+
+  /// Insert a new lab rating
+  static Future<void> insertLabRating(Map<String, dynamic> rating) async {
+    try {
+      if (rating.isEmpty || !rating.containsKey('labId') || !rating.containsKey('rating')) {
+        throw Exception('Invalid rating data: Missing required fields');
+      }
+
+      rating['createdAt'] = DateTime.now().millisecondsSinceEpoch;
+
+      await _labRating?.insertOne(rating);
+      logger.i('Lab rating inserted successfully');
+    } catch (e, stackTrace) {
+      logger.e('Error inserting lab rating', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Update an existing lab rating (e.g., user changes their rating)
+  static Future<void> updateLabRating(String ratingId, Map<String, dynamic> updatedFields) async {
+    try {
+      ObjectId id;
+      try {
+        id = ObjectId.parse(ratingId);
+      } catch (e) {
+        throw Exception('Invalid rating ID format');
+      }
+
+      final modifier = ModifierBuilder();
+      updatedFields.forEach((key, value) {
+        modifier.set(key, value);
+      });
+
+      final result = await _labRating?.updateOne(
+        where.id(id),
+        modifier,
+      );
+
+      if (result?.isSuccess == true) {
+        logger.i('Lab rating updated successfully');
+      } else {
+        logger.w('Lab rating update failed or no changes made');
+      }
+    } catch (e, stackTrace) {
+      logger.e('Error updating lab rating', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Fetch all ratings for a specific lab
+  static Future<List<Map<String, dynamic>>> getLabRatings(String labId) async {
+    try {
+      var ratings = await _labRating
+          ?.find(where.eq('labId', labId).sortBy('createdAt', descending: true))
+          .toList();
+
+      logger.i('Fetched ${ratings?.length ?? 0} ratings for labId: $labId');
+      return ratings?.map((doc) => doc).toList() ?? [];
+    } catch (e, stackTrace) {
+      logger.e('Error fetching lab ratings', error: e, stackTrace: stackTrace);
+      return [];
+    }
+  }
+
+
+  /// (Optional) Fetch ratings by a specific user
+  static Future<List<Map<String, dynamic>>> getUserLabRatings(String userId) async {
+    try {
+      var ratings = await _labRating
+          ?.find(where.eq('userId', userId).sortBy('createdAt', descending: true))
+          .toList();
+
+      logger.i('Fetched ${ratings?.length ?? 0} ratings made by userId: $userId');
+      return ratings?.map((doc) => doc).toList() ?? [];
+    } catch (e, stackTrace) {
+      logger.e('Error fetching user lab ratings', error: e, stackTrace: stackTrace);
+      return [];
+    }
+  }
+
+  /// (Optional) Delete a specific lab rating
+  static Future<void> deleteLabRating(String ratingId) async {
+    try {
+      ObjectId id;
+      try {
+        id = ObjectId.parse(ratingId);
+      } catch (e) {
+        throw Exception('Invalid rating ID format');
+      }
+
+      final result = await _labRating?.deleteOne(where.id(id));
+
+      if (result?.isSuccess == true) {
+        logger.i('Lab rating deleted successfully');
+      } else {
+        logger.w('Lab rating deletion failed or rating not found');
+      }
+    } catch (e, stackTrace) {
+      logger.e('Error deleting lab rating', error: e, stackTrace: stackTrace);
+      rethrow;
     }
   }
 

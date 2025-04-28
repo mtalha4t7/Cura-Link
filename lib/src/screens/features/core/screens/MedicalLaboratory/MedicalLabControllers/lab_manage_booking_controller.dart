@@ -135,7 +135,10 @@ class BookingController {
         {'_id': objectId},
         {'\$set': {'status': newStatus}},
       );
-
+      final result1 = await MongoDatabase.patientBookingsCollection?.updateOne(
+        {'_id': objectId},
+        {'\$set': {'status': newStatus}},
+      );
       if (result != null && result.isSuccess) {
         print('Booking status updated successfully in bookings collection.');
       } else {

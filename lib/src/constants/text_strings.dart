@@ -50,6 +50,7 @@ const String USER_VERIFICATION = "userVerification";
 const String LAB_BOOKINGS = "labBookings";
 const String PATIENT_LAB_BOOKINGS = "patientLabBookings";
 const String MESSAGES_COLLECTION_NAME = "messages";
+const String LAB_RATING_COLLECTION = "labRating";
 
 const String ipAddress = "http://192.168.1.45:4000";
 // -- GLOBAL Texts

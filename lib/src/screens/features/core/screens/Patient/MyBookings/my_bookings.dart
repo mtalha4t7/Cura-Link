@@ -1,4 +1,5 @@
 import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabWidgets/booking_card.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookings/rating_controller.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_bookings_card.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -160,7 +161,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                                 ),
                               );
                             }
-                          },
+                          }, onRate: () {
+                          _showRatingDialog(context, booking['labUserEmail'],booking['patientUserEmail']);
+                        },
                         );
                       },
                     );
@@ -175,6 +178,81 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       ),
     );
   }
+
+  void _showRatingDialog(BuildContext context, String labEmail, String patientEmail) {
+    double rating = 3.0;
+    final TextEditingController reviewController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) => AlertDialog(
+            title: const Text('Rate the Lab'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('How was your experience?'),
+                const SizedBox(height: 10),
+                Slider(
+                  min: 1,
+                  max: 5,
+                  divisions: 4,
+                  value: rating,
+                  label: rating.toString(),
+                  onChanged: (value) {
+                    setState(() {
+                      rating = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: reviewController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Write your review',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () => Navigator.pop(context),
+              ),
+              ElevatedButton(
+                child: const Text('Submit'),
+                onPressed: () async {
+                  final review = reviewController.text.trim();
+                  if (review.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please write a review before submitting')),
+                    );
+                    return;
+                  }
+
+                  await RatingsController.submitRating(
+                    labEmail: labEmail,
+                    userEmail: patientEmail,
+                    rating: rating,
+                    review: review,
+                  );
+
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Thanks for your rating!')),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
 
   Future<ChatUserModelMongoDB?> fetchUserData(String email) async {
     try {

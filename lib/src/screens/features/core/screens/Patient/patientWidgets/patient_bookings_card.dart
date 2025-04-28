@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 
+import '../MyBookings/MyBooking_widgets/RatingButton.dart';
 class PatientBookingsCard extends StatelessWidget {
   final String labUserName;
   final String testName;
   final String bookingDate;
   final String status;
-  final String price; // Use double for price
+  final String price;
   final bool isDark;
   final VoidCallback onAccept;
   final VoidCallback onReject;
   final VoidCallback onModify;
-  final VoidCallback onMessage; // New callback for opening chat
+  final VoidCallback onMessage;
+  final VoidCallback onRate; // <-- NEW callback for rating!
 
   const PatientBookingsCard({
     super.key,
@@ -23,8 +25,11 @@ class PatientBookingsCard extends StatelessWidget {
     required this.onAccept,
     required this.onReject,
     required this.onModify,
-    required this.onMessage, // Accept the new callback
+    required this.onMessage,
+    required this.onRate, // <-- Add it to constructor
   });
+
+  bool get isAccepted => status.toLowerCase() == 'accepted'; // Helper for enabling Rate button
 
   @override
   Widget build(BuildContext context) {
@@ -80,39 +85,40 @@ class PatientBookingsCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            // Buttons layout
+
+            // Chat button
+            MessageButton(onPressed: onMessage),
+            const SizedBox(height: 12),
+
+            // Rating button (always visible)
+            RateButton(
+              enabled: isAccepted,
+              onPressed: onRate,
+            ),
+            const SizedBox(height: 12),
+
+            // Accept/Reject/Modify buttons (only for Pending/Modified)
             if (status == 'Pending' || status == 'Modified')
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // First, the Chat button with icon
-                  MessageButton(onPressed: onMessage),
-
-                  const SizedBox(height: 12), // Line break between Chat and other buttons
-
-                  // Then the other buttons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      CustomButton(
-                        text: 'Accept',
-                        backgroundColor: Colors.green,
-                        textColor: Colors.white,
-                        onPressed: onAccept,
-                      ),
-                      CustomButton(
-                        text: 'Reject',
-                        backgroundColor: Colors.red,
-                        textColor: Colors.white,
-                        onPressed: onReject,
-                      ),
-                      CustomButton(
-                        text: 'Modify',
-                        backgroundColor: Colors.blue,
-                        textColor: Colors.white,
-                        onPressed: onModify,
-                      ),
-                    ],
+                  CustomButton(
+                    text: 'Accept',
+                    backgroundColor: Colors.green,
+                    textColor: Colors.white,
+                    onPressed: onAccept,
+                  ),
+                  CustomButton(
+                    text: 'Reject',
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    onPressed: onReject,
+                  ),
+                  CustomButton(
+                    text: 'Modify',
+                    backgroundColor: Colors.blue,
+                    textColor: Colors.white,
+                    onPressed: onModify,
                   ),
                 ],
               ),
