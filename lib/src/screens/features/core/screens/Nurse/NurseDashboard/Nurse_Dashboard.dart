@@ -1,7 +1,7 @@
 import 'package:cura_link/src/screens/features/core/screens/Nurse/NurseProfile/Nurse_Profile_Screen.dart';
-import 'package:cura_link/src/screens/features/core/screens/Nurse/NurseProfile/Nurse_Update_Profile_Screen.dart';
 import 'package:flutter/material.dart';
-
+import 'package:get/get.dart';
+import '../../Nurse/NurseChat/chat_home.dart';
 import '../../MedicalLaboratory/MedicalLabWidgets/quick_access_button.dart';
 import '../../MedicalLaboratory/MedicalLabWidgets/service_card.dart';
 
@@ -150,14 +150,18 @@ class NurseDashboard extends StatelessWidget {
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
           ],
           onTap: (index) {
-            if (index == 2) {
-              
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const NurseProfileScreen()),
-              );
-            } else {
-              // Handle other navigation
+            switch (index) {
+              case 0:
+                Get.to(() => NurseDashboard());
+                break;
+              case 1:
+                break;
+              case 2:
+                Get.to(() => ChatHomeScreen());
+                break;
+              case 3:
+                Get.to(() => NurseProfileScreen());
+                break;
             }
           },
           backgroundColor: isDark ? Colors.grey[850] : Colors.white,

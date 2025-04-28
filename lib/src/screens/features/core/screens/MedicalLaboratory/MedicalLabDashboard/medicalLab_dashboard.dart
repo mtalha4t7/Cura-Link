@@ -1,5 +1,8 @@
+import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabProfile/medicalLab_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import '../../MedicalLaboratory/MedicalLabChat/chat_home.dart';
 import '../ManageBooking/ManageBooking.dart';
 import '../ManageLabTests/manage_test_screen.dart';
 import '../MedicalLabControllers/lab_dashboard_controller.dart';
@@ -282,7 +285,21 @@ class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
             BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Chat"),
           ],
-          onTap: (index) {},
+          onTap: (index) {
+            switch (index) {
+              case 0:
+                Get.to(() => MedicalLabDashboard());
+                break;
+              case 1:
+                break;
+              case 2:
+                Get.to(() => ChatHomeScreen());
+                break;
+              case 3:
+                Get.to(() => MedicalLabProfileScreen());
+                break;
+            }
+          },
         ),
       ),
     );

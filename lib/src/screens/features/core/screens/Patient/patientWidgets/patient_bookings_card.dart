@@ -23,7 +23,7 @@ class PatientBookingsCard extends StatelessWidget {
     required this.onAccept,
     required this.onReject,
     required this.onModify,
-    required this.onMessage, // Accept the new callback
+    required this.onMessage,
   });
 
   @override
