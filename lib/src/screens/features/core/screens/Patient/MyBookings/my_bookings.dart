@@ -230,20 +230,20 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Please write a review before submitting')),
                     );
-                    return;
+
+                  }else {
+                    await RatingsController.submitRating(
+                      labEmail: labEmail,
+                      userEmail: patientEmail,
+                      rating: rating,
+                      review: review,
+                    );
+
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Thanks for your rating!')),
+                    );
                   }
-
-                  await RatingsController.submitRating(
-                    labEmail: labEmail,
-                    userEmail: patientEmail,
-                    rating: rating,
-                    review: review,
-                  );
-
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Thanks for your rating!')),
-                  );
                 },
               ),
             ],

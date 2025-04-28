@@ -93,11 +93,11 @@ class MongoDatabase {
   /// Insert a new lab rating
   static Future<void> insertLabRating(Map<String, dynamic> rating) async {
     try {
-      if (rating.isEmpty || !rating.containsKey('labId') || !rating.containsKey('rating')) {
+      if (rating.isEmpty || !rating.containsKey('labEmail') || !rating.containsKey('rating')) {
         throw Exception('Invalid rating data: Missing required fields');
       }
 
-      rating['createdAt'] = DateTime.now().millisecondsSinceEpoch;
+      rating['createdAt'] ??= DateTime.now().millisecondsSinceEpoch;
 
       await _labRating?.insertOne(rating);
       logger.i('Lab rating inserted successfully');
@@ -106,6 +106,7 @@ class MongoDatabase {
       rethrow;
     }
   }
+
 
   /// Update an existing lab rating (e.g., user changes their rating)
   static Future<void> updateLabRating(String ratingId, Map<String, dynamic> updatedFields) async {

@@ -1,6 +1,7 @@
 
 
-import '../../../../../../mongodb/mongodb.dart'; // Make sure you import your MongoDB helper
+import '../../../../../../mongodb/mongodb.dart';
+import '../../../models/lab_Rating_Model.dart'; // adjust path if needed
 
 class RatingsController {
   static Future<void> submitRating({
@@ -10,15 +11,15 @@ class RatingsController {
     required String review,
   }) async {
     try {
-      final ratingData = {
-        'labEmail': labEmail,
-        'userEmail': userEmail,
-        'rating': rating,
-        'review': review,
-        'createdAt': DateTime.now().millisecondsSinceEpoch,
-      };
-      // Insert into the "lab_ratings" collection
-      await MongoDatabase.insertLabRating(ratingData);
+      final labRating = LabRating(
+        labEmail: labEmail,
+        userEmail: userEmail,
+        rating: rating,
+        review: review,
+        createdAt: DateTime.now(),
+      );
+
+      await MongoDatabase.insertLabRating(labRating.toJson());
     } catch (e) {
       throw Exception('Failed to submit rating: $e');
     }
