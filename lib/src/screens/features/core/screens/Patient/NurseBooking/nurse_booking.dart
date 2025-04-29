@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'temp_user_NurseModel.dart';
 import 'bid_model.dart';
 
@@ -29,7 +30,29 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
   @override
   void initState() {
     super.initState();
-    _initializeData();
+    _checkExistingRequest();
+  }
+
+  Future<void> _checkExistingRequest() async {
+    final prefs = await SharedPreferences.getInstance();
+    final requestId = prefs.getString('nurseRequestId');
+    final savedLat = prefs.getDouble('requestLat');
+    final savedLng = prefs.getDouble('requestLng');
+
+    if (requestId != null && savedLat != null && savedLng != null && mounted) {
+      setState(() {
+        _requestId = requestId;
+        _currentLocation = LatLng(savedLat, savedLng);
+        _isLoading = false;
+      });
+      _startBidPolling();
+    } else {
+      // Clear invalid/corrupted data
+      await prefs.remove('nurseRequestId');
+      await prefs.remove('requestLat');
+      await prefs.remove('requestLng');
+      await _initializeData();
+    }
   }
 
   Future<void> _initializeData() async {
@@ -38,6 +61,27 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
       await _createServiceRequest();
       _startBidPolling();
     }
+  }
+
+  Future<void> _saveRequestToPrefs() async {
+    if (_requestId == null || _currentLocation == null) {
+      debugPrint('Error: Attempted to save null request data');
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('nurseRequestId', _requestId!);
+    await prefs.setString('nurseService', widget.selectedService);
+    await prefs.setDouble('requestLat', _currentLocation!.latitude);
+    await prefs.setDouble('requestLng', _currentLocation!.longitude);
+  }
+
+  Future<void> _clearRequestFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('nurseRequestId');
+    await prefs.remove('nurseService');
+    await prefs.remove('requestLat');
+    await prefs.remove('requestLng');
   }
 
   Future<void> _determinePosition() async {
@@ -60,18 +104,14 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
     }
 
     if (permission == LocationPermission.deniedForever) {
-      setState(() => _locationError =
-      'Location permissions are permanently denied');
+      setState(() => _locationError = 'Location permissions are permanently denied');
       return;
     }
 
     try {
       final position = await Geolocator.getCurrentPosition();
       setState(() {
-        _currentLocation = LatLng(
-          position.latitude,
-          position.longitude,
-        );
+        _currentLocation = LatLng(position.latitude, position.longitude);
         _isLoading = false;
       });
     } catch (e) {
@@ -83,6 +123,14 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
   }
 
   Future<void> _createServiceRequest() async {
+    if (_currentLocation == null) {
+      setState(() {
+        _locationError = 'Location services are required';
+        _isLoading = false;
+      });
+      return;
+    }
+
     try {
       final patientEmail = FirebaseAuth.instance.currentUser?.email;
       if (patientEmail == null) throw Exception('User not logged in');
@@ -91,10 +139,11 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
         serviceType: widget.selectedService,
         location: _currentLocation!,
       );
+      await _saveRequestToPrefs();
       setState(() => _requestId = requestId);
     } catch (e) {
       setState(() {
-        _locationError = 'Failed to create service request: ${e.toString()}';
+        _locationError = 'Failed to create request: ${e.toString()}';
         _isLoading = false;
       });
     }
@@ -105,9 +154,10 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
       _bidTimer?.cancel();
       if (_requestId != null) {
         await _controller.cancelServiceRequest(_requestId!);
+        await _clearRequestFromPrefs();
       }
       if (mounted) {
-        Navigator.pop(context); // Go back to previous screen
+        Navigator.pop(context);
       }
     } catch (e) {
       showDialog(
@@ -126,13 +176,6 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
     }
   }
 
-
-
-
-
-
-
-
   void _startBidPolling() {
     _bidTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
       if (_requestId == null) return;
@@ -147,9 +190,7 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
             final nurse = nurses.firstWhere(
                   (n) => n.userEmail == bid.nurseEmail,
             );
-
-            return bid
-              ..nurseName = nurse.userName;
+            return bid..nurseName = nurse.userName;
           }).toList();
           _isSearching = false;
         });
@@ -162,6 +203,7 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
   Future<void> _acceptBid(Bid bid) async {
     try {
       await _controller.acceptBid(bid.id);
+      await _clearRequestFromPrefs();
       _showConfirmationDialog(bid);
     } catch (e) {
       showDialog(
@@ -214,6 +256,38 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async {
+        if (_requestId == null) return true;
+
+        final shouldCancel = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Active Request'),
+            content: const Text('Keep request running in background?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Minimize'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Cancel Request'),
+              ),
+            ],
+          ),
+        );
+
+        if (shouldCancel ?? false) {
+          await _cancelRequest();
+        }
+        return shouldCancel ?? false;
+      },
+      child: _buildMainContent(),
+    );
+  }
+
+  Widget _buildMainContent() {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(title: const Text('Request Nurse Service')),
@@ -327,7 +401,6 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
     );
   }
 
-
   Widget _buildBidsList() {
     return Column(
       children: [
@@ -385,5 +458,4 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
       ],
     );
   }
-
 }

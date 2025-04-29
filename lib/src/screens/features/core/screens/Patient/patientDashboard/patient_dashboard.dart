@@ -1,4 +1,5 @@
 import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookings/my_bookings.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/NurseBooking/nurse_booking.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/NurseBooking/show_nurse_services.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/PatientChat/chat_home.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/PatientProfile/patient_profile_screen.dart';
@@ -9,6 +10,7 @@ import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidge
 import 'package:flutter/material.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_appbar.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../../constants/sizes.dart';
 import '../LabBooking/lab_booking.dart';
 import '../PatientControllers/my_bookings_controller.dart';
@@ -53,9 +55,18 @@ class _PatientDashboardState extends State<PatientDashboard> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     QuickAccessButton(icon: Icons.medication, label: 'Order Medicine', onTap: () {}),
-                    QuickAccessButton(icon: Icons.local_hospital, label: 'Call Nurse', onTap: () {
-                      Get.to(() =>  ShowNurseServices());
-                    }),
+                    QuickAccessButton(
+                      icon: Icons.local_hospital,
+                      label: 'Call Nurse',
+                      onTap: () async {
+                        final prefs = await SharedPreferences.getInstance();
+                        if (prefs.containsKey('nurseRequestId')) {
+                          Get.to(() => NurseBookingScreen(selectedService: ''));
+                        } else {
+                          Get.to(() => ShowNurseServices());
+                        }
+                      },
+                    ),
                     QuickAccessButton(
                       icon: Icons.science,
                       label: 'Book Lab',
@@ -81,7 +92,10 @@ class _PatientDashboardState extends State<PatientDashboard> {
                     crossAxisSpacing: 8,
                     children: [
                       ServiceCard(icon: Icons.medical_services, title: 'Medicine Delivery', onTap: () {}),
-                      ServiceCard(icon: Icons.medical_services_sharp, title: 'Nurse Assistance', onTap: () {}),
+                      ServiceCard(icon: Icons.medical_services_sharp, title: 'Nurse bookings', onTap: () {
+
+
+                      }),
                       ServiceCard(icon: Icons.biotech, title: 'Lab Tests', onTap: () {}),
                       ServiceCard(
                         icon: Icons.add_to_queue,

@@ -1,4 +1,6 @@
+import 'package:cura_link/src/screens/features/core/screens/Patient/NurseBooking/nurse_booking_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'nurse_booking.dart';
 
 class ShowNurseServices extends StatelessWidget {
@@ -73,15 +75,58 @@ class ShowNurseServices extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: subItems.map((subItem) => InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => NurseBookingScreen(
-                              selectedService: subItem,
+                      // In show_nurse_services.dart, modify the onTap handler:
+                      onTap: () async {
+                        final prefs = await SharedPreferences.getInstance();
+
+                        if (prefs.containsKey('nurseRequestId')) {
+                          // Show dialog to resume or cancel existing request
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Active Request Found'),
+                              content: const Text('You have an ongoing service request.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const NurseBookingScreen(selectedService: ''),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text('Resume'),
+                                ),
+                                TextButton(
+                                  onPressed: () async {
+                                    // Force clear existing request
+                                    await prefs.remove('nurseRequestId');
+                                    await prefs.remove('nurseService');
+                                    await prefs.remove('requestLat');
+                                    await prefs.remove('requestLng');
+                                    Navigator.pop(context);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => NurseBookingScreen(selectedService: subItem),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text('New Request'),
+                                ),
+                              ],
                             ),
-                          ),
-                        );
+                          );
+                        } else {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => NurseBookingScreen(selectedService: subItem),
+                            ),
+                          );
+                        }
                       },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 12),
