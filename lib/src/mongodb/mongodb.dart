@@ -103,14 +103,14 @@ class MongoDatabase {
         throw Exception('Invalid rating data: Missing required fields');
       }
 
-      // Check if a rating already exists for this user and booking
+      
       final existingRating = await _labRating?.findOne({
         'userEmail': rating['userEmail'],  // fixed this
         'bookingId': rating['bookingId'],
       });
 
       if (existingRating != null) {
-        throw Exception('User has already rated this booking');
+        throw Exception('you have  already rated this booking');
       }
 
       rating['createdAt'] ??= DateTime.now().millisecondsSinceEpoch;
