@@ -237,7 +237,7 @@ class MongoDatabase {
         throw Exception('Invalid rating data: Missing required fields');
       }
 
-      
+
       final existingRating = await _labRating?.findOne({
         'userEmail': rating['userEmail'],  // fixed this
         'bookingId': rating['bookingId'],
@@ -590,6 +590,25 @@ class MongoDatabase {
       throw Exception("An error occurred during verification: $e");
     }
   }
+
+  // Add this method to MongoDatabase class
+  static Future<List<Map<String, dynamic>>> getNurseServiceRequests(String nurseEmail) async {
+    try {
+      final requests = await _nurseServiceRequestsCollection?.find(
+          where.eq('status', 'open')
+              .sortBy('createdAt', descending: true)
+      ).toList();
+
+      return requests ?? [];
+
+    } catch (e, stackTrace) {
+      logger.e('Error fetching nurse requests', error: e, stackTrace: stackTrace);
+      return [];
+    }
+  }
+
+
+
 
   // Function to update user details (e.g., after login) in the specified collection
   static Future<void> updateUser(

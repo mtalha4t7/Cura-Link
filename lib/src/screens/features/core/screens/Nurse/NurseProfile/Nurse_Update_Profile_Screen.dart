@@ -1,12 +1,14 @@
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart' as geo;
 import 'package:get/get.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:location/location.dart';
 import '../../../../../../common_widgets/buttons/primary_button.dart';
 import '../../../../../../constants/sizes.dart';
 import '../../../../../../constants/text_strings.dart';
+
 
 class NurseProfileFormScreen extends StatefulWidget {
   const NurseProfileFormScreen({super.key});
@@ -57,23 +59,39 @@ class _NurseProfileFormScreenState extends State<NurseProfileFormScreen> {
   }
 
   Future<void> _getCurrentLocation() async {
+    bool serviceEnabled;
+    geo.LocationPermission permission;
+
     try {
       setState(() => _isLoading = true);
 
-      final serviceEnabled = await _locationService.serviceEnabled();
-      if (!serviceEnabled && !await _locationService.requestService()) return;
+      serviceEnabled = await geo.Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        Get.snackbar("Error", "Please enable location services");
+        return;
+      }
 
-      final permission = await _locationService.hasPermission();
-      if (permission == PermissionStatus.denied &&
-          await _locationService.requestPermission() != PermissionStatus.granted) return;
+      permission = await geo.Geolocator.checkPermission();
+      if (permission == geo.LocationPermission.denied) {
+        permission = await geo.Geolocator.requestPermission();
+        if (permission != geo.LocationPermission.whileInUse &&
+            permission != geo.LocationPermission.always) {
+          Get.snackbar("Error", "Location permissions required");
+          return;
+        }
+      }
 
-      final locationData = await _locationService.getLocation();
+      final position = await geo.Geolocator.getCurrentPosition(
+        desiredAccuracy: geo.LocationAccuracy.best, // Correct accuracy constant
+      );
+
       setState(() {
         _locationController.text =
-        '${locationData.latitude?.toStringAsFixed(4)}, ${locationData.longitude?.toStringAsFixed(4)}';
+        '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
       });
+
     } catch (e) {
-      Get.snackbar("Error", "Failed to get location");
+      Get.snackbar("Error", "Location fetch failed: ${e.toString()}");
     } finally {
       setState(() => _isLoading = false);
     }
@@ -85,18 +103,39 @@ class _NurseProfileFormScreenState extends State<NurseProfileFormScreen> {
     try {
       setState(() => _isLoading = true);
 
+      // Parse and validate location coordinates
+      final locationParts = _locationController.text.split(', ');
+      if (locationParts.length != 2) {
+        throw FormatException("Invalid location format");
+      }
+
+      final lat = double.tryParse(locationParts[0]);
+      final lng = double.tryParse(locationParts[1]);
+      if (lat == null || lng == null) {
+        throw FormatException("Invalid coordinate values");
+      }
+
+      // Build GeoJSON structure
       final updates = {
         'userName': _nameController.text.trim(),
         'userPhone': _phoneController.text.trim(),
         'specialization': _specializationController.text.trim(),
-        'userAddress': _locationController.text.trim(),
+        'location': {
+          'type': 'Point',
+          'coordinates': [lng, lat], // MongoDB expects [longitude, latitude]
+        },
       };
 
+      // Update database
       await UserRepository.instance.updateNurseUser(_email!, updates);
-      Get.back(); // Return to profile screen
+
+      Get.back();
       Get.snackbar("Success", "Profile updated successfully");
+
+    } on FormatException catch (e) {
+      Get.snackbar("Invalid Location", e.message);
     } catch (e) {
-      Get.snackbar("Error", "Failed to update profile");
+      Get.snackbar("Update Failed", "Please try again");
     } finally {
       setState(() => _isLoading = false);
     }
