@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 
 import '../../../../../../repository/user_repository/user_repository.dart';
@@ -23,29 +22,50 @@ class NurseDashboardController extends GetxController {
   Future<void> fetchNurseData() async {
     try {
       isLoading(true);
-      // Replace with your actual way to get current user email
-      final currentUserEmail = FirebaseAuth.instance.currentUser?.email;
-      final data = await _userRepository.getNurseUserByEmail(currentUserEmail!);
-      nurse.value = NurseModelMongoDB.fromDataMap(data!);
-      isAvailable(nurse.value?.isAvailable ?? false);
+      final currentUser = FirebaseAuth.instance.currentUser;
+
+      if (currentUser == null || currentUser.email == null) {
+        throw Exception('No authenticated user found');
+      }
+
+      final data = await _userRepository.getNurseUserByEmail(currentUser.email!);
+
+
+      if (data == null) {
+        throw Exception('Nurse profile not found for ${currentUser.email}');
+      }
+
+      final nurseModel = NurseModelMongoDB.fromDataMap(data);
+      if (nurseModel == null) {
+        throw Exception('Failed to parse nurse data');
+      }
+
+      nurse.value = nurseModel;
+      isAvailable(nurseModel.isAvailable);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to fetch nurse data: ${e.toString()}');
+      print('Error in fetchNurseData: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to fetch nurse data: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 5),
+      );
     } finally {
       isLoading(false);
     }
   }
-
   Future<void> toggleAvailability() async {
     try {
       isLoading(true);
       final newAvailability = !isAvailable.value;
       isAvailable(newAvailability);
 
-      final currentUserEmail = 'current_user@example.com';
+      final currentUserEmail =FirebaseAuth.instance.currentUser?.email;
       await _userRepository.updateNurseUser(
-        currentUserEmail,
+        currentUserEmail!,
         {'isAvailable': newAvailability},
       );
+
 
       nurse.value = nurse.value?.copyWith(isAvailable: newAvailability);
 

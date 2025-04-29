@@ -11,6 +11,7 @@ import 'package:mongo_dart/mongo_dart.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../screens/features/authentication/models/message_model.dart';
 
+
 class UserRepository extends GetxController {
   static UserRepository get instance => Get.find();
 
@@ -646,7 +647,40 @@ class UserRepository extends GetxController {
   // Nurse-specific methods
   Future<void> createNurseUser(Map<String, dynamic> data) => createUser(userData: data, collection: _nurseCollection);
   Future<Map<String, dynamic>?> getNurseUserByEmail(String email) => getUserByEmail(email: email, collection: _nurseCollection);
-  Future<void> updateNurseUser(String email, Map<String, dynamic> updatedData) => updateUser(email: email, updatedData: updatedData, collection: _nurseCollection);
+
+  Future<bool> updateNurseUser(String email, Map<String, dynamic> updates) async {
+    try {
+      final collection = MongoDatabase.userNurseCollection;
+
+      // Create the update document manually
+      final updateDoc = {
+        '\$set': {...updates}  // Spread operator to include all updates
+      };
+
+      // Remove null values from updates
+      updateDoc['\$set']?.removeWhere((key, value) => value == null);
+
+      if (updateDoc['\$set']?.isEmpty ?? true) {
+        throw ArgumentError('No valid fields to update');
+      }
+
+      final result = await collection?.updateOne(
+        where.eq('userEmail', email),
+        updateDoc,
+      );
+
+      if (result == null || !result.isSuccess) {
+        throw Exception('Update operation failed: ${result?.errmsg}');
+      }
+
+      return true;
+    } catch (e) {
+      print('Error updating nurse user: $e');
+      rethrow;
+    }
+  }
+
+
   Future<void> deleteNurseUser(String email) => deleteUser(email: email, collection: _nurseCollection);
   Future<List<Map<String, dynamic>>> getAllNurseUsers() => getAllUsers(_nurseCollection);
   Future<bool> nurseUserExists(String email) => userExists(email: email, collection: _nurseCollection);
@@ -672,4 +706,6 @@ class UserRepository extends GetxController {
     _newMessagesController.close();
     super.onClose();
   }
+
+
 }

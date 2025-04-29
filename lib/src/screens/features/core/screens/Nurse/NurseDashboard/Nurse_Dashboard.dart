@@ -264,6 +264,7 @@ class NurseDashboard extends StatelessWidget {
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
             BottomNavigationBarItem(icon: Icon(Icons.book), label: "Bookings"),
+            BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Chat"),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
           ],
           onTap: (index) {

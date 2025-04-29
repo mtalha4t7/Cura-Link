@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
 import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabProfile/medicalLab_update_profile_screen.dart';
-import 'package:cura_link/src/screens/features/core/screens/Patient/PatientProfile/patient_all_users.dart';
 import 'package:cura_link/src/screens/features/core/screens/profile/widgets/profile_menu.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -147,11 +146,6 @@ class _MedicalStoreProfileScreenState extends State<MedicalStoreProfileScreen> {
                 title: "Billing Details",
                 icon: LineAwesomeIcons.wallet_solid,
                 onPress: () {},
-              ),
-              ProfileMenuWidget(
-                title: "User Management",
-                icon: LineAwesomeIcons.user_check_solid,
-                onPress: () => Get.to(() => PatientAllUsers()),
               ),
               const Divider(),
               const SizedBox(height: 10),
