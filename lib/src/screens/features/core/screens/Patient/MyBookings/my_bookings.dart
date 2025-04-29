@@ -3,7 +3,7 @@ import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookings/r
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_bookings_card.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import '../../../../../../mongodb/mongodb.dart';
 import '../../../../../../repository/user_repository/user_repository.dart';
 import '../../../../authentication/models/chat_user_model.dart';
@@ -194,15 +194,20 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
               children: [
                 const Text('How was your experience?'),
                 const SizedBox(height: 10),
-                Slider(
-                  min: 1,
-                  max: 5,
-                  divisions: 4,
-                  value: rating,
-                  label: rating.toString(),
-                  onChanged: (value) {
+                RatingBar.builder(
+                  initialRating: rating,
+                  minRating: 1,
+                  direction: Axis.horizontal,
+                  allowHalfRating: true,
+                  itemCount: 5,
+                  itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  itemBuilder: (context, _) => const Icon(
+                    Icons.star,
+                    color: Colors.amber,
+                  ),
+                  onRatingUpdate: (newRating) {
                     setState(() {
-                      rating = value;
+                      rating = newRating;
                     });
                   },
                 ),
@@ -210,6 +215,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                 TextField(
                   controller: reviewController,
                   maxLines: 3,
+                  maxLength: 300,
                   decoration: const InputDecoration(
                     labelText: 'Write your review',
                     border: OutlineInputBorder(),
@@ -230,8 +236,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Please write a review before submitting')),
                     );
-
-                  }else {
+                  } else {
                     await RatingsController.submitRating(
                       labEmail: labEmail,
                       userEmail: patientEmail,
