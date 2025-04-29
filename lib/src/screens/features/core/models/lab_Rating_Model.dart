@@ -1,12 +1,13 @@
-import 'package:mongo_dart/mongo_dart.dart';
+import 'package:bson/bson.dart';
 
 class LabRating {
-  ObjectId? id;          // MongoDB _id field (optional for new ratings)
-  final String labEmail; // Email of the lab
-  final String userEmail; // Email of the user who gave the rating
-  final double rating;    // Rating value (e.g., 4.5)
-  final String review;    // Review text
-  final DateTime createdAt; // Timestamp as DateTime (easy to work with)
+  ObjectId? id;
+  final String labEmail;
+  final String userEmail;
+  final double rating;
+  final String review;
+  final DateTime createdAt;
+  final ObjectId bookingId; // NEW
 
   LabRating({
     this.id,
@@ -15,9 +16,9 @@ class LabRating {
     required this.rating,
     required this.review,
     required this.createdAt,
+    required this.bookingId, // NEW
   });
 
-  /// Factory constructor to create a LabRating object from a Map (MongoDB document)
   factory LabRating.fromJson(Map<String, dynamic> json) {
     return LabRating(
       id: json['_id'],
@@ -26,17 +27,18 @@ class LabRating {
       rating: (json['rating'] ?? 0).toDouble(),
       review: json['review'] ?? '',
       createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] ?? DateTime.now().millisecondsSinceEpoch),
+      bookingId: json['bookingId'], // NEW
     );
   }
 
-  /// Convert a LabRating object to a Map (for inserting into MongoDB)
   Map<String, dynamic> toJson() {
     final map = {
       'labEmail': labEmail,
       'userEmail': userEmail,
       'rating': rating,
       'review': review,
-      'createdAt': createdAt.millisecondsSinceEpoch, // Save as int (Mongo-friendly)
+      'createdAt': createdAt.millisecondsSinceEpoch,
+      'bookingId': bookingId, // NEW
     };
     if (id != null) {
       map['_id'] = id!;
