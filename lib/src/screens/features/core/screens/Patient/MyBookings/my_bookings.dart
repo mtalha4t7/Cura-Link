@@ -1,3 +1,4 @@
+import 'package:bson/bson.dart';
 import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabWidgets/booking_card.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookings/rating_controller.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_bookings_card.dart';
@@ -162,7 +163,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                               );
                             }
                           }, onRate: () {
-                          _showRatingDialog(context, booking['labUserEmail'],booking['patientUserEmail']);
+                          _showRatingDialog(
+                            context,
+                            booking['labUserEmail'],
+                            booking['patientUserEmail'],
+                            booking['_id'], // NEW
+                          );
                         },
                         );
                       },
@@ -179,7 +185,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     );
   }
 
-  void _showRatingDialog(BuildContext context, String labEmail, String patientEmail) {
+  void _showRatingDialog(BuildContext context, String labEmail, String patientEmail, ObjectId bookingId) {
     double rating = 3.0;
     final TextEditingController reviewController = TextEditingController();
 
@@ -200,7 +206,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                   direction: Axis.horizontal,
                   allowHalfRating: true,
                   itemCount: 5,
-                  itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
                   itemBuilder: (context, _) => const Icon(
                     Icons.star,
                     color: Colors.amber,
@@ -236,17 +241,26 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Please write a review before submitting')),
                     );
-                  } else {
+                    return;
+                  }
+
+                  try {
                     await RatingsController.submitRating(
                       labEmail: labEmail,
                       userEmail: patientEmail,
                       rating: rating,
                       review: review,
+                      bookingId: bookingId,
                     );
 
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Thanks for your rating!')),
+                    );
+                  } catch (e) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(e.toString())),
                     );
                   }
                 },
@@ -257,6 +271,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       },
     );
   }
+
 
 
   Future<ChatUserModelMongoDB?> fetchUserData(String email) async {

@@ -19,6 +19,7 @@ class MongoDatabase {
   static DbCollection? _users;
   static DbCollection? _messagesCollection;
   static DbCollection? _labRating;
+  static late DbCollection labRatingsCollection;
 
   // Connect to MongoDB and initialize the collections
   static Future<void> connect() async {
@@ -40,6 +41,7 @@ class MongoDatabase {
       _users = _db!.collection(USERS);
       _messagesCollection = _db!.collection(MESSAGES_COLLECTION_NAME);
       _labRating = _db!.collection(LAB_RATING_COLLECTION);
+      labRatingsCollection = _db!.collection('labRatings');
 
       // Optional: Use inspect to debug the database connection
       inspect(_db);
@@ -93,8 +95,22 @@ class MongoDatabase {
   /// Insert a new lab rating
   static Future<void> insertLabRating(Map<String, dynamic> rating) async {
     try {
-      if (rating.isEmpty || !rating.containsKey('labEmail') || !rating.containsKey('rating')) {
+      if (rating.isEmpty ||
+          !rating.containsKey('labEmail') ||
+          !rating.containsKey('rating') ||
+          !rating.containsKey('userEmail') ||  // fixed this
+          !rating.containsKey('bookingId')) {
         throw Exception('Invalid rating data: Missing required fields');
+      }
+
+      // Check if a rating already exists for this user and booking
+      final existingRating = await _labRating?.findOne({
+        'userEmail': rating['userEmail'],  // fixed this
+        'bookingId': rating['bookingId'],
+      });
+
+      if (existingRating != null) {
+        throw Exception('User has already rated this booking');
       }
 
       rating['createdAt'] ??= DateTime.now().millisecondsSinceEpoch;
@@ -106,6 +122,7 @@ class MongoDatabase {
       rethrow;
     }
   }
+
 
 
   /// Update an existing lab rating (e.g., user changes their rating)
