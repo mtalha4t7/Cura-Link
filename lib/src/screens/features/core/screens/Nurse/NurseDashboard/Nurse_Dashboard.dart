@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:cura_link/src/screens/features/core/screens/Nurse/NurseProfile/Nurse_Profile_Screen.dart';
 import '../../../../../../repository/user_repository/user_repository.dart';
@@ -7,10 +8,75 @@ import '../../MedicalLaboratory/MedicalLabWidgets/quick_access_button.dart';
 import '../../MedicalLaboratory/MedicalLabWidgets/service_card.dart';
 import 'Nurse_Dashboard_controller.dart';
 
-
 class NurseDashboard extends StatelessWidget {
   NurseDashboard({super.key}) {
     Get.put(NurseDashboardController(Get.find<UserRepository>()));
+  }
+
+  void _showVerificationDialog(BuildContext context, void Function(String, String) onVerify) {
+    final nicController = TextEditingController();
+    final licenseController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          "Verify Your Account",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nicController,
+                decoration: InputDecoration(
+                  labelText: "ID Card (NIC)",
+                  hintText: "e.g., 15201-2808169-3",
+                  prefixIcon: const Icon(Icons.credit_card),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                ),
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: licenseController,
+                decoration: InputDecoration(
+                  labelText: "License Number",
+                  hintText: "Enter your license number",
+                  prefixIcon: const Icon(Icons.badge),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                ),
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                maxLength: 10,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("Cancel", style: TextStyle(color: Colors.red)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final nic = nicController.text.trim().replaceAll('-', '');
+              final license = licenseController.text.trim();
+              Navigator.of(context).pop();
+              onVerify(nic, license);
+            },
+            child: const Text("Verify"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -81,11 +147,26 @@ class NurseDashboard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (!controller.isVerified.value)
+                    GestureDetector(
+                      onTap: () => _showVerificationDialog(context, (nic, license) {
+                        controller.verifyUser(nic, license, context);
+                      }),
+                      child: Container(
+                        color: Colors.redAccent,
+                        padding: const EdgeInsets.all(12),
+                        width: double.infinity,
+                        child: const Text(
+                          "Your account is not verified. Tap here to verify.",
+                          style: TextStyle(color: Colors.white),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 8),
                   Text("Welcome Back, ${controller.nurse.value?.userName ?? 'Nurse'}!",
                       style: txtTheme.bodyMedium),
                   const SizedBox(height: 16.0),
-
-                  // Availability Toggle Button
                   Center(
                     child: GestureDetector(
                       onTap: controller.toggleAvailability,
@@ -96,18 +177,12 @@ class NurseDashboard extends StatelessWidget {
                         decoration: BoxDecoration(
                           gradient: controller.isAvailable.value
                               ? LinearGradient(
-                            colors: [
-                              Colors.green.shade400,
-                              Colors.green.shade700
-                            ],
+                            colors: [Colors.green.shade400, Colors.green.shade700],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           )
                               : LinearGradient(
-                            colors: [
-                              Colors.red.shade400,
-                              Colors.red.shade700
-                            ],
+                            colors: [Colors.red.shade400, Colors.red.shade700],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -127,12 +202,9 @@ class NurseDashboard extends StatelessWidget {
                           children: [
                             Center(
                               child: controller.isLoading.value
-                                  ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
+                                  ? const CircularProgressIndicator(color: Colors.white)
                                   : Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
                                     controller.isAvailable.value
@@ -183,8 +255,6 @@ class NurseDashboard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 20),
-
-                  // Quick Access Buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
@@ -206,8 +276,6 @@ class NurseDashboard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16.0),
-
-                  // Bookings Section
                   const Text(
                     "Current Bookings",
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -230,8 +298,6 @@ class NurseDashboard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16.0),
-
-                  // Services Section
                   const Text(
                     "Services You Provide",
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),

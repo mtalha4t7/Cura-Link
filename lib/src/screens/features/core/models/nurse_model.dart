@@ -9,6 +9,7 @@ class NurseModelMongoDB {
   String? userType;
   String? userAddress;
   bool? isAvailable;
+  String? userVerified;
 
   NurseModelMongoDB({
     this.userId,
@@ -19,6 +20,7 @@ class NurseModelMongoDB {
     this.userType,
     this.userAddress,
     this.isAvailable = false,
+    this.userVerified = "0",
   });
 
   /// Converts the object into a Map
@@ -32,6 +34,7 @@ class NurseModelMongoDB {
       'userType': userType,
       'userAddress': userAddress,
       'isAvailable': isAvailable,
+      'userVerified': userVerified,
     };
   }
 
@@ -46,6 +49,7 @@ class NurseModelMongoDB {
       userPassword: dataMap['userPassword'] as String? ?? '',
       userPhone: dataMap['userPhone'] as String? ?? '',
       isAvailable: dataMap['isAvailable'] as bool? ?? false,
+      userVerified: dataMap['userVerified'] as String? ?? '0',
     );
   }
 
@@ -67,6 +71,7 @@ extension NurseModelExtensions on NurseModelMongoDB {
     String? userType,
     String? userAddress,
     bool? isAvailable,
+    String? userVerified,
   }) {
     return NurseModelMongoDB(
       userId: userId ?? this.userId,
@@ -77,6 +82,7 @@ extension NurseModelExtensions on NurseModelMongoDB {
       userType: userType ?? this.userType,
       userAddress: userAddress ?? this.userAddress,
       isAvailable: isAvailable ?? this.isAvailable,
+      userVerified: userVerified ?? this.userVerified,
     );
   }
 }
