@@ -102,6 +102,7 @@ dependencies:
   google_maps_flutter: ^2.12.1
   geolocator: ^13.0.4
   geocoding: ^3.0.0
+  flutter_rating_bar: ^4.0.1
 flutter_native_splash:
   color: "#ffffff"  # Background color for light mode
   image: assets/images/appLogoSplashLight.png  # Light mode logo
