@@ -21,7 +21,7 @@ class LabBookingScreen extends StatefulWidget {
 }
 
 class _LabBookingScreenState extends State<LabBookingScreen> {
-  final PatientLabBookingController _controller = PatientLabBookingController();
+  final NurseBookingController _controller = NurseBookingController();
   late GoogleMapController _mapController;
   final Set<Marker> _markers = {};
   LatLng? _currentLocation;
@@ -93,7 +93,7 @@ class _LabBookingScreenState extends State<LabBookingScreen> {
 
   Future<void> _loadLabs() async {
     try {
-      final List<ShowLabUserModel> labs = await _controller.fetchAllUsers();
+      final List<ShowLabUserModel> labs = await _controller.fetchAllLabUsers();
       setState(() {
         _labs = labs;
         _hasLabs = labs.isNotEmpty;

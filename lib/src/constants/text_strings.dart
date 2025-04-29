@@ -51,6 +51,8 @@ const String LAB_BOOKINGS = "labBookings";
 const String PATIENT_LAB_BOOKINGS = "patientLabBookings";
 const String MESSAGES_COLLECTION_NAME = "messages";
 const String LAB_RATING_COLLECTION = "labRating";
+const String NURSE_SERVICE_REQUESTS_COLLECTION = 'nurseServiceRequests';
+const String NURSE_BIDS_COLLECTION = 'nurseBids';
 
 const String ipAddress = "http://192.168.1.45:4000";
 // -- GLOBAL Texts

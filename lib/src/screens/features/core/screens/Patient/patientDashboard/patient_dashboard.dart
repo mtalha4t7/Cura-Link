@@ -1,4 +1,5 @@
 import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookings/my_bookings.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/NurseBooking/show_nurse_services.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/PatientChat/chat_home.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/PatientProfile/patient_profile_screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/health_tip_card.dart';
@@ -52,7 +53,9 @@ class _PatientDashboardState extends State<PatientDashboard> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     QuickAccessButton(icon: Icons.medication, label: 'Order Medicine', onTap: () {}),
-                    QuickAccessButton(icon: Icons.local_hospital, label: 'Call Nurse', onTap: () {}),
+                    QuickAccessButton(icon: Icons.local_hospital, label: 'Call Nurse', onTap: () {
+                      Get.to(() =>  ShowNurseServices());
+                    }),
                     QuickAccessButton(
                       icon: Icons.science,
                       label: 'Book Lab',

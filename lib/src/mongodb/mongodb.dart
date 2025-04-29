@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import '../constants/text_strings.dart'; // Ensure this path is correct
 import 'package:logger/logger.dart';
@@ -20,6 +21,9 @@ class MongoDatabase {
   static DbCollection? _messagesCollection;
   static DbCollection? _labRating;
   static late DbCollection labRatingsCollection;
+  static DbCollection? _nurseServiceRequestsCollection;
+  static DbCollection? _nurseBidsCollection;
+
 
   // Connect to MongoDB and initialize the collections
   static Future<void> connect() async {
@@ -42,16 +46,31 @@ class MongoDatabase {
       _messagesCollection = _db!.collection(MESSAGES_COLLECTION_NAME);
       _labRating = _db!.collection(LAB_RATING_COLLECTION);
       labRatingsCollection = _db!.collection('labRatings');
+      _nurseServiceRequestsCollection = _db!.collection(NURSE_SERVICE_REQUESTS_COLLECTION);
+      _nurseBidsCollection = _db!.collection(NURSE_BIDS_COLLECTION);
 
+      // Create geospatial index for nurses
+      await _userNurseCollection?.createIndex(
+        keys: {'location': '2dsphere'},
+        name: 'location_2dsphere',
+        background: true,
+      );
+      logger.i('Created geospatial index for nurses');
       // Optional: Use inspect to debug the database connection
       inspect(_db);
 
       logger.i('Connected to MongoDB database successfully');
     } catch (e, stackTrace) {
       logger.e('Error connecting to MongoDB', error: e, stackTrace: stackTrace);
-      rethrow; // Rethrow the exception if needed
+      rethrow;
     }
+
+
+
   }
+
+  static DbCollection? get nurseServiceRequests => _nurseServiceRequestsCollection;
+  static DbCollection? get nurseBids => _nurseBidsCollection;
 
   static DbCollection? get userPatientCollection => _userPatientCollection;
   static DbCollection? get userLabCollection => _userLabCollection;
@@ -87,6 +106,121 @@ class MongoDatabase {
     }
   }
 
+  static Future<String> createServiceRequest({
+    required String patientEmail,
+    required String serviceType,
+    required LatLng location,
+  }) async {
+    try {
+      final request = {
+        'patientEmail': patientEmail,
+        'serviceType': serviceType,
+        'location': {
+          'type': 'Point',
+          'coordinates': [location.longitude, location.latitude],
+        },
+        'status': 'open',
+        'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
+      };
+
+      final result = await _nurseServiceRequestsCollection?.insertOne(request);
+      return result?.id.toHexString() ?? '';
+    } catch (e, stackTrace) {
+      logger.e('Error creating service request', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> deleteServiceRequestById(String requestId) async {
+    try {
+      final id = ObjectId.parse(requestId);
+      await _nurseServiceRequestsCollection?.deleteOne(where.id(id));
+    } catch (e) {
+      throw Exception('Error deleting service request: $e');
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getNearbyNurses(LatLng location, double maxDistanceKm) async {
+    try {
+      final nurses = await _userNurseCollection?.find(where.nearSphere(
+        'location',
+        location.longitude as Geometry,
+        minDistance: location.latitude,
+        maxDistance: maxDistanceKm * 1000, // Convert km to meters
+      )).toList();
+
+      return nurses ?? [];
+    } catch (e, stackTrace) {
+      logger.e('Error fetching nearby nurses', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
+  static Future<String> submitBid({
+    required String requestId,
+    required String nurseEmail,
+    required double price,
+  }) async {
+    try {
+      final bid = {
+        'requestId': requestId,
+        'nurseEmail': nurseEmail,
+        'price': price,
+        'status': 'pending',
+        'createdAt': DateTime.now(),
+      };
+
+      final result = await _nurseBidsCollection?.insertOne(bid);
+      return result?.id.toHexString() ?? '';
+    } catch (e, stackTrace) {
+      logger.e('Error submitting bid', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getBidsForRequest(String requestId) async {
+    try {
+      final bids = await _nurseBidsCollection?.find(
+          where.eq('requestId', requestId)
+              .sortBy('createdAt', descending: true)
+      ).toList();
+
+      return bids ?? [];
+    } catch (e, stackTrace) {
+      logger.e('Error fetching bids', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
+  static Future<void> acceptBid(String bidId) async {
+    try {
+      final bidObjectId = ObjectId.parse(bidId);
+
+      // Update bid status
+      await _nurseBidsCollection?.updateOne(
+        where.id(bidObjectId),
+        modify.set('status', 'accepted'),
+      );
+
+      // Get the associated request
+      final bid = await _nurseBidsCollection?.findOne(where.id(bidObjectId));
+      final requestId = bid?['requestId'];
+
+      if (requestId != null) {
+        // Update request status
+        await _nurseServiceRequestsCollection?.updateOne(
+          where.id(ObjectId.parse(requestId)),
+          modify
+            ..set('status', 'accepted')
+            ..set('acceptedBidId', bidId),
+        );
+      }
+    } catch (e, stackTrace) {
+      logger.e('Error accepting bid', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
 
 
 

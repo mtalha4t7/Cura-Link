@@ -8,7 +8,7 @@ import '../../../../../../shared prefrences/shared_prefrence.dart';
 import '../../../../../../utils/helper/helper_controller.dart';
 import '../../../../authentication/models/user_model.dart';
 
-class PatientLabBookingController {
+class NurseBookingController {
   // Fetch user bookings from the MongoDB collection
   final _userRepo = UserRepository();
 
@@ -138,7 +138,7 @@ class PatientLabBookingController {
   }
 
   // Fetch all users from the MongoDB collection
-  Future<List<ShowLabUserModel>> fetchAllUsers() async {
+  Future<List<ShowLabUserModel>> fetchAllLabUsers() async {
     try {
       debugPrint("Fetching users from lab collection...");
       final userCollection = await _userRepo.getAllUsers(MongoDatabase.userLabCollection);
@@ -174,7 +174,42 @@ class PatientLabBookingController {
       rethrow;
     }
   }
+  Future<List<ShowLabUserModel>> fetchAllNurseUsers() async {
+    try {
+      debugPrint("Fetching users from Nurse collection...");
+      final userCollection = await _userRepo.getAllUsers(MongoDatabase.userNurseCollection);
+      debugPrint("Received ${userCollection.length} raw user records");
 
+      final List<ShowLabUserModel> allUsers = userCollection
+          .where((user) =>
+      user != null &&
+          user['userVerified'] == '1' &&
+          user['userAddress'] != null &&
+          user['userName'] != null
+      )
+          .map((user) {
+        try {
+          // Convert ObjectId to String if needed
+          final modifiedUser = Map<String, dynamic>.from(user);
+          if (modifiedUser['_id'] != null && modifiedUser['_id'] is ObjectId) {
+            modifiedUser['_id'] = modifiedUser['_id'].toString();
+          }
+          return ShowLabUserModel.fromJson(modifiedUser);
+        } catch (e) {
+          debugPrint("Error parsing user: $e");
+          return null;
+        }
+      })
+          .whereType<ShowLabUserModel>()
+          .toList();
+
+      debugPrint("Returning ${allUsers.length} verified labs");
+      return allUsers;
+    } catch (e) {
+      debugPrint("Error in fetchAllUsers: $e");
+      rethrow;
+    }
+  }
 
   Future<List<UserModel>> getAllUsers() async {
     try {
