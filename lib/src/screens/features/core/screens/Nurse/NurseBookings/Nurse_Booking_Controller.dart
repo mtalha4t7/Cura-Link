@@ -75,7 +75,7 @@ class BookingControllerNurse extends GetxController {
     try {
 
       isLoading(true);
-
+       print("===================="+nurseName);
       await MongoDatabase.submitBid(
         nurseName: nurseName,
         requestId: requestId,

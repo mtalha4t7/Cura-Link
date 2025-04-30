@@ -17,7 +17,8 @@ class NurseBookingsScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('My Bookings')),
       body: Obx(() {
         print('🔄 Rebuilding UI - Loading: ${controller.isLoading.value}');
-        print('   📚 Active requests count: ${controller.activeRequests.length}');
+        print(
+            '   📚 Active requests count: ${controller.activeRequests.length}');
 
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
@@ -48,11 +49,13 @@ class NurseBookingsScreen extends StatelessWidget {
                   children: [
                     Text(
                       booking['serviceType'] ?? 'Unknown Service',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 6),
                     Text('Patient: ${booking['patientEmail'] ?? 'Unknown'}'),
-                    Text('Status: ${booking['status']?.toUpperCase() ?? 'UNKNOWN'}'),
+                    Text('Status: ${booking['status']?.toUpperCase() ??
+                        'UNKNOWN'}'),
                     if (booking['price'] != null)
                       Text('Price: \$${booking['price'].toStringAsFixed(2)}'),
                     const SizedBox(height: 6),
@@ -70,7 +73,8 @@ class NurseBookingsScreen extends StatelessWidget {
                       onPressed: hasBid
                           ? null
                           : () {
-                        _showBidDialog(context, booking['_id'].toString(), controller);
+                        _showBidDialog(
+                            context, booking['_id'].toString(), controller);
                       },
                       child: Text(hasBid ? 'Bid Submitted' : 'Bid Now'),
                     ),
@@ -84,46 +88,56 @@ class NurseBookingsScreen extends StatelessWidget {
     );
   }
 
-  void _showBidDialog(BuildContext context, String requestId, BookingControllerNurse controller) {
+  void _showBidDialog(BuildContext context, String requestId,
+      BookingControllerNurse controller) {
     final priceController = TextEditingController();
-    final email= FirebaseAuth.instance.currentUser?.email;
-    final String name= UserRepository.instance.getNurseUserName(email!) as String;
+    final email = FirebaseAuth.instance.currentUser?.email;
+
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Submit Your Bid'),
-        content: TextField(
-          controller: priceController,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: 'Enter your price'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
+      builder: (_) =>
+          AlertDialog(
+            title: const Text('Submit Your Bid'),
+            content: TextField(
+              controller: priceController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Enter your price'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final price = double.tryParse(priceController.text.trim());
+                  if (price != null) {
+                    // Extract plain ObjectId string
+                    String extractId(String objectIdString) {
+                      final regex = RegExp(r'ObjectId\("([a-fA-F0-9]+)"\)');
+                      final match = regex.firstMatch(objectIdString);
+                      return match != null ? match.group(1)! : objectIdString;
+                    }
 
-              final price = double.tryParse(priceController.text.trim());
-              if (price != null) {
-                String extractId(String objectIdString) {
-                  final regex = RegExp(r'ObjectId\("([a-fA-F0-9]+)"\)');
-                  final match = regex.firstMatch(objectIdString);
-                  return match != null ? match.group(1)! : objectIdString; // fallback if already clean
-                }
-                String cleanRequestId = extractId(requestId);
-                controller.submitBid(cleanRequestId, price,name);
-                Navigator.of(context).pop();
-              } else {
-                Get.snackbar('Error', 'Please enter a valid number');
-              }
-            },
-            child: const Text('Submit Bid'),
+                    String cleanRequestId = extractId(requestId);
+
+                    // Await name resolution
+                    final name = await UserRepository.instance.getNurseUserName(
+                        email.toString());
+
+                    // Submit bid with name
+                    controller.submitBid(
+                        cleanRequestId, price, name ?? "Unknown Nurse");
+
+                    Navigator.of(context).pop();
+                  } else {
+                    Get.snackbar('Error', 'Please enter a valid number');
+                  }
+                },
+                child: const Text('Submit Bid'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }
-
