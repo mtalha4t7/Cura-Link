@@ -183,7 +183,7 @@ class MongoDatabase {
   }) async {
     try {
       final bid = {
-        'requestId': requestId,
+        'requestId': ObjectId.parse(requestId),
         'nurseEmail': nurseEmail,
         'price': price,
         'userName':nurseName,
@@ -209,29 +209,28 @@ class MongoDatabase {
         return [];
       }
 
-      // Build query — either String or ObjectId
-      final query = {
-        r'$or': [
-          {'requestId': requestId},
-          {'requestId': ObjectId.tryParse(requestId)}
-        ]
-      };
+      // Convert to ObjectId (if valid)
+      final objectId = ObjectId.tryParse(requestId);
+      if (objectId == null) {
+        print("❌ Invalid requestId for ObjectId: $requestId");
+        return [];
+      }
 
-      // Fetch bids
+      // Query using ObjectId only
+      final query = {'requestId': objectId};
+
       final rawBids = await bidsCollection.find(query).toList();
 
-      print("💡 Processed ${rawBids.length} bids");
+      print("💡 Fetched ${rawBids.length} bids");
 
-      // Map to List<Bid>
-      final bids = rawBids.map((map) => Bid.fromMap(map)).toList();
-
-      return bids;
+      return rawBids.map((map) => Bid.fromMap(map)).toList();
     } catch (e, stackTrace) {
       print("❌ Error in getBidsForRequest: $e");
       print(stackTrace);
       return [];
     }
   }
+
 
 
   static Future<void> acceptBid(String bidId) async {
