@@ -183,7 +183,7 @@ class MongoDatabase {
   }) async {
     try {
       final bid = {
-        'requestId': ObjectId.parse(requestId),
+        'requestId':requestId ,
         'nurseEmail': nurseEmail,
         'price': price,
         'userName':nurseName,
