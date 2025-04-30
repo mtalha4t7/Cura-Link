@@ -182,7 +182,7 @@ class MongoDatabase {
   static Future<List<Map<String, dynamic>>> getBidsForRequest(String requestId) async {
     try {
       final bids = await _nurseBidsCollection?.find(
-          where.eq('requestId', requestId)
+          where.eq('_id', requestId)
               .sortBy('createdAt', descending: true)
       ).toList();
 
