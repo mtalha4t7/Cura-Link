@@ -103,7 +103,13 @@ class NurseBookingsScreen extends StatelessWidget {
             onPressed: () {
               final price = double.tryParse(priceController.text.trim());
               if (price != null) {
-                controller.submitBid(requestId, price);
+                String extractId(String objectIdString) {
+                  final regex = RegExp(r'ObjectId\("([a-fA-F0-9]+)"\)');
+                  final match = regex.firstMatch(objectIdString);
+                  return match != null ? match.group(1)! : objectIdString; // fallback if already clean
+                }
+                String cleanRequestId = extractId(requestId);
+                controller.submitBid(cleanRequestId, price);
                 Navigator.of(context).pop();
               } else {
                 Get.snackbar('Error', 'Please enter a valid number');
