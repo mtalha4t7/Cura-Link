@@ -209,19 +209,12 @@ class MongoDatabase {
         return [];
       }
 
-      // Convert to ObjectId (if valid)
-      final objectId = ObjectId.tryParse(requestId);
-      if (objectId == null) {
-        print("❌ Invalid requestId for ObjectId: $requestId");
-        return [];
-      }
-
-      // Query using ObjectId only
-      final query = {'requestId': objectId};
+      // RequestId is stored as plain string, not ObjectId
+      final query = {'requestId': requestId};
 
       final rawBids = await bidsCollection.find(query).toList();
 
-      print("💡 Fetched ${rawBids.length} bids");
+      print("💡 Fetched ${rawBids.length} bids for requestId $requestId");
 
       return rawBids.map((map) => Bid.fromMap(map)).toList();
     } catch (e, stackTrace) {

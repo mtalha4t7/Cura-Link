@@ -87,7 +87,7 @@ class NurseBookingsScreen extends StatelessWidget {
   void _showBidDialog(BuildContext context, String requestId, BookingControllerNurse controller) {
     final priceController = TextEditingController();
     final email= FirebaseAuth.instance.currentUser?.email;
-    final String name= UserRepository.instance.getNurseUserName(email!).toString();
+    final String name= UserRepository.instance.getNurseUserName(email!) as String;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
