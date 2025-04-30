@@ -73,6 +73,7 @@ class BookingControllerNurse extends GetxController {
 
   Future<void> submitBid(String requestId, double price) async {
     try {
+      print("=========="+requestId);
       isLoading(true);
       await MongoDatabase.submitBid(
         requestId: requestId,
