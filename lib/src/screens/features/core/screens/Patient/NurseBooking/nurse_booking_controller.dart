@@ -29,17 +29,13 @@ class NurseBookingController extends GetxController {
   }
 
   Future<List<Bid>> fetchBids(String requestId) async {
-    final bidsData = await MongoDatabase.getBidsForRequest(requestId);
-    return bidsData.map((bid) {
-      return Bid(
-        id: bid['_id'].toHexString(),
-        nurseEmail: bid['nurseEmail'],
-        price: bid['price'].toDouble(),
-        status: bid['status'],
-        requestId: bid['requestId'],
-        createdAt: bid['createdAt'],
-      );
-    }).toList();
+    try {
+      final bidsData = await MongoDatabase.getBidsForRequest(requestId);
+      return bidsData.map((bid) => Bid.fromMap(bid)).toList();
+    } catch (e) {
+      print('Error fetching bids: ${e.toString()}');
+      rethrow;
+    }
   }
 
   Future<void> acceptBid(String bidId) async {

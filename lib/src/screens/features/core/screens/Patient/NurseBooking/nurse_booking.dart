@@ -256,7 +256,7 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
           _isSearching = false;
         });
       } catch (e) {
-        print('Error fetching bids: ${e.toString()}');
+        print('Error fetching bids for meee: ${e.toString()}');
       }
     });
   }

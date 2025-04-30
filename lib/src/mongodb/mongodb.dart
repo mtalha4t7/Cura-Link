@@ -180,35 +180,44 @@ class MongoDatabase {
   }
 
 
-
   static Future<List<Map<String, dynamic>>> getBidsForRequest(String requestId) async {
     try {
-      // Step 1: Parse the requestId to ObjectId
+      logger.i('Fetching bids for requestId: $requestId');
 
-      logger.i('Parsed requestId: $requestId');  // Debug print
+      // Convert string requestId to ObjectId
+      final ObjectId requestIdObj = ObjectId.parse(requestId); // 🚨 Critical fix
 
-      // Step 2: Fetch matching bids
-      final bids = await _nurseBidsCollection?.find(
-        where.eq('requestId', requestId).sortBy('createdAt', descending: true),
-      ).toList();
+      // Query using ObjectId
+      final query = where.eq('requestId', requestIdObj).sortBy('createdAt', descending: true);
+      final bids = await _nurseBidsCollection?.find(query).toList();
 
-      // Step 3: Log results
-      if (bids != null && bids.isNotEmpty) {
-        logger.i('Found ${bids.length} bids for requestId $requestId');
-        for (var bid in bids) {
-          logger.i('Bid: ${bid.toString()}');  // Optional: print each bid
+      // Convert ObjectId fields to strings
+      final processedBids = bids?.map((bid) {
+        final map = Map<String, dynamic>.from(bid);
+
+        // Convert document _id
+        if (map['_id'] is ObjectId) {
+          map['_id'] = (map['_id'] as ObjectId).toHexString();
         }
-      } else {
-        logger.w('No bids found for requestId $requestId');
-      }
 
-      return bids ?? [];
+        // Convert requestId field
+        if (map['requestId'] is ObjectId) {
+          map['requestId'] = (map['requestId'] as ObjectId).toHexString();
+        }
+
+        return map;
+      }).toList() ?? [];
+
+      logger.i('Processed ${processedBids.length} bids');
+      return processedBids;
+    } on FormatException catch (e) {
+      logger.e('Invalid requestId format: $requestId');
+      rethrow;
     } catch (e, stackTrace) {
-      logger.e('Error fetching bids for requestId $requestId', error: e, stackTrace: stackTrace);
+      logger.e('Error fetching bids', error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
-
 
 
   static Future<void> acceptBid(String bidId) async {
