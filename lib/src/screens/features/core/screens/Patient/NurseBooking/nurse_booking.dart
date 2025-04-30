@@ -250,21 +250,16 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
 
       try {
         final bids = await _controller.fetchBids(_requestId!);
-        print("==========================="+bids.toString());
+
+        // Extract nurse names directly from bids
         final nurseEmails = bids.map((b) => b.nurseEmail).toList();
-        final nurseNamse=bids.map((b)=>b.nurseName).toString();
-        final nurses = await _controller.getNurseDetails(nurseEmails);
-        print(nurseEmails);
+        final nurseNames = bids.map((b) => b.nurseName ?? 'Unknown').toList(); // In case some are missing
+
+        print('Nurse Emails: $nurseEmails');
+        print('Nurse Names: $nurseNames');
 
         setState(() {
-          _bids = bids.map((bid) {
-            final nurse = nurses.firstWhere(
-                  (n) => n.userEmail == bid.nurseEmail,
-              orElse: () => Nurse(userName: nurseNamse??'Unknown', userEmail: '', id: ''),
-            );
-
-            return bid..nurseName = nurse.userName;
-          }).toList();
+          _bids = bids; 
           _isSearching = false;
         });
       } catch (e) {

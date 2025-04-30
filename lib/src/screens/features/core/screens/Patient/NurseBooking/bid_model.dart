@@ -44,6 +44,7 @@ class Bid {
       status: map['status']?.toString() ?? '',
       createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ??
           DateTime.now(),
+      nurseName: map['userName']?.toString(), // 👈 added support for userName
       rating: (map['rating'] as num?)?.toDouble(),
     );
   }
