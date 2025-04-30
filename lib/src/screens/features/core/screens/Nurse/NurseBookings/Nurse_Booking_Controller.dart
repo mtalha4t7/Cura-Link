@@ -71,12 +71,13 @@ class BookingControllerNurse extends GetxController {
     }
   }
 
-  Future<void> submitBid(String requestId, double price) async {
+  Future<void> submitBid(String requestId, double price, String nurseName) async {
     try {
 
       isLoading(true);
 
       await MongoDatabase.submitBid(
+        nurseName: nurseName,
         requestId: requestId,
         nurseEmail: nurse.value?.userEmail ?? '',
         price: price,

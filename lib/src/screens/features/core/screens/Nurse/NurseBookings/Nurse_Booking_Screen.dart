@@ -1,3 +1,5 @@
+import 'package:cura_link/src/repository/user_repository/user_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -84,7 +86,8 @@ class NurseBookingsScreen extends StatelessWidget {
 
   void _showBidDialog(BuildContext context, String requestId, BookingControllerNurse controller) {
     final priceController = TextEditingController();
-
+    final email= FirebaseAuth.instance.currentUser?.email;
+    final String name= UserRepository.instance.getNurseUserName(email!).toString();
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -101,6 +104,7 @@ class NurseBookingsScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
+
               final price = double.tryParse(priceController.text.trim());
               if (price != null) {
                 String extractId(String objectIdString) {
@@ -109,7 +113,7 @@ class NurseBookingsScreen extends StatelessWidget {
                   return match != null ? match.group(1)! : objectIdString; // fallback if already clean
                 }
                 String cleanRequestId = extractId(requestId);
-                controller.submitBid(requestId, price);
+                controller.submitBid(requestId, price,name);
                 Navigator.of(context).pop();
               } else {
                 Get.snackbar('Error', 'Please enter a valid number');

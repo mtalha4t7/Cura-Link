@@ -1,12 +1,15 @@
 import 'dart:async';
+import 'package:bson/bson.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/NurseBooking/nurse_booking_controller.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientDashboard/patient_dashboard.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'nurseModel.dart';
 import 'temp_user_NurseModel.dart';
 import 'bid_model.dart';
 
@@ -242,27 +245,31 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
   }
 
 
-
   void _startBidPolling() {
     _bidTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
       if (_requestId == null) return;
 
       try {
         final bids = await _controller.fetchBids(_requestId!);
+        print("==========================="+bids.toString());
         final nurseEmails = bids.map((b) => b.nurseEmail).toList();
+        final nurseNamse=bids.map((b)=>b.nurseName).toString();
         final nurses = await _controller.getNurseDetails(nurseEmails);
+        print(nurseEmails);
 
         setState(() {
           _bids = bids.map((bid) {
             final nurse = nurses.firstWhere(
                   (n) => n.userEmail == bid.nurseEmail,
+              orElse: () => Nurse(userName: nurseNamse??'Unknown', userEmail: '', id: ''),
             );
+
             return bid..nurseName = nurse.userName;
           }).toList();
           _isSearching = false;
         });
       } catch (e) {
-        print('Error fetching bids for meee: ${e.toString()}');
+        print('Error fetching bids: $e');
       }
     });
   }

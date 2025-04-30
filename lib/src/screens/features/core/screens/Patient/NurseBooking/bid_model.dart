@@ -24,24 +24,38 @@ class Bid {
   factory Bid.fromJson(Map<String, dynamic> json) => Bid.fromMap(json);
 
   factory Bid.fromMap(Map<String, dynamic> map) {
-    // Universal ID handling
+    // Universal _id handling
     dynamic rawId = map['_id'];
-    final String id = (rawId is ObjectId) ? rawId.toHexString() : rawId.toString();
+    final String id = (rawId is ObjectId)
+        ? rawId.toHexString()
+        : rawId?.toString() ?? '';
 
     // Universal requestId handling
     dynamic rawRequestId = map['requestId'];
     final String requestId = (rawRequestId is ObjectId)
         ? rawRequestId.toHexString()
-        : rawRequestId.toString();
+        : rawRequestId?.toString() ?? '';
 
     return Bid(
       id: id,
       requestId: requestId,
-      nurseEmail: map['nurseEmail'].toString(),
-      price: (map['price'] as num).toDouble(),
-      status: map['status'].toString(),
-      createdAt: DateTime.parse(map['createdAt'].toString()),
-      rating: map['rating']?.toDouble(),
+      nurseEmail: map['nurseEmail']?.toString() ?? '',
+      price: (map['price'] as num?)?.toDouble() ?? 0.0,
+      status: map['status']?.toString() ?? '',
+      createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
+      rating: (map['rating'] as num?)?.toDouble(),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'nurseEmail': nurseEmail,
+    'price': price,
+    'status': status,
+    'requestId': requestId,
+    'createdAt': createdAt.toIso8601String(),
+    'nurseName': nurseName,
+    'rating': rating,
+  };
 }

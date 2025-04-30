@@ -4,6 +4,9 @@ import 'package:mongo_dart/mongo_dart.dart';
 import '../constants/text_strings.dart'; // Ensure this path is correct
 import 'package:logger/logger.dart';
 
+import '../screens/features/core/screens/Patient/NurseBooking/bid_model.dart';
+import '../screens/features/core/screens/Patient/NurseBooking/nurseModel.dart';
+
 // Initialize a logger for better logging
 final logger = Logger();
 
@@ -106,6 +109,21 @@ class MongoDatabase {
     }
   }
 
+  // In MongoDatabase
+  static Future<List<Nurse>> getNursesByEmails(List<String> emails) async {
+    try {
+      final nursesCollection = _db?.collection('userNurse');
+      if (nursesCollection == null) return [];
+
+      final query = {'userEmail': {'\$in': emails}};
+      final nursesData = await nursesCollection.find(query).toList();
+      return nursesData.map((doc) => Nurse.fromMap(doc)).toList();
+    } catch (e) {
+      print('Error fetching nurses by emails: $e');
+      return [];
+    }
+  }
+
   static Future<String> createServiceRequest({
     required String patientEmail,
     required String serviceType,
@@ -159,6 +177,7 @@ class MongoDatabase {
 
   static Future<String> submitBid({
     required String requestId,
+    required String nurseName,
     required String nurseEmail,
     required double price,
   }) async {
@@ -167,6 +186,7 @@ class MongoDatabase {
         'requestId': requestId,
         'nurseEmail': nurseEmail,
         'price': price,
+        'userName':nurseName,
         'status': 'pending',
         'createdAt': DateTime.now(),
       };
@@ -180,40 +200,36 @@ class MongoDatabase {
   }
 
 
-  static Future<List<Map<String, dynamic>>> getBidsForRequest(String requestId) async {
+  static Future<List<Bid>> getBidsForRequest(String requestId) async {
     try {
-      logger.i('Fetching bids for requestId: $requestId');
+      final bidsCollection = _db?.collection('nurseBids');
 
+      if (bidsCollection == null) {
+        print("❌ Bids collection is null!");
+        return [];
+      }
 
-      // Query using ObjectId
-      final query = where.eq('requestId', requestId).sortBy('createdAt', descending: true);
-      final bids = await _nurseBidsCollection?.find(query).toList();
+      // Build query — either String or ObjectId
+      final query = {
+        r'$or': [
+          {'requestId': requestId},
+          {'requestId': ObjectId.tryParse(requestId)}
+        ]
+      };
 
-      // Convert ObjectId fields to strings
-      final processedBids = bids?.map((bid) {
-        final map = Map<String, dynamic>.from(bid);
+      // Fetch bids
+      final rawBids = await bidsCollection.find(query).toList();
 
-        // Convert document _id
-        if (map['_id'] is ObjectId) {
-          map['_id'] = (map['_id'] as ObjectId).toHexString();
-        }
+      print("💡 Processed ${rawBids.length} bids");
 
-        // Convert requestId field
-        if (map['requestId'] is ObjectId) {
-          map['requestId'] = (map['requestId'] as ObjectId).toHexString();
-        }
+      // Map to List<Bid>
+      final bids = rawBids.map((map) => Bid.fromMap(map)).toList();
 
-        return map;
-      }).toList() ?? [];
-
-      logger.i('Processed ${processedBids.length} bids');
-      return processedBids;
-    } on FormatException catch (e) {
-      logger.e('Invalid requestId format: $requestId');
-      rethrow;
+      return bids;
     } catch (e, stackTrace) {
-      logger.e('Error fetching bids', error: e, stackTrace: stackTrace);
-      rethrow;
+      print("❌ Error in getBidsForRequest: $e");
+      print(stackTrace);
+      return [];
     }
   }
 

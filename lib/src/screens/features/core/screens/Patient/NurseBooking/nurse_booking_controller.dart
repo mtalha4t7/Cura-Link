@@ -9,6 +9,7 @@ import 'package:mongo_dart/mongo_dart.dart';
 
 import '../../../../../../mongodb/mongodb.dart';
 import 'bid_model.dart';
+import 'nurseModel.dart';
 class NurseBookingController extends GetxController {
 
   final mongoDatabase = MongoDatabase();
@@ -27,16 +28,17 @@ class NurseBookingController extends GetxController {
       location: location,
     );
   }
-
   Future<List<Bid>> fetchBids(String requestId) async {
     try {
       final bidsData = await MongoDatabase.getBidsForRequest(requestId);
-      return bidsData.map((bid) => Bid.fromMap(bid)).toList();
-    } catch (e) {
-      print('Error fetching bids: ${e.toString()}');
+      return bidsData;
+    } catch (e, stackTrace) {
+      print('❌ Error fetching bids: $e');
+      print(stackTrace);
       rethrow;
     }
   }
+
 
   Future<void> acceptBid(String bidId) async {
     await MongoDatabase.acceptBid(bidId);
@@ -50,12 +52,14 @@ class NurseBookingController extends GetxController {
 
 
 
-  Future<List<ShowNurseUserModel>> getNurseDetails(List<String> nurseEmails) async {
-    final nurses = await MongoDatabase.userNurseCollection?.find(
-        where.oneFrom('userEmail', nurseEmails)
-    ).toList();
-
-    return nurses?.map((nurse) => ShowNurseUserModel.fromJson(nurse)).toList() ?? [];
+  Future<List<Nurse>> getNurseDetails(List<String> nurseEmails) async {
+    try {
+      final nurses = await MongoDatabase.getNursesByEmails(nurseEmails);
+      return nurses;
+    } catch (e) {
+      print('Error fetching nurses: $e');
+      return [];
+    }
   }
 }
-// Existing Nurse User Model (should be in separate file)
+
