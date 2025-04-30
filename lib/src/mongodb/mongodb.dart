@@ -179,19 +179,38 @@ class MongoDatabase {
     }
   }
 
+
+
   static Future<List<Map<String, dynamic>>> getBidsForRequest(String requestId) async {
     try {
+      // Step 1: Parse the requestId to ObjectId
+      final requestObjectId = ObjectId.parse(requestId);
+      logger.i('Parsed requestId: $requestObjectId');  // Debug print
+
+      // Step 2: Fetch matching bids
       final bids = await _nurseBidsCollection?.find(
-          where.eq('_id', requestId)
+          where.eq('requestId', requestObjectId)
               .sortBy('createdAt', descending: true)
       ).toList();
 
+      // Step 3: Log results
+      if (bids != null && bids.isNotEmpty) {
+        logger.i('Found ${bids.length} bids for requestId $requestId');
+        for (var bid in bids) {
+          logger.i('Bid: ${bid.toString()}');  // Optional: print each bid
+        }
+      } else {
+        logger.w('No bids found for requestId $requestId');
+      }
+
       return bids ?? [];
     } catch (e, stackTrace) {
-      logger.e('Error fetching bids', error: e, stackTrace: stackTrace);
+      logger.e('Error fetching bids for requestId $requestId', error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
+
+
 
   static Future<void> acceptBid(String bidId) async {
     try {
