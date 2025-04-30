@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:cura_link/src/screens/features/core/screens/Patient/NurseBooking/nurse_booking_controller.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/patientDashboard/patient_dashboard.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'temp_user_NurseModel.dart';
@@ -26,6 +28,7 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
   List<Bid> _bids = [];
   bool _isSearching = true;
   Timer? _bidTimer;
+  bool _isResuming = false;
 
   @override
   void initState() {
@@ -44,10 +47,10 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
         _requestId = requestId;
         _currentLocation = LatLng(savedLat, savedLng);
         _isLoading = false;
+        _isResuming = true;
       });
       _startBidPolling();
     } else {
-      // Clear invalid/corrupted data
       await prefs.remove('nurseRequestId');
       await prefs.remove('requestLat');
       await prefs.remove('requestLng');
@@ -139,8 +142,8 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
         serviceType: widget.selectedService,
         location: _currentLocation!,
       );
-      await _saveRequestToPrefs();
       setState(() => _requestId = requestId);
+      await _saveRequestToPrefs();
     } catch (e) {
       setState(() {
         _locationError = 'Failed to create request: ${e.toString()}';
@@ -256,6 +259,15 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isResuming) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Resuming previous nurse request...')),
+        );
+        _isResuming = false;
+      });
+    }
+
     return WillPopScope(
       onWillPop: () async {
         if (_requestId == null) return true;
@@ -267,7 +279,11 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
             content: const Text('Keep request running in background?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context, false),
+                onPressed: () {
+                  Navigator.pop(context, false); // Minimize
+                  Get.to(() => PatientDashboard());
+
+                },
                 child: const Text('Minimize'),
               ),
               TextButton(
