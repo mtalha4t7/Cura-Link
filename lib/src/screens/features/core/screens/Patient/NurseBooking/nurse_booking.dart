@@ -138,10 +138,15 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
       final patientEmail = FirebaseAuth.instance.currentUser?.email;
       if (patientEmail == null) throw Exception('User not logged in');
 
-      final requestId = await _controller.createServiceRequest(
+      final requestId = patientEmail; // 👈 Use email as requestId
+
+      // Call controller and pass the email-based requestId
+      await _controller.createServiceRequest(
         serviceType: widget.selectedService,
         location: _currentLocation!,
+        requestId: requestId, // 👈 Explicitly pass it
       );
+
       setState(() => _requestId = requestId);
       await _saveRequestToPrefs();
     } catch (e) {
@@ -151,6 +156,7 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
       });
     }
   }
+
 
   Future<void> _cancelRequest() async {
     final confirm = await showDialog<bool>(

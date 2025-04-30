@@ -184,11 +184,9 @@ class MongoDatabase {
     try {
       logger.i('Fetching bids for requestId: $requestId');
 
-      // Convert string requestId to ObjectId
-      final ObjectId requestIdObj = ObjectId.parse(requestId); // 🚨 Critical fix
 
       // Query using ObjectId
-      final query = where.eq('requestId', requestIdObj).sortBy('createdAt', descending: true);
+      final query = where.eq('requestId', requestId).sortBy('createdAt', descending: true);
       final bids = await _nurseBidsCollection?.find(query).toList();
 
       // Convert ObjectId fields to strings

@@ -16,7 +16,7 @@ class NurseBookingController extends GetxController {
 
   Future<String> createServiceRequest({
     required String serviceType,
-    required LatLng location,
+    required LatLng location, required String requestId,
   }) async {
     final patientEmail = _auth.currentUser?.email;
     if (patientEmail == null) throw Exception('User not logged in');
