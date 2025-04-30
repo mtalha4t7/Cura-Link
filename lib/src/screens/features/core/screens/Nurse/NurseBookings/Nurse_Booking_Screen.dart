@@ -70,7 +70,7 @@ class NurseBookingsScreen extends StatelessWidget {
                       onPressed: hasBid
                           ? null
                           : () {
-                        _showBidDialog(context, booking['patientEmail'].toString(), controller);
+                        _showBidDialog(context, booking['_id'].toString(), controller);
                       },
                       child: Text(hasBid ? 'Bid Submitted' : 'Bid Now'),
                     ),

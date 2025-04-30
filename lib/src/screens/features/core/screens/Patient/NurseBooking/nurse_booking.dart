@@ -141,15 +141,14 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
       final patientEmail = FirebaseAuth.instance.currentUser?.email;
       if (patientEmail == null) throw Exception('User not logged in');
 
-      final requestId = patientEmail; // 👈 Use email as requestId
-
-      // Call controller and pass the email-based requestId
-      await _controller.createServiceRequest(
+      // Call controller to create request (MongoDB auto-generates _id)
+      final requestId = await _controller.createServiceRequest(
         serviceType: widget.selectedService,
         location: _currentLocation!,
-        requestId: requestId, // 👈 Explicitly pass it
+        patientEmail: patientEmail,
       );
 
+      // Save the Mongo ObjectId (hex string)
       setState(() => _requestId = requestId);
       await _saveRequestToPrefs();
     } catch (e) {

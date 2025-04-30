@@ -17,17 +17,23 @@ class NurseBookingController extends GetxController {
 
   Future<String> createServiceRequest({
     required String serviceType,
-    required LatLng location, required String requestId,
+    required LatLng location,
+    required String patientEmail,
   }) async {
-    final patientEmail = _auth.currentUser?.email;
-    if (patientEmail == null) throw Exception('User not logged in');
-
-    return await MongoDatabase.createServiceRequest(
+    final result = await MongoDatabase.createServiceRequest(
       patientEmail: patientEmail,
       serviceType: serviceType,
       location: location,
     );
+
+    if (result.isNotEmpty) {
+      return result; // already a hex string
+    } else {
+      throw Exception('Failed to insert service request');
+    }
   }
+
+
   Future<List<Bid>> fetchBids(String requestId) async {
     try {
       final bidsData = await MongoDatabase.getBidsForRequest(requestId);

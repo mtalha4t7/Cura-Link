@@ -123,7 +123,6 @@ class MongoDatabase {
       return [];
     }
   }
-
   static Future<String> createServiceRequest({
     required String patientEmail,
     required String serviceType,
@@ -149,6 +148,7 @@ class MongoDatabase {
       rethrow;
     }
   }
+
 
   Future<void> deleteServiceRequestById(String requestId) async {
     try {
