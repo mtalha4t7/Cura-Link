@@ -567,6 +567,39 @@ class MongoDatabase {
       rethrow;
     }
   }
+  static Future<String?> getUserLocationByEmail(String email) async {
+    try {
+      if (_db == null) {
+        throw Exception('Database connection is not established');
+      }
+
+      List<DbCollection?> collections = [
+        _userPatientCollection,
+        _userLabCollection,
+        _userNurseCollection,
+        _userMedicalStoreCollection,
+        _medicalLabServices,
+        _userVerification,
+      ];
+
+      for (var collection in collections) {
+        if (collection != null) {
+          var user = await collection.findOne({'email': email});
+          if (user != null) {
+            // Try both possible keys for location
+            return user['location'] ?? user['address'] ?? 'No location found';
+          }
+        }
+      }
+
+      logger.w('User not found in any collection for email: $email');
+      return null;
+    } catch (e, stackTrace) {
+      logger.e('Error fetching user location', error: e, stackTrace: stackTrace);
+      return null;
+    }
+  }
+
 
   static Future<List<Map<String, dynamic>>> getAllUsers() async {
     try {

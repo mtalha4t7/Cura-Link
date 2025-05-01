@@ -97,12 +97,13 @@ class NurseBookingController extends GetxController {
           ..set('acceptedBidId', bidId),
       );
       logger.i('📌 Service request update result: ${serviceUpdateResult?.isSuccess}');
-
+        final location= await MongoDatabase.getUserLocationByEmail(PatientEmail);
       // 5. Prepare booking data
       logger.i('📦 Preparing booking data');
       final bookingData = {
         '_id': ObjectId(),
         'bookingId': bidId,
+        'location': location,
         'patientEmail':PatientEmail,
         'nurseEmail': nurseEmail,
         'nurseName': nurseName,
