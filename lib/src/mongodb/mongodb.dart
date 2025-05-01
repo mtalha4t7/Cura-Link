@@ -584,10 +584,10 @@ class MongoDatabase {
 
       for (var collection in collections) {
         if (collection != null) {
-          var user = await collection.findOne({'email': email});
+          var user = await collection.findOne({'userEmail': email});
           if (user != null) {
             // Try both possible keys for location
-            return user['location'] ?? user['address'] ?? 'No location found';
+            return user['location'] ?? user['userAddress'] ?? 'No location found';
           }
         }
       }

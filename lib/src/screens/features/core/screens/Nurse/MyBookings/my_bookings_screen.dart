@@ -27,6 +27,8 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
     super.initState();
     email = widget.nurseEmail;
     _loadBookings();
+
+
   }
 
   void _loadBookings() {
@@ -34,6 +36,7 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
       _bookingsFuture = _currentFilter == 'upcoming'
           ? _controller.getUpcomingBookings(widget.nurseEmail)
           : _controller.getPastBookings(widget.nurseEmail);
+
     });
   }
 
@@ -201,7 +204,7 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
                           booking: booking,
                           isDark: isDarkTheme,
                           onChat: () =>
-                              _startChat(widget.nurseEmail), // FIXED HERE
+                              _startChat(booking['patientEmail']), // FIXED HERE
                           onLocation: () =>
                               _launchMaps(booking['address']),
                           formattedDate:

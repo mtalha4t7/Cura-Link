@@ -94,14 +94,14 @@ class NurseBookingCard extends StatelessWidget {
               const SizedBox(height: 8),
               _buildDetailRow(
                 icon: Icons.access_time_outlined,
-                title: 'Duration',
-                value: booking['duration'] ?? '1 hour',
+                title: 'price',
+                value: booking['price'].toString() ?? '',
               ),
               const SizedBox(height: 8),
               _buildDetailRow(
                 icon: Icons.location_on_outlined,
                 title: 'Location',
-                value: booking['address'] ?? 'No address provided',
+                value: booking['location'] ?? 'No address provided',
               ),
 
               const SizedBox(height: 16),
