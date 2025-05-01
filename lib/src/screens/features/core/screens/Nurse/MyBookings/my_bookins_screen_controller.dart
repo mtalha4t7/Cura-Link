@@ -1,27 +1,38 @@
+import 'package:flutter/material.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:logger/logger.dart';
 
+
 import '../../../../../../mongodb/mongodb.dart';
+import '../../../../../../repository/user_repository/user_repository.dart';
+import '../../../../authentication/models/chat_user_model.dart';
 
 class MyBookingsNurseController {
   final Logger _logger = Logger();
 
-  // Fetch all bookings for the current nurse
   Future<List<Map<String, dynamic>>> fetchNurseBookings(String nurseEmail) async {
     try {
       final bookings = await MongoDatabase.patientNurseBookingsCollection?.find(
           where.eq('nurseEmail', nurseEmail)
-              .sortBy('bookingDate', descending: false) // Show upcoming first
+              .sortBy('bookingDate', descending: false)
       ).toList();
 
-      return bookings ?? [];
+      return bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
     } catch (e, stackTrace) {
       _logger.e('Error fetching nurse bookings', error: e, stackTrace: stackTrace);
       return [];
     }
   }
+  Future<ChatUserModelMongoDB?> fetchUserData(String email) async {
+    try {
+      final userData = await UserRepository.instance.getUserByEmailFromAllCollections(email);
+      return userData != null ? ChatUserModelMongoDB.fromMap(userData) : null;
+    } catch (e) {
+      debugPrint('Error fetching user data: $e');
+      return null;
+    }
+  }
 
-  // Update booking status
   Future<bool> updateBookingStatus(String bookingId, String newStatus) async {
     try {
       final id = ObjectId.parse(bookingId);
@@ -39,38 +50,25 @@ class MyBookingsNurseController {
     }
   }
 
-  // Cancel a booking
   Future<bool> cancelBooking(String bookingId) async {
-    try {
-      return await updateBookingStatus(bookingId, 'Cancelled');
-    } catch (e, stackTrace) {
-      _logger.e('Error cancelling booking', error: e, stackTrace: stackTrace);
-      return false;
-    }
+    return await updateBookingStatus(bookingId, 'Cancelled');
   }
 
-  // Complete a booking
   Future<bool> completeBooking(String bookingId) async {
-    try {
-      return await updateBookingStatus(bookingId, 'Completed');
-    } catch (e, stackTrace) {
-      _logger.e('Error completing booking', error: e, stackTrace: stackTrace);
-      return false;
-    }
+    return await updateBookingStatus(bookingId, 'Completed');
   }
 
-  // Get booking details by ID
   Future<Map<String, dynamic>?> getBookingDetails(String bookingId) async {
     try {
       final id = ObjectId.parse(bookingId);
-      return await MongoDatabase.patientNurseBookingsCollection?.findOne(where.id(id));
+      final booking = await MongoDatabase.patientNurseBookingsCollection?.findOne(where.id(id));
+      return booking != null ? _sanitizeBookingData(booking) : null;
     } catch (e, stackTrace) {
       _logger.e('Error getting booking details', error: e, stackTrace: stackTrace);
       return null;
     }
   }
 
-  // Get upcoming bookings (status not completed or cancelled)
   Future<List<Map<String, dynamic>>> getUpcomingBookings(String nurseEmail) async {
     try {
       final bookings = await MongoDatabase.patientNurseBookingsCollection?.find(
@@ -80,14 +78,13 @@ class MyBookingsNurseController {
               .sortBy('bookingDate', descending: false)
       ).toList();
 
-      return bookings ?? [];
+      return bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
     } catch (e, stackTrace) {
       _logger.e('Error fetching upcoming bookings', error: e, stackTrace: stackTrace);
       return [];
     }
   }
 
-  // Get past bookings (status completed or cancelled)
   Future<List<Map<String, dynamic>>> getPastBookings(String nurseEmail) async {
     try {
       final bookings = await MongoDatabase.patientNurseBookingsCollection?.find(
@@ -99,10 +96,27 @@ class MyBookingsNurseController {
               .sortBy('bookingDate', descending: true)
       ).toList();
 
-      return bookings ?? [];
+      return bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
     } catch (e, stackTrace) {
       _logger.e('Error fetching past bookings', error: e, stackTrace: stackTrace);
       return [];
     }
+  }
+
+  Map<String, dynamic> _sanitizeBookingData(Map<String, dynamic> booking) {
+    return {
+      '_id': booking['_id'],
+      'patientId': booking['patientId'] ?? '',
+      'patientName': booking['patientName'] ?? 'Unknown Patient',
+      'patientEmail': booking['patientEmail'] ?? '',
+      'nurseEmail': booking['nurseEmail'] ?? '',
+      'serviceType': booking['serviceType'] ?? 'Nursing Service',
+      'status': booking['status'] ?? 'Pending',
+      'price': booking['price'] ?? 0.0,
+      'bookingDate': booking['bookingDate']?.toString() ?? DateTime.now().toString(),
+      'duration': booking['duration'] ?? '1 hour',
+      'address': booking['address'] ?? 'No address provided',
+      'bids': booking['bids'] ?? [],
+    };
   }
 }

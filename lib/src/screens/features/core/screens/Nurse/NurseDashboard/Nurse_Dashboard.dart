@@ -1,5 +1,7 @@
+import 'package:cura_link/src/screens/features/core/screens/Nurse/MyBookings/my_bookings_screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/Nurse/NurseBookings/Nurse_Booking_Screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookings/my_bookings.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cura_link/src/screens/features/core/screens/Nurse/NurseProfile/Nurse_Profile_Screen.dart';
@@ -22,6 +24,7 @@ class NurseDashboard extends StatelessWidget {
     final txtTheme = Theme.of(context).textTheme;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
     final controller = Get.find<NurseDashboardController>();
+
 
     return SafeArea(
       child: Scaffold(
@@ -203,7 +206,8 @@ class NurseDashboard extends StatelessWidget {
                         icon: Icons.medical_services,
                         label: 'Manage Bookings',
                         onTap: () {
-                          Get.to(() => MyBookingsScreen());
+                          final emial= FirebaseAuth.instance.currentUser?.email.toString();
+                          Get.to(() => MyBookingsNurseScreen(nurseEmail: emial!));
                         },
                       ),
                       QuickAccessButton(

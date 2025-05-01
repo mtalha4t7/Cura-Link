@@ -1,9 +1,11 @@
+import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabChat/chat_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'my_bookings_nurse_card.dart';
 import 'my_bookins_screen_controller.dart';
-
 
 class MyBookingsNurseScreen extends StatefulWidget {
   final String nurseEmail;
@@ -17,11 +19,13 @@ class MyBookingsNurseScreen extends StatefulWidget {
 class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
   final MyBookingsNurseController _controller = MyBookingsNurseController();
   late Future<List<Map<String, dynamic>>> _bookingsFuture;
-  String _currentFilter = 'upcoming'; // 'upcoming' or 'past'
+  String _currentFilter = 'upcoming';
+  late final String email;
 
   @override
   void initState() {
     super.initState();
+    email = widget.nurseEmail;
     _loadBookings();
   }
 
@@ -33,8 +37,7 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
     });
   }
 
-  // Function to format date
-  String formatDate(String rawDate) {
+  String _formatDate(String rawDate) {
     try {
       final parsedDate = DateTime.parse(rawDate);
       return DateFormat.yMMMMEEEEd().add_jm().format(parsedDate);
@@ -43,7 +46,6 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
     }
   }
 
-  // Function to launch Google Maps
   Future<void> _launchMaps(String address) async {
     final Uri uri = Uri.parse(
       'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}',
@@ -55,18 +57,19 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
     }
   }
 
-  // Function to initiate chat
-  void _startChat(String patientId, String patientName) {
-    // Implement your chat functionality here
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening chat with $patientName'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+  Future<void> _startChat(String nurseEmail) async {
+    final user = await _controller.fetchUserData(nurseEmail);
+    if (user != null && mounted) {
+      Get.to(() => ChatScreen(user: user));
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not fetch user data for chat')),
+        );
+      }
+    }
   }
 
-  // Function to cancel booking
   Future<void> _cancelBooking(String bookingId) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -86,7 +89,7 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
       ),
     );
 
-    if (confirmed == true) {
+    if (confirmed == true && mounted) {
       final success = await _controller.cancelBooking(bookingId);
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -97,7 +100,6 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
     }
   }
 
-  // Function to complete booking
   Future<void> _completeBooking(String bookingId) async {
     final success = await _controller.completeBooking(bookingId);
     if (success && mounted) {
@@ -191,27 +193,29 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
                     }
                     return ListView.separated(
                       itemCount: bookings.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 12),
+                      separatorBuilder: (context, index) =>
+                      const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final booking = bookings[index];
-                        return _NurseBookingCard(
+                        return NurseBookingCard(
                           booking: booking,
                           isDark: isDarkTheme,
-                          onChat: () => _startChat(
-                            booking['patientId'],
-                            booking['patientName'],
-                          ),
-                          onLocation: () => _launchMaps(booking['address']),
-                          formattedDate: formatDate(booking['bookingDate']),
+                          onChat: () =>
+                              _startChat(widget.nurseEmail), // FIXED HERE
+                          onLocation: () =>
+                              _launchMaps(booking['address']),
+                          formattedDate:
+                          _formatDate(booking['bookingDate']),
                           showActions: _currentFilter == 'upcoming',
-                          onCancel: () => _cancelBooking(booking['_id'].toHexString()),
-                          onComplete: () => _completeBooking(booking['_id'].toHexString()),
+                          onCancel: () => _cancelBooking(
+                              booking['_id'].toString()),
+                          onComplete: () => _completeBooking(
+                              booking['_id'].toString()),
                         );
                       },
                     );
-                  } else {
-                    return const Center(child: Text('No data found.'));
                   }
+                  return const Center(child: Text('No data found.'));
                 },
               ),
             ),
@@ -219,175 +223,5 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
         ),
       ),
     );
-  }
-}
-
-class _NurseBookingCard extends StatelessWidget {
-  final Map<String, dynamic> booking;
-  final bool isDark;
-  final VoidCallback onChat;
-  final VoidCallback onLocation;
-  final String formattedDate;
-  final bool showActions;
-  final VoidCallback onCancel;
-  final VoidCallback onComplete;
-
-  const _NurseBookingCard({
-    required this.booking,
-    required this.isDark,
-    required this.onChat,
-    required this.onLocation,
-    required this.formattedDate,
-    this.showActions = false,
-    required this.onCancel,
-    required this.onComplete,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  booking['patientName'] ?? 'Patient',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(booking['status']),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    booking['status'] ?? 'Pending',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              booking['serviceType'] ?? 'Nursing Service',
-              style: TextStyle(
-                fontSize: 16,
-                color: isDark ? Colors.white70 : Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 12),
-            _buildInfoRow(Icons.calendar_today, formattedDate),
-            const SizedBox(height: 8),
-            _buildInfoRow(Icons.access_time, booking['duration'] ?? '1 hour'),
-            const SizedBox(height: 8),
-            _buildInfoRow(Icons.location_on, booking['address'] ?? 'No address provided'),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildActionButton(
-                  context,
-                  icon: Icons.chat,
-                  label: 'Chat',
-                  onPressed: onChat,
-                ),
-                _buildActionButton(
-                  context,
-                  icon: Icons.map,
-                  label: 'Location',
-                  onPressed: onLocation,
-                ),
-                if (showActions)
-                  _buildActionButton(
-                    context,
-                    icon: Icons.cancel,
-                    label: 'Cancel',
-                    onPressed: onCancel,
-                    backgroundColor: Colors.red,
-                  ),
-                if (showActions)
-                  _buildActionButton(
-                    context,
-                    icon: Icons.check_circle,
-                    label: 'Complete',
-                    onPressed: onComplete,
-                    backgroundColor: Colors.green,
-                  ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 18, color: Colors.grey),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 14,
-              color: isDark ? Colors.white70 : Colors.black87,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButton(
-      BuildContext context, {
-        required IconData icon,
-        required String label,
-        required VoidCallback onPressed,
-        Color? backgroundColor,
-      }) {
-    return ElevatedButton.icon(
-      icon: Icon(icon, size: 18),
-      label: Text(label),
-      style: ElevatedButton.styleFrom(
-        foregroundColor: Theme.of(context).colorScheme.onPrimary,
-        backgroundColor: backgroundColor ?? Theme.of(context).colorScheme.primary,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      ),
-      onPressed: onPressed,
-    );
-  }
-
-  Color _getStatusColor(String? status) {
-    switch (status?.toLowerCase()) {
-      case 'completed':
-        return Colors.green;
-      case 'cancelled':
-        return Colors.red;
-      case 'in progress':
-        return Colors.orange;
-      case 'scheduled':
-        return Colors.blue;
-      default:
-        return Colors.grey;
-    }
   }
 }
