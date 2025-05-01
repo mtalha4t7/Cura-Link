@@ -146,6 +146,26 @@ class MongoDatabase {
   }
 
 
+
+  Future<List<Map<String, dynamic>>> getUpcomingBookings(String nurseEmail) async {
+    try {
+      final bookings = await MongoDatabase.patientNurseBookingsCollection
+          ?.find(
+        where
+            .eq('nurseEmail', nurseEmail)
+            .ne('status', 'Completed')
+            .ne('status', 'Cancelled')
+            .sortBy('bookingDate', descending: false),
+      )
+          .toList();
+
+      return bookings ?? [];
+    } catch (e, stackTrace) {
+      print('Error fetching upcoming bookings: $e');
+      return [];
+    }
+  }
+
 // Get all bookings for a nurse
   static Future<List<Map<String, dynamic>>> getNurseBookings(String nurseEmail) async {
     try {

@@ -1,3 +1,4 @@
+import 'package:cura_link/src/mongodb/mongodb.dart';
 import 'package:cura_link/src/screens/features/core/screens/Nurse/MyBookings/my_bookings_screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/Nurse/NurseBookings/Nurse_Booking_Screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookings/my_bookings.dart';
@@ -13,10 +14,24 @@ import '../NurseBookings/Nurse_Booking_Controller.dart';
 import 'Nurse_Dashboard_controller.dart';
 
 
-class NurseDashboard extends StatelessWidget {
+class NurseDashboard extends StatefulWidget {
   NurseDashboard({super.key}) {
     Get.put(NurseDashboardController(Get.find<UserRepository>()));
     Get.put(BookingControllerNurse());
+  }
+
+  @override
+  State<NurseDashboard> createState() => _NurseDashboardState();
+}
+
+class _NurseDashboardState extends State<NurseDashboard> {
+  late Future<List<Map<String, dynamic>>> _latestBookingsFuture;
+  final emial= FirebaseAuth.instance.currentUser?.email.toString();
+
+  @override
+  void initState() {
+    super.initState();
+    _latestBookingsFuture = MongoDatabase().getUpcomingBookings(emial!);
   }
 
   @override
@@ -24,7 +39,6 @@ class NurseDashboard extends StatelessWidget {
     final txtTheme = Theme.of(context).textTheme;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
     final controller = Get.find<NurseDashboardController>();
-
 
     return SafeArea(
       child: Scaffold(
@@ -206,7 +220,7 @@ class NurseDashboard extends StatelessWidget {
                         icon: Icons.medical_services,
                         label: 'Manage Bookings',
                         onTap: () {
-                          final emial= FirebaseAuth.instance.currentUser?.email.toString();
+
                           Get.to(() => MyBookingsNurseScreen(nurseEmail: emial!));
                         },
                       ),
@@ -221,23 +235,40 @@ class NurseDashboard extends StatelessWidget {
 
                   // Bookings Section
                   const Text(
-                    "Current Bookings",
+                    "Current Booking",
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(
                     height: 200,
-                    child: ListView.builder(
-                      itemCount: 5,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          leading: const Icon(Icons.person),
-                          title: Text("Booking #$index"),
-                          subtitle: Text("Details of booking $index"),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.arrow_forward),
-                            onPressed: () {},
-                          ),
-                        );
+                    child: FutureBuilder<List<Map<String, dynamic>>>(
+                      future: _latestBookingsFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                          return Center(child: Text('Error: ${snapshot.error}'));
+                        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return const Center(child: Text('No current bookings found.'));
+                        } else {
+                          final bookings = snapshot.data!;
+                          return ListView.builder(
+                            itemCount: bookings.length,
+                            itemBuilder: (context, index) {
+                              final booking = bookings[index];
+                              return ListTile(
+                                leading: const Icon(Icons.person),
+                                title: Text("Patient: ${booking['patientName'] ?? 'Unknown'}"),
+                                subtitle: Text("Date: ${booking['status']}"),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.arrow_forward),
+                                  onPressed: () {
+                                    Get.to(() => MyBookingsNurseScreen(nurseEmail: emial!));
+                                  },
+                                ),
+                              );
+                            },
+                          );
+                        }
                       },
                     ),
                   ),
@@ -302,3 +333,5 @@ class NurseDashboard extends StatelessWidget {
     );
   }
 }
+
+
