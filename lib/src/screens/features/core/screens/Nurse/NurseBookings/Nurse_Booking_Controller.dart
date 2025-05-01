@@ -91,7 +91,7 @@ class BookingControllerNurse extends GetxController {
     }
   }
 
-  // ... keep existing methods ...
+
 
   Future<Map<String, dynamic>> getNurseLocation() async {
     try {

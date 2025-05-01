@@ -6,11 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'nurseModel.dart';
-import 'temp_user_NurseModel.dart';
 import 'bid_model.dart';
 
 class NurseBookingScreen extends StatefulWidget {
@@ -270,7 +267,8 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
 
   Future<void> _acceptBid(Bid bid) async {
     try {
-      await _controller.acceptBid(bid.id);
+      final patientEmail= FirebaseAuth.instance.currentUser?.email.toString();
+      await NurseBookingController.acceptBid(bid.id,patientEmail!);
       await _clearRequestFromPrefs();
       _showConfirmationDialog(bid);
     } catch (e) {

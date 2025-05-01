@@ -53,6 +53,8 @@ const String MESSAGES_COLLECTION_NAME = "messages";
 const String LAB_RATING_COLLECTION = "labRating";
 const String NURSE_SERVICE_REQUESTS_COLLECTION = 'nurseServiceRequests';
 const String NURSE_BIDS_COLLECTION = 'nurseBids';
+const String PATIENT_NURSE_BOOKINGS_COLLECTION = 'patient_Nurse_Bookings';
+const String NURSE_RECEIVED_BOOKINGS_COLLECTION = 'nurse_Received_Bookings';
 
 const String ipAddress = "http://192.168.1.45:4000";
 // -- GLOBAL Texts

@@ -26,7 +26,15 @@ class MongoDatabase {
   static late DbCollection labRatingsCollection;
   static DbCollection? _nurseServiceRequestsCollection;
   static DbCollection? _nurseBidsCollection;
+  static DbCollection? _patientNurseBookingsCollection;
+  static DbCollection? _nurseReceivedBookingsCollection;
 
+
+
+
+
+
+  // Update getters to include new collections
 
   // Connect to MongoDB and initialize the collections
   static Future<void> connect() async {
@@ -51,6 +59,10 @@ class MongoDatabase {
       labRatingsCollection = _db!.collection('labRatings');
       _nurseServiceRequestsCollection = _db!.collection(NURSE_SERVICE_REQUESTS_COLLECTION);
       _nurseBidsCollection = _db!.collection(NURSE_BIDS_COLLECTION);
+      _patientNurseBookingsCollection = _db!.collection(PATIENT_NURSE_BOOKINGS_COLLECTION);
+      _nurseReceivedBookingsCollection = _db!.collection(NURSE_RECEIVED_BOOKINGS_COLLECTION);
+
+
 
       // Create geospatial index for nurses
       await _userNurseCollection?.createIndex(
@@ -88,6 +100,14 @@ class MongoDatabase {
   static DbCollection? get users => _users;
   static DbCollection? get messagesCollection => _messagesCollection;
   static DbCollection? get labRating => _labRating;
+
+  static DbCollection? get patientNurseBookingsCollection => _patientNurseBookingsCollection;
+  static DbCollection? get nurseReceivedBookingsCollection => _nurseReceivedBookingsCollection;
+  static DbCollection? get nurseServiceRequestsCollection => _nurseServiceRequestsCollection;
+  static DbCollection? get nurseBidsCollection => _nurseBidsCollection;
+
+  static DbCollection? get labRatingCollection => _labRating;
+  static Db? get db => _db;
   // Close the MongoDB connection
   static Future<void> close() async {
     if (_db != null) {
