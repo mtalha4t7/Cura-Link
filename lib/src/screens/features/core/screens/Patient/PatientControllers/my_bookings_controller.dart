@@ -23,8 +23,7 @@ class MyBookingsController extends GetxController {
 
     try {
       // Query the database for bookings tied to the user's email
-      final userBookings = await MongoDatabase.patientBookingsCollection
-          ?.find({'patientUserEmail': userEmail}).toList();
+      final userBookings = await MongoDatabase.getNurseBookings(userEmail);
       if (userBookings != null) {
         return userBookings;
       }

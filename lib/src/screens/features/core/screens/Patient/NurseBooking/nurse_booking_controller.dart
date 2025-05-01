@@ -103,6 +103,8 @@ class NurseBookingController extends GetxController {
       final bookingData = {
         '_id': ObjectId(),
         'bookingId': bidId,
+        'patientEmail':PatientEmail,
+        'nurseEmail': nurseEmail,
         'nurseName': nurseName,
         'patientName': patientName,
         'price': price,

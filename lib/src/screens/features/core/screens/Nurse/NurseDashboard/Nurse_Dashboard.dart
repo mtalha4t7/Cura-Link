@@ -1,4 +1,5 @@
 import 'package:cura_link/src/screens/features/core/screens/Nurse/NurseBookings/Nurse_Booking_Screen.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookings/my_bookings.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cura_link/src/screens/features/core/screens/Nurse/NurseProfile/Nurse_Profile_Screen.dart';
@@ -200,8 +201,10 @@ class NurseDashboard extends StatelessWidget {
                       ),
                       QuickAccessButton(
                         icon: Icons.medical_services,
-                        label: 'Manage Services',
-                        onTap: () {},
+                        label: 'Manage Bookings',
+                        onTap: () {
+                          Get.to(() => MyBookingsScreen());
+                        },
                       ),
                       QuickAccessButton(
                         icon: Icons.settings,

@@ -129,6 +129,47 @@ class MongoDatabase {
     }
   }
 
+
+  // Get all bookings for a patient
+  static Future<List<Map<String, dynamic>>> getPatientBookings(String patientEmail) async {
+    try {
+      final bookings = await _patientNurseBookingsCollection?.find(
+          where.eq('patientEmail', patientEmail)
+              .sortBy('bookingDate', descending: true)
+      ).toList();
+
+      return bookings ?? [];
+    } catch (e, stackTrace) {
+      logger.e('Error fetching patient bookings', error: e, stackTrace: stackTrace);
+      return [];
+    }
+  }
+
+
+// Get all bookings for a nurse
+  static Future<List<Map<String, dynamic>>> getNurseBookings(String nurseEmail) async {
+    try {
+      logger.i('Fetching bookings for nurseEmail: $nurseEmail');
+
+      if (_patientNurseBookingsCollection == null) {
+        logger.w('MongoDB collection _patientNurseBookingsCollection is null');
+        return [];
+      }
+
+      final bookings = await _patientNurseBookingsCollection!
+          .find(where.eq('nurseEmail', nurseEmail)
+          .sortBy('bookingDate', descending: true))
+          .toList();
+
+      logger.i('Fetched ${bookings.length} bookings for $nurseEmail');
+      return bookings;
+    } catch (e, stackTrace) {
+      logger.e('Error fetching nurse bookings for $nurseEmail', error: e, stackTrace: stackTrace);
+      return [];
+    }
+  }
+
+
   // In MongoDatabase
   static Future<List<Nurse>> getNursesByEmails(List<String> emails) async {
     try {
