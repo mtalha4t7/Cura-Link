@@ -8,9 +8,9 @@ import 'my_booked_nurses_card.dart';
 import 'my_booked_nurses_screen_controller.dart';
 
 class MyBookedNursesScreen extends StatefulWidget {
-  final String nurseEmail;
+  final String patientEmail;
 
-  const MyBookedNursesScreen({super.key, required this.nurseEmail});
+  const MyBookedNursesScreen({super.key, required this.patientEmail});
 
   @override
   _MyBookedNursesScreenState createState() => _MyBookedNursesScreenState();
@@ -25,7 +25,7 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
   @override
   void initState() {
     super.initState();
-    email = widget.nurseEmail;
+    email = widget.patientEmail;
     _loadBookings();
 
 
@@ -34,8 +34,8 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
   void _loadBookings() {
     setState(() {
       _bookingsFuture = _currentFilter == 'upcoming'
-          ? _controller.getUpcomingBookings(widget.nurseEmail)
-          : _controller.getPastBookings(widget.nurseEmail);
+          ? _controller.getUpcomingBookings(widget.patientEmail)
+          : _controller.getPastBookings(widget.patientEmail);
 
     });
   }

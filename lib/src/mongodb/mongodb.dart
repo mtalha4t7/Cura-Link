@@ -180,9 +180,13 @@ class MongoDatabase {
           .find(where.eq('nurseEmail', nurseEmail)
           .sortBy('bookingDate', descending: true))
           .toList();
+      final bookings1 = await _patientNurseBookingsCollection!
+          .find(where.eq('patientEmail', nurseEmail)
+          .sortBy('bookingDate', descending: true))
+          .toList();
 
       logger.i('Fetched ${bookings.length} bookings for $nurseEmail');
-      return bookings;
+      return bookings??bookings1;
     } catch (e, stackTrace) {
       logger.e('Error fetching nurse bookings for $nurseEmail', error: e, stackTrace: stackTrace);
       return [];
