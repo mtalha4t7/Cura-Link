@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../../../../repository/user_repository/user_repository.dart';
 import '../../../../../../shared prefrences/shared_prefrence.dart';
 import '../PatientControllers/lab_booking_controller.dart';
+import 'confirm_booking.dart';
 
 class ShowLabServices extends StatefulWidget {
   const ShowLabServices({super.key});
@@ -92,6 +93,18 @@ class _ShowLabServicesState extends State<ShowLabServices> {
     setState(() {
       _services = _loadEmailAndFetchServices();
     });
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BookingConfirmationScreen(
+          labName: service['labName'], // assuming service map contains labName
+          bookingId: service['labUserId'],
+          bookingTime: selectedDateTime,
+          recipientUserId: service['labUserId'], // assuming this field exists
+        ),
+      ),
+    );
 
     // Show a confirmation message
     ScaffoldMessenger.of(context).showSnackBar(
