@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/material.dart';
@@ -12,10 +13,10 @@ class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
-
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
   FlutterLocalNotificationsPlugin();
+  UserRepository get _userRepository => Get.find<UserRepository>();
 
   // Notification channel setup
   static const String _channelId = 'cura_link_channel';
@@ -190,63 +191,85 @@ class NotificationService {
 
   /// Save FCM token to MongoD
 
-  Future<void>saveToken(String token)async{
-    _saveTokenToDatabase(token);
+  Future<void> saveToken(String token) async {
+    debugPrint('[FCM] Attempting to save token: $token');
+    try {
+      await _saveTokenToDatabase(token);
+      debugPrint('[FCM] Token saved successfully');
+    } catch (e) {
+      debugPrint('[FCM] Error saving token: $e');
+      // You might want to retry later if this fails
+    }
   }
+
   Future<void> _saveTokenToDatabase(String token) async {
     try {
-      final String userId = UserRepository.instance.getCurrentUserMongoEmail() as String;
+      final String? userId = FirebaseAuth.instance.currentUser?.email;
       if (userId == null || userId.isEmpty) {
-        debugPrint('No user ID available for saving FCM token');
+        debugPrint('[FCM] No user ID available for saving FCM token');
         return;
       }
 
-      // Determine which collection to update based on user type
-      DbCollection? collection;
+      debugPrint('[FCM] Current user ID: $userId');
+
+      // Find which collection the user belongs to
       final user = await MongoDatabase.findUserPatient(userId) ??
           await MongoDatabase.findUserLab(userId) ??
           await MongoDatabase.findUserNurse(userId) ??
           await MongoDatabase.findUserMedicalStore(userId);
 
       if (user == null) {
-        debugPrint('User not found in any collection');
+        debugPrint('[FCM] User not found in any collection');
         return;
       }
 
-      final userType = user['userType']?.toString().toLowerCase();
-      final modifier = modify
-        ..push('fcmTokens', token)
-        ..set('updatedAt', DateTime.now());
+      final userType = user['userType']?.toString();
+      debugPrint('[FCM] Found user type: $userType');
 
+      DbCollection? collection;
       switch (userType) {
-        case 'patient':
+        case 'Patient':
           collection = MongoDatabase.userPatientCollection;
           break;
-        case 'lab':
+        case 'Lab':
           collection = MongoDatabase.userLabCollection;
           break;
-        case 'nurse':
+        case 'Nurse':
           collection = MongoDatabase.userNurseCollection;
           break;
-        case 'medicalstore':
+        case 'MedicalStore':
           collection = MongoDatabase.userMedicalStoreCollection;
           break;
         default:
-          debugPrint('Unknown user type: $userType');
+          debugPrint('[FCM] Unknown user type: $userType');
           return;
       }
 
       if (collection != null) {
-        await collection.update(
+        debugPrint('[FCM] Updating collection: $collection');
+
+        final updateResult = await collection.updateOne(
           where.eq('userEmail', userId),
-          modifier,
+          modify
+            ..set('fcmToken', token)
+            ..set('updatedAt', DateTime.now()),
         );
-        debugPrint('FCM token saved for $userType: $userId');
+
+        debugPrint('[FCM] Update result: $updateResult');
+
+        if (updateResult.isSuccess) {
+          debugPrint('[FCM] Token successfully saved to database');
+        } else {
+          debugPrint('[FCM] Failed to save token. Update not acknowledged');
+        }
       }
-    } catch (e) {
-      debugPrint('Error saving FCM token: $e');
+    } catch (e, stackTrace) {
+      debugPrint('[FCM] Error in _saveTokenToDatabase: $e');
+      debugPrint('[FCM] Stack trace: $stackTrace');
+      rethrow;
     }
   }
+
 
   /// Navigate based on notification data
   void _navigateBasedOnData(Map<String, dynamic> data) {
