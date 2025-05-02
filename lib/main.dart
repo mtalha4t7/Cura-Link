@@ -1,4 +1,5 @@
 import 'package:cura_link/src/network_manager.dart';
+import 'package:cura_link/src/notification_handler/notification_server.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -22,6 +23,9 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)
       .then((_) => Get.put(AuthenticationRepository()));
   Get.put(NetworkManager());
+  // Initialize Notification Service
+  final notificationService = NotificationService();
+  await notificationService.initialize();
 
   runApp(const App());
   FlutterNativeSplash.remove();

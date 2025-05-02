@@ -115,6 +115,33 @@ class UserRepository extends GetxController {
     return null;
   }
 
+  Future<String?> getCurrentUserMongoEmail() async {
+    final email = FirebaseAuth.instance.currentUser?.email;
+
+    if (email == null) return null;
+
+    List<DbCollection?> collections = [
+      _patientCollection,
+      _labCollection,
+      _nurseCollection,
+      _medicalStoreCollection
+    ];
+
+    for (var collection in collections) {
+      if (collection != null) {
+        final user = await collection.findOne(where.eq('userEmail', email));
+        if (user != null && user['userEmail'] != null) {
+          debugPrint("User found in collection: ${collection.collectionName}");
+          debugPrint("MongoDB _id: ${user['_id']}");
+          return user['userEmail'];
+        }
+      }
+    }
+
+    debugPrint("No user found with email: $email in any collection.");
+    return null;
+  }
+
   /// Get all users from all collections
   Future<List<Map<String, dynamic>>> getAllUsersFromAllCollections() async {
     return await MongoDatabase.getAllUsers();
