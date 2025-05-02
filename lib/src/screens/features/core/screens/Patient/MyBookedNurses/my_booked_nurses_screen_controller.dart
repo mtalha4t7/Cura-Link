@@ -58,10 +58,26 @@ class MyBookedNursesController {
       return false;
     }
   }
+  Future<bool> deleteBooking(dynamic bookingId) async {
+    try {
+      debugPrint('Deleting booking [$bookingId]');
+
+      final id = _parseObjectId(bookingId);
+      final result = await MongoDatabase.patientNurseBookingsCollection?.deleteOne(
+        where.id(id),
+      );
+
+      debugPrint('Delete result: ${result?.isSuccess}');
+      return result?.isSuccess ?? false;
+    } catch (e, stackTrace) {
+      _logger.e('Error deleting booking', error: e, stackTrace: stackTrace);
+      return false;
+    }
+  }
 
   /// Cancel a booking
   Future<bool> cancelBooking(dynamic bookingId) async {
-    return await updateBookingStatus(bookingId, 'Cancelled');
+    return await deleteBooking(bookingId);
   }
 
   /// Complete a booking

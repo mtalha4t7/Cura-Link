@@ -50,10 +50,27 @@ class MyBookingsNurseController {
     }
   }
 
-  Future<bool> cancelBooking(String bookingId) async {
-    return await updateBookingStatus(bookingId, 'Cancelled');
+  Future<bool> deleteBooking(dynamic bookingId) async {
+    try {
+      debugPrint('Deleting booking [$bookingId]');
+
+      final id = _parseObjectId(bookingId);
+      final result = await MongoDatabase.patientNurseBookingsCollection?.deleteOne(
+        where.id(id),
+      );
+
+      debugPrint('Delete result: ${result?.isSuccess}');
+      return result?.isSuccess ?? false;
+    } catch (e, stackTrace) {
+      _logger.e('Error deleting booking', error: e, stackTrace: stackTrace);
+      return false;
+    }
   }
 
+  /// Cancel a booking
+  Future<bool> cancelBooking(dynamic bookingId) async {
+    return await deleteBooking(bookingId);
+  }
   Future<bool> completeBooking(String bookingId) async {
     return await updateBookingStatus(bookingId, 'Completed');
   }
@@ -119,5 +136,24 @@ class MyBookingsNurseController {
       'location': booking['location'] ?? 'No location provided',
       'duration': booking['duration'] ?? '1 hour',
     };
+  }
+  /// Parse different ObjectId formats
+  ObjectId _parseObjectId(dynamic id) {
+    try {
+      if (id is ObjectId) return id;
+      if (id is String) {
+        // Remove any quotes or ObjectId wrapper if present
+        String cleanedId = id.replaceAll('ObjectId("', '').replaceAll('")', '').trim();
+
+        // Check if the string is a valid 24-character hex string
+        if (cleanedId.length == 24 && RegExp(r'^[0-9a-fA-F]{24}$').hasMatch(cleanedId)) {
+          return ObjectId.fromHexString(cleanedId);
+        }
+      }
+      throw Exception('Invalid ID format: $id (${id.runtimeType})');
+    } catch (e, stackTrace) {
+      _logger.e('Error parsing ObjectId', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
   }
 }
