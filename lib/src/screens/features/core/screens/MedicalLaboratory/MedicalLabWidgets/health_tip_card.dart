@@ -17,7 +17,7 @@ class HealthTipCard extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isDarkTheme
-            ? const Color.fromARGB(255, 178, 203, 227)
+            ? Colors.black26
             : tServiceCardLightBg, // Light or dark background color
         borderRadius: BorderRadius.circular(8),
       ),
