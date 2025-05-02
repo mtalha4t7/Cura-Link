@@ -106,6 +106,8 @@ dependencies:
   url_launcher: ^6.3.1
   firebase_messaging: ^15.2.5
   flutter_local_notifications: ^19.1.0
+  flutter_dotenv: ^5.2.1
+  googleapis_auth: ^2.0.0
 flutter_native_splash:
   color: "#ffffff"  # Background color for light mode
   image: assets/images/appLogoSplashLight.png  # Light mode logo
