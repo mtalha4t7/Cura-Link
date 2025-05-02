@@ -27,8 +27,6 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
     super.initState();
     email = widget.nurseEmail;
     _loadBookings();
-
-
   }
 
   void _loadBookings() {
@@ -36,32 +34,50 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
       _bookingsFuture = _currentFilter == 'upcoming'
           ? _controller.getUpcomingBookings(widget.nurseEmail)
           : _controller.getPastBookings(widget.nurseEmail);
-
     });
   }
 
-  String _formatDate(String rawDate) {
+  String _formatDate(dynamic date) {
     try {
-      final parsedDate = DateTime.parse(rawDate);
-      return DateFormat.yMMMMEEEEd().add_jm().format(parsedDate);
+      if (date is String) {
+        return DateFormat.yMMMMEEEEd().add_jm().format(DateTime.parse(date));
+      } else if (date is DateTime) {
+        return DateFormat.yMMMMEEEEd().add_jm().format(date);
+      }
+      return 'Date not available';
     } catch (e) {
-      return rawDate;
+      return 'Invalid date';
     }
   }
 
-  Future<void> _launchMaps(String address) async {
-    final Uri uri = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}',
-    );
-    if (!await launchUrl(uri)) {
+  Future<void> _launchMaps(String coordinates) async {
+    try {
+      final parts = coordinates.split(',');
+      if (parts.length == 2) {
+        final lat = parts[0].trim();
+        final lng = parts[1].trim();
+        final Uri uri = Uri.parse(
+          'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+        );
+        if (!await launchUrl(uri)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not open maps')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invalid location coordinates')),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open maps')),
+        const SnackBar(content: Text('Error opening maps')),
       );
     }
   }
 
-  Future<void> _startChat(String nurseEmail) async {
-    final user = await _controller.fetchUserData(nurseEmail);
+  Future<void> _startChat(String patientEmail) async {
+    final user = await _controller.fetchUserData(patientEmail);
     if (user != null && mounted) {
       Get.to(() => ChatScreen(user: user));
     } else {
@@ -203,17 +219,12 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
                         return NurseBookingCard(
                           booking: booking,
                           isDark: isDarkTheme,
-                          onChat: () =>
-                              _startChat(booking['patientEmail']), // FIXED HERE
-                          onLocation: () =>
-                              _launchMaps(booking['address']),
-                          formattedDate:
-                          _formatDate(booking['bookingDate']),
+                          onChat: () => _startChat(booking['patientEmail']),
+                          onLocation: () => _launchMaps(booking['location'] ?? ''),
+                          formattedDate: _formatDate(booking['bookingDate'] ?? booking['createdAt']),
                           showActions: _currentFilter == 'upcoming',
-                          onCancel: () => _cancelBooking(
-                              booking['_id'].toString()),
-                          onComplete: () => _completeBooking(
-                              booking['_id'].toString()),
+                          onCancel: () => _cancelBooking(booking['_id'].toString()),
+                          onComplete: () => _completeBooking(booking['_id'].toString()),
                         );
                       },
                     );

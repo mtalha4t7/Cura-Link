@@ -35,13 +35,12 @@ class NurseBookingCard extends StatelessWidget {
       elevation: 1,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {}, // Add onTap functionality if needed
+        onTap: () {},
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with patient name and status
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -74,8 +73,6 @@ class NurseBookingCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-
-              // Service Type
               Text(
                 booking['serviceType'] ?? 'Nursing Service',
                 style: theme.textTheme.bodyLarge?.copyWith(
@@ -84,8 +81,6 @@ class NurseBookingCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // Details Section
               _buildDetailRow(
                 icon: Icons.calendar_today_outlined,
                 title: 'Appointment Date',
@@ -93,23 +88,19 @@ class NurseBookingCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               _buildDetailRow(
-                icon: Icons.access_time_outlined,
-                title: 'price',
-                value: booking['price'].toString() ?? '',
+                icon: Icons.attach_money_outlined,
+                title: 'Price',
+                value: '${booking['price']?.toString() ?? '0'}',
               ),
               const SizedBox(height: 8),
               _buildDetailRow(
                 icon: Icons.location_on_outlined,
                 title: 'Location',
-                value: booking['location'] ?? 'No address provided',
+                value: _formatLocation(booking['location'] ?? 'No location provided'),
               ),
-
               const SizedBox(height: 16),
-
-              // Action Buttons - Now in a column for better spacing
               Column(
                 children: [
-                  // Primary Actions (Chat and Location)
                   Row(
                     children: [
                       Expanded(
@@ -136,8 +127,6 @@ class NurseBookingCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-
-                  // Conditional Action Buttons (Cancel/Complete)
                   if (showActions)
                     Row(
                       children: [
@@ -171,6 +160,24 @@ class NurseBookingCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatLocation(String coordinates) {
+    if (coordinates.isEmpty || coordinates == 'No location provided') {
+      return coordinates;
+    }
+
+    try {
+      final parts = coordinates.split(',');
+      if (parts.length == 2) {
+        final lat = double.parse(parts[0].trim());
+        final lng = double.parse(parts[1].trim());
+        return 'Lat: ${lat.toStringAsFixed(4)}, Lng: ${lng.toStringAsFixed(4)}';
+      }
+      return coordinates;
+    } catch (e) {
+      return coordinates;
+    }
   }
 
   Widget _buildDetailRow({

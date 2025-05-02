@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:logger/logger.dart';
 
-
 import '../../../../../../mongodb/mongodb.dart';
 import '../../../../../../repository/user_repository/user_repository.dart';
 import '../../../../authentication/models/chat_user_model.dart';
@@ -14,7 +13,7 @@ class MyBookingsNurseController {
     try {
       final bookings = await MongoDatabase.patientNurseBookingsCollection?.find(
           where.eq('nurseEmail', nurseEmail)
-              .sortBy('bookingDate', descending: false)
+              .sortBy('createdAt', descending: false)
       ).toList();
 
       return bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
@@ -23,6 +22,7 @@ class MyBookingsNurseController {
       return [];
     }
   }
+
   Future<ChatUserModelMongoDB?> fetchUserData(String email) async {
     try {
       final userData = await UserRepository.instance.getUserByEmailFromAllCollections(email);
@@ -75,7 +75,7 @@ class MyBookingsNurseController {
           where.eq('nurseEmail', nurseEmail)
               .ne('status', 'Completed')
               .ne('status', 'Cancelled')
-              .sortBy('bookingDate', descending: false)
+              .sortBy('createdAt', descending: false)
       ).toList();
 
       return bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
@@ -93,7 +93,7 @@ class MyBookingsNurseController {
             where.eq('status', 'Completed'),
             where.eq('status', 'Cancelled'),
           ] as SelectorBuilder)
-              .sortBy('bookingDate', descending: true)
+              .sortBy('createdAt', descending: true)
       ).toList();
 
       return bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
@@ -106,17 +106,18 @@ class MyBookingsNurseController {
   Map<String, dynamic> _sanitizeBookingData(Map<String, dynamic> booking) {
     return {
       '_id': booking['_id'],
+      'bookingId': booking['bookingId'] ?? '',
       'patientId': booking['patientId'] ?? '',
       'patientName': booking['patientName'] ?? 'Unknown Patient',
       'patientEmail': booking['patientEmail'] ?? '',
       'nurseEmail': booking['nurseEmail'] ?? '',
+      'nurseName': booking['nurseName'] ?? 'Unknown Nurse',
       'serviceType': booking['serviceType'] ?? 'Nursing Service',
       'status': booking['status'] ?? 'Pending',
       'price': booking['price'] ?? 0.0,
-      'bookingDate': booking['bookingDate']?.toString() ?? DateTime.now().toString(),
+      'createdAt': booking['createdAt'],
+      'location': booking['location'] ?? 'No location provided',
       'duration': booking['duration'] ?? '1 hour',
-      'address': booking['address'] ?? 'No address provided',
-      'bids': booking['bids'] ?? [],
     };
   }
 }
