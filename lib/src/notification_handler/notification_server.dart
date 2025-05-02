@@ -251,7 +251,7 @@ class NotificationService {
         final updateResult = await collection.updateOne(
           where.eq('userEmail', userId),
           modify
-            ..set('fcmToken', token)
+            ..push('fcmTokens', token)
             ..set('updatedAt', DateTime.now()),
         );
 
@@ -287,7 +287,6 @@ class NotificationService {
     }
   }
 
-  /// Send a booking confirmation notification
   Future<void> sendBookingConfirmation({
     required String recipientUserId,
     required String labName,
@@ -296,6 +295,8 @@ class NotificationService {
   }) async {
     try {
       // Get recipient's FCM tokens from MongoDB
+
+      print(recipientUserId);
       final user = await MongoDatabase.findUserPatient(recipientUserId) ??
           await MongoDatabase.findUserLab(recipientUserId) ??
           await MongoDatabase.findUserNurse(recipientUserId) ??
