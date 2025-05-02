@@ -11,17 +11,18 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+        coreLibraryDesugaringEnabled true   // <-- ✅ added for desugaring
     }
 
     kotlinOptions {
-        jvmTarget =  JavaVersion.VERSION_1_8
+        jvmTarget = "1.8"  // <-- ✅ correct value as String
     }
 
     defaultConfig {
         applicationId = "com.example.cura_link"
-        minSdkVersion 23  // Ensure this is set to at least 23
+        minSdkVersion 23  // <-- ✅ must be at least 21, you're good
         targetSdk = flutter.targetSdkVersion
         ndkVersion = "25.1.8937393"
         versionCode = flutter.versionCode
@@ -42,4 +43,7 @@ flutter {
 dependencies {
     implementation platform('com.google.firebase:firebase-bom:33.4.0')
     implementation 'com.google.firebase:firebase-analytics'
+
+    // 👇 added desugaring dependency
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
 }
