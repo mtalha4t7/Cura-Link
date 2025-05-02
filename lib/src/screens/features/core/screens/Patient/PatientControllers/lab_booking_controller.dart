@@ -17,24 +17,24 @@ class NurseBookingController {
 
 
   // Add a new booking to the MongoDB collection
-  Future<void> addBooking(String patientName,
+  Future<String?> addBooking(
+      String patientName,
       String testName,
       String price,
-      String bookingDate,) async {
+      String bookingDate,
+      ) async {
     final user = FirebaseAuth.instance.currentUser;
     final patientUserEmail = user?.email;
 
     final userEmail = await loadEmail();
     final userName = await loadName();
 
-
     if (userEmail == null) {
       print("Error: User not logged in.");
-      return;
+      return null;
     }
 
     try {
-      // Check if a similar booking already exists in the main bookings collection
       final existingBooking = await MongoDatabase.bookingsCollection?.findOne({
         'userEmail': userEmail,
         'patientName': patientName,
@@ -43,51 +43,53 @@ class NurseBookingController {
       });
 
       if (existingBooking == null) {
-        // Insert the booking into the main bookings collection with the price
         final result = await MongoDatabase.bookingsCollection?.insertOne({
           'labUserEmail': userEmail,
-          'labUserName' : userName,
+          'labUserName': userName,
           'patientUserEmail': patientUserEmail,
           'patientName': patientName,
           'testName': testName,
           'bookingDate': bookingDate,
-          'price': price, // Store price in the booking
-          'status': 'Pending', // Initialize with a default status
+          'price': price,
+          'status': 'Pending',
         });
+
         if (result != null && result.isSuccess) {
-          // Access the generated _id from the result's 'document' field
           final bookingId = result.document?['_id']?.toHexString();
 
           if (bookingId != null) {
-            // Insert the booking into the patient bookings collection with the bookingId
             await MongoDatabase.patientBookingsCollection?.insertOne({
               'bookingId': bookingId,
               'patientUserEmail': patientUserEmail,
               'labUserEmail': userEmail,
-              'labUserName' : userName,
+              'labUserName': userName,
               'patientName': patientName,
               'testName': testName,
               'bookingDate': bookingDate,
               'price': price,
               'status': 'Pending',
-              // Initialize with a default status
             });
 
-            print(
-                'Booking added successfully to bookingsCollection and patientBookingsCollection.');
+            print('Booking added successfully.');
+            return bookingId;
           } else {
             print('Error: Generated bookingId is null.');
+            return null;
           }
         } else {
           print('Error inserting booking into bookingsCollection.');
+          return null;
         }
       } else {
         print('Booking already exists.');
+        return null;
       }
     } catch (e) {
       print('Error adding booking: $e');
+      return null;
     }
   }
+
 
   // Remove a booking from the MongoDB collection
   Future<void> removeBooking(String patientName) async {

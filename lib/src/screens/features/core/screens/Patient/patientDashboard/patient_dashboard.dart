@@ -1,3 +1,10 @@
+import 'package:cura_link/src/notification_handler/notification_server.dart';
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookedNurses/my_booked_nurses_screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookings/my_bookings.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/NurseBooking/nurse_booking.dart';
@@ -8,14 +15,12 @@ import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidge
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_dashboard_sidebar.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/quick_access_button.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/service_card.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_appbar.dart';
-import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/PatientControllers/my_bookings_controller.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/LabBooking/lab_booking.dart';
+
 import '../../../../../../constants/sizes.dart';
-import '../LabBooking/lab_booking.dart';
-import '../PatientControllers/my_bookings_controller.dart';
+import '../../../../../../mongodb/mongodb.dart';
 
 class PatientDashboard extends StatefulWidget {
   const PatientDashboard({super.key});
@@ -26,11 +31,43 @@ class PatientDashboard extends StatefulWidget {
 
 class _PatientDashboardState extends State<PatientDashboard> {
   final MyBookingsController _controller = Get.put(MyBookingsController());
+  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  void initState() {
+    super.initState();
+    _setupFCM();
     _controller.fetchUnreadBookingsCount();
+  }
+
+  Future<void> _setupFCM() async {
+    try {
+      final settings = await _fcm.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        debugPrint('User granted notification permissions');
+      }
+
+      final token = await _fcm.getToken();
+      if (token != null) {
+        await _saveTokenToDatabase(token);
+        debugPrint('FCM Token: $token');
+      }
+
+      _fcm.onTokenRefresh.listen(_saveTokenToDatabase);
+    } catch (e) {
+      debugPrint('Error setting up FCM: $e');
+    }
+  }
+
+  Future<void> _saveTokenToDatabase(String token) async {
+     NotificationService().saveToken(token);
   }
 
   @override
@@ -56,68 +93,84 @@ class _PatientDashboardState extends State<PatientDashboard> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    QuickAccessButton(icon: Icons.medication, label: 'Order Medicine', onTap: () {}),
+                    QuickAccessButton(
+                        icon: Icons.medication,
+                        label: 'Order Medicine',
+                        onTap: () {}
+                    ),
                     QuickAccessButton(
                       icon: Icons.local_hospital,
                       label: 'Call Nurse',
                       onTap: () async {
                         final prefs = await SharedPreferences.getInstance();
-                        if (prefs.containsKey('nurseRequestId')) {
-                          Get.to(() => NurseBookingScreen(selectedService: ''));
-                        } else {
-                          Get.to(() => ShowNurseServices());
-                        }
+                        prefs.containsKey('nurseRequestId')
+                            ? Get.to(() => NurseBookingScreen(selectedService: ''))
+                            : Get.to(() => ShowNurseServices());
                       },
                     ),
                     QuickAccessButton(
                       icon: Icons.science,
                       label: 'Book Lab',
-                      onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => LabBookingScreen()))
-                            .then((_) => _controller.fetchUnreadBookingsCount());
-                      },
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => LabBookingScreen())
+                      ).then((_) => _controller.fetchUnreadBookingsCount()),
                     ),
                   ],
                 ),
                 const SizedBox(height: tDashboardPadding),
 
                 // Services Grid
-                const Text("Our Services", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text(
+                    "Our Services",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
+                ),
 
-                Obx(() {
-                  return GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    childAspectRatio: 1,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                    children: [
-                      ServiceCard(icon: Icons.medical_services, title: 'Medicine Delivery', onTap: () {}),
-                      ServiceCard(icon: Icons.medical_services_sharp, title: 'Nurse bookings', onTap: () {
-                        final String? email= FirebaseAuth.instance.currentUser?.email.toString();
-                        Get.to(() => MyBookedNursesScreen(patientEmail: email!));
-
-
-                      }),
-                      ServiceCard(icon: Icons.biotech, title: 'Lab Tests', onTap: () {}),
-                      ServiceCard(
-                        icon: Icons.add_to_queue,
-                        title: 'My Bookings',
-                        showBadge: _controller.unreadCount.value > 0,
-                        onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => MyBookingsScreen()))
-                              .then((_) => _controller.fetchUnreadBookingsCount());
-                        },
+                Obx(() => GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  children: [
+                    ServiceCard(
+                        icon: Icons.medical_services,
+                        title: 'Medicine Delivery',
+                        onTap: () {}
+                    ),
+                    ServiceCard(
+                      icon: Icons.medical_services_sharp,
+                      title: 'Nurse bookings',
+                      onTap: () => Get.to(
+                              () => MyBookedNursesScreen(
+                              patientEmail: _auth.currentUser?.email ?? ''
+                          )
                       ),
-                    ],
-                  );
-                }),
+                    ),
+                    ServiceCard(
+                        icon: Icons.biotech,
+                        title: 'Lab Tests',
+                        onTap: () {}
+                    ),
+                    ServiceCard(
+                      icon: Icons.add_to_queue,
+                      title: 'My Bookings',
+                      showBadge: _controller.unreadCount.value > 0,
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => MyBookingsScreen())
+                      ).then((_) => _controller.fetchUnreadBookingsCount()),
+                    ),
+                  ],
+                )),
 
                 const SizedBox(height: tDashboardPadding),
 
                 // Health Tips Section
-                const Text("Health Tips", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text(
+                    "Health Tips",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
+                ),
                 SizedBox(
                   height: 120,
                   child: ListView(
@@ -148,9 +201,10 @@ class _PatientDashboardState extends State<PatientDashboard> {
           onTap: (index) {
             switch (index) {
               case 0:
-                Get.to(() => const PatientDashboard());
+                Get.offAll(() => const PatientDashboard());
                 break;
               case 1:
+              // Handle orders navigation
                 break;
               case 2:
                 Get.to(() => ChatHomeScreen());

@@ -144,6 +144,19 @@ class MongoDatabase {
       return [];
     }
   }
+  static Future<List<Map<String, dynamic>>> getPatientLabBookings(String patientEmail) async {
+    try {
+      final bookings = await _patientBookingsCollection?.find(
+          where.eq('patientUserEmail', patientEmail)
+              .sortBy('bookingDate', descending: true)
+      ).toList();
+
+      return bookings ?? [];
+    } catch (e, stackTrace) {
+      logger.e('Error fetching patient bookings', error: e, stackTrace: stackTrace);
+      return [];
+    }
+  }
 
 
 

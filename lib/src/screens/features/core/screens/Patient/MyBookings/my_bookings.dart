@@ -98,7 +98,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                           onAccept: () {
                             if(booking['status']=="Modified"){
                               _controller.updateBookingStatus(
-                                booking['bookingId'], // MongoDB ObjectId
+                                booking['bookingId'].toString(), // MongoDB ObjectId
                                 'Accepted',
                               );
                               setState(() {});
@@ -322,7 +322,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 
         // Confirm the changes and save
         _controller.updateBookingDate(
-          booking['_id'], // MongoDB ObjectId
+          booking['bookingId'], // MongoDB ObjectId
           formattedDate,
         );
         setState(() {}); // Refresh the UI after update

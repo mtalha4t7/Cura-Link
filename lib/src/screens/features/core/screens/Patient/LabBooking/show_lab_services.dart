@@ -2,6 +2,8 @@ import 'package:cura_link/src/screens/features/core/screens/Patient/PatientContr
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
+import '../../../../../../mongodb/mongodb.dart';
 import '../../../../../../repository/user_repository/user_repository.dart';
 import '../../../../../../shared prefrences/shared_prefrence.dart';
 import '../PatientControllers/lab_booking_controller.dart';
@@ -54,12 +56,10 @@ class _ShowLabServicesState extends State<ShowLabServices> {
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(Duration(days: 365)), // One year from now
+      lastDate: DateTime.now().add(Duration(days: 365)),
     );
 
-    if (selectedDate == null) {
-      return; // User canceled the date picker
-    }
+    if (selectedDate == null) return;
 
     // Select time
     TimeOfDay? selectedTime = await showTimePicker(
@@ -67,11 +67,9 @@ class _ShowLabServicesState extends State<ShowLabServices> {
       initialTime: TimeOfDay.now(),
     );
 
-    if (selectedTime == null) {
-      return; // User canceled the time picker
-    }
+    if (selectedTime == null) return;
 
-    // Combine date and time into a DateTime object
+    // Combine date and time
     DateTime selectedDateTime = DateTime(
       selectedDate.year,
       selectedDate.month,
@@ -79,34 +77,59 @@ class _ShowLabServicesState extends State<ShowLabServices> {
       selectedTime.hour,
       selectedTime.minute,
     );
+
     String price = service['prize'].toString();
 
-    // Confirm booking
-    await _addBookingController.addBooking(
+    // 1. Add booking and get bookingId
+    String? bookingId = await _addBookingController.addBooking(
       _patientName,
       service['serviceName'],
       price,
-      selectedDateTime.toIso8601String(), // selected date and time
+      selectedDateTime.toIso8601String(),
     );
 
-    // Refresh the services list after booking
+    if (bookingId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to book. Please try again.')),
+      );
+      return;
+    }
+
+    // 2. Fetch full booking from _patientBookingsCollection
+    final bookedService = await MongoDatabase.patientBookingsCollection
+        ?.findOne({'bookingId': bookingId});
+
+    if (bookedService == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not find booking details.')),
+      );
+      return;
+    }
+
+    final String? labUserEmail = bookedService['labUserEmail']?.toString();
+    final String? labUserName = bookedService['labUserName']?.toString();
+
+    if (labUserEmail == null || labUserName == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Booking details incomplete.')),
+      );
+      return;
+    }
+
+    // 3. Go to confirmation screen
+    Get.to(() => BookingConfirmationScreen(
+      labName: labUserName,
+      bookingId: bookingId,
+      bookingTime: selectedDateTime,
+      recipientUserId: labUserEmail,
+    ));
+
+    // 4. Refresh UI
     setState(() {
       _services = _loadEmailAndFetchServices();
     });
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BookingConfirmationScreen(
-          labName: service['labName'], // assuming service map contains labName
-          bookingId: service['labUserId'],
-          bookingTime: selectedDateTime,
-          recipientUserId: service['labUserId'], // assuming this field exists
-        ),
-      ),
-    );
-
-    // Show a confirmation message
+    // 5. Show confirmation message
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Booking confirmed for ${service['serviceName']}')),
     );

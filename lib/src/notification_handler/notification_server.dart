@@ -188,7 +188,11 @@ class NotificationService {
     }
   }
 
-  /// Save FCM token to MongoDB
+  /// Save FCM token to MongoD
+
+  Future<void>saveToken(String token)async{
+    _saveTokenToDatabase(token);
+  }
   Future<void> _saveTokenToDatabase(String token) async {
     try {
       final String userId = UserRepository.instance.getCurrentUserMongoEmail() as String;

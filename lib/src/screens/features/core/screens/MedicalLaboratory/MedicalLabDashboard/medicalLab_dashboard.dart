@@ -1,7 +1,9 @@
 import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabProfile/medicalLab_profile_screen.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import '../../../../../../notification_handler/notification_server.dart';
 import '../../MedicalLaboratory/MedicalLabChat/chat_home.dart';
 import '../ManageBooking/ManageBooking.dart';
 import '../ManageLabTests/manage_test_screen.dart';
@@ -20,14 +22,46 @@ class MedicalLabDashboard extends StatefulWidget {
 }
 class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
   late DashboardController _controller;
+  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   bool isVerified = false;
 
   @override
   void initState() {
     super.initState();
     _controller = DashboardController();
+    _setupFCM();
     _checkUserVerification();
   }
+
+  Future<void> _setupFCM() async {
+    try {
+      final settings = await _fcm.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        debugPrint('User granted notification permissions');
+      }
+
+      final token = await _fcm.getToken();
+      if (token != null) {
+        await _saveTokenToDatabase(token);
+        debugPrint('FCM Token: $token');
+      }
+
+      _fcm.onTokenRefresh.listen(_saveTokenToDatabase);
+    } catch (e) {
+      debugPrint('Error setting up FCM: $e');
+    }
+  }
+
+  Future<void> _saveTokenToDatabase(String token) async {
+    NotificationService().saveToken(token);
+  }
+
 
   /// Dynamically check user verification status
   void _checkUserVerification() async {

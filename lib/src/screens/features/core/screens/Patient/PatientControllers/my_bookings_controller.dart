@@ -23,7 +23,7 @@ class MyBookingsController extends GetxController {
 
     try {
       // Query the database for bookings tied to the user's email
-      final userBookings = await MongoDatabase.getNurseBookings(userEmail);
+      final userBookings = await MongoDatabase.getPatientLabBookings(userEmail);
       if (userBookings != null) {
         return userBookings;
       }
@@ -147,15 +147,11 @@ class MyBookingsController extends GetxController {
     try {
       print('Attempting to update booking ID: $bookingId to status: $newStatus');
 
-      // Convert bookingId to ObjectId
-      final objectId = ObjectId.parse(bookingId);
-      final bookingIdAsString = objectId.toHexString(); // Convert to string
 
-      print('Parsed ObjectId: $objectId');
 
       // Update the status in bookingsCollection
       final result = await MongoDatabase.bookingsCollection?.updateOne(
-        {'_id': objectId}, // Use ObjectId for labBookings
+        {'_id': ObjectId.parse(bookingId)}, // Use ObjectId for labBookings
         {'\$set': {'status': newStatus}},
       );
 
@@ -167,7 +163,7 @@ class MyBookingsController extends GetxController {
 
       // Check if a matching document exists in patientBookingsCollection
       final existingPatientBooking = await MongoDatabase.patientBookingsCollection?.findOne({
-        'bookingId': bookingIdAsString, // Use string for patientBookings
+        'bookingId': ObjectId.parse(bookingId), // Use string for patientBookings
       });
 
       print('Existing booking in patientBookings collection: $existingPatientBooking');
@@ -175,7 +171,7 @@ class MyBookingsController extends GetxController {
       if (existingPatientBooking != null) {
         // Update the status in patientBookingsCollection
         final updateResult = await MongoDatabase.patientBookingsCollection?.updateOne(
-          {'bookingId': bookingIdAsString}, // Match as string
+          {'bookingId': ObjectId.parse(bookingId)}, // Match as string
           {'\$set': {'status': newStatus}},
         );
 
@@ -200,14 +196,10 @@ class MyBookingsController extends GetxController {
     try {
       print('Attempting to update booking date for booking ID: $bookingId to date: $newDate');
 
-      // Convert bookingId to ObjectId
-      final objectId = ObjectId.parse(bookingId);
-      final bookingIdAsString = objectId.toHexString(); // Convert to string for patientBookingsCollection
-
-      // Update the bookingDate in bookingsCollection
+      // Update in main bookings collection
       final result = await MongoDatabase.bookingsCollection?.updateOne(
-        {'_id': objectId}, // Filter by ObjectId
-        {'\$set': {'bookingDate': newDate}}, // Update the booking date
+        {'bookingId': bookingId},
+        {'\$set': {'bookingDate': newDate}},
       );
 
       if (result != null && result.isSuccess) {
@@ -216,17 +208,16 @@ class MyBookingsController extends GetxController {
         print('Update failed in bookings collection. Result: $result');
       }
 
-      // Check if a matching document exists in patientBookingsCollection
+      // Update in patientBookingsCollection
       final existingPatientBooking = await MongoDatabase.patientBookingsCollection?.findOne({
-        'bookingId': bookingIdAsString, // Query as a string
+        'bookingId':bookingId,
       });
 
       print('Existing booking in patientBookings collection: $existingPatientBooking');
 
       if (existingPatientBooking != null) {
-        // Update the bookingDate in patientBookingsCollection
         final updateResult = await MongoDatabase.patientBookingsCollection?.updateOne(
-          {'bookingId': bookingIdAsString}, // Match as string
+          {'bookingId': bookingId},
           {'\$set': {'bookingDate': newDate}},
         );
 
@@ -242,5 +233,6 @@ class MyBookingsController extends GetxController {
       print('Error updating booking date: $e');
     }
   }
+
 
 }
