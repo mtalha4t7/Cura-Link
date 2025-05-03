@@ -8,6 +8,7 @@ class UserModelMongoDB {
   String? userPassword;
   String? userType;
   String? userAddress;
+  String? userDeviceToken;
 
   UserModelMongoDB({
     this.userId,
@@ -17,6 +18,7 @@ class UserModelMongoDB {
     required this.userPassword,
     this.userType,
     this.userAddress,
+    this.userDeviceToken
   });
 
   /// Converts the object into a Map
@@ -29,19 +31,22 @@ class UserModelMongoDB {
       'userPassword': userPassword,
       'userType': userType,
       'userAddress': userAddress,
+      'userDeviceToken':userDeviceToken
     };
   }
 
   /// Factory constructor to create an object from a Map
+
   factory UserModelMongoDB.fromDataMap(Map<String, dynamic> dataMap) {
     return UserModelMongoDB(
-      userId: dataMap['userId'] as String?,
+      userId: dataMap['_id']?.toString(), // Convert ObjectId to String
       userName: dataMap['userName'] as String?,
       userEmail: dataMap['userEmail'] as String?,
       userAddress: dataMap['userAddress'] as String?,
       userType: dataMap['userType'] as String?,
       userPassword: dataMap['userPassword'] as String?,
       userPhone: dataMap['userPhone'] as String?,
+      userDeviceToken: dataMap['userDeviceToken'] as String?,
     );
   }
 

@@ -1,21 +1,58 @@
+import 'package:cura_link/src/notification_handler/notification_server.dart';
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookedNurses/my_booked_nurses_screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookings/my_bookings.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/NurseBooking/nurse_booking.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/NurseBooking/show_nurse_services.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/PatientChat/chat_home.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/PatientProfile/patient_profile_screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/health_tip_card.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_dashboard_sidebar.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/quick_access_button.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/service_card.dart';
-import 'package:flutter/material.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_appbar.dart';
-import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import '../../../../../../constants/sizes.dart';
-import '../LabBooking/lab_booking.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/PatientControllers/my_bookings_controller.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/LabBooking/lab_booking.dart';
 
-class PatientDashboard extends StatelessWidget {
+import '../../../../../../constants/sizes.dart';
+import '../../../../../../mongodb/mongodb.dart';
+
+class PatientDashboard extends StatefulWidget {
   const PatientDashboard({super.key});
 
   @override
+  State<PatientDashboard> createState() => _PatientDashboardState();
+}
+
+class _PatientDashboardState extends State<PatientDashboard> {
+  final MyBookingsController _controller = Get.put(MyBookingsController());
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  MongoDatabase mongoDatabase = MongoDatabase();
+  late String _email;
+  late String _userDeviceToken;
+   NotificationService  notificationService= NotificationService();
+  @override
+  void initState() {
+    super.initState();
+    _initializeAsyncStuff();
+  }
+
+  Future<void> _initializeAsyncStuff() async {
+    _email = (_auth.currentUser?.email!)!;
+    _userDeviceToken = await notificationService.getDeviceToken();
+    await mongoDatabase.checkAndAddDeviceToken(_email, _userDeviceToken);
+    notificationService.requestNotificationPermission();
+    _controller.fetchUnreadBookingsCount();
+    notificationService.firebaseInit(context);
+    notificationService.setupInteractMessage(context);
+  }
+
+    @override
   Widget build(BuildContext context) {
     final txtTheme = Theme.of(context).textTheme;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
@@ -31,8 +68,7 @@ class PatientDashboard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text("Welcome to Cura Link", style: txtTheme.bodyMedium),
-                Text("How can we assist you today?",
-                    style: txtTheme.displayMedium),
+                Text("How can we assist you today?", style: txtTheme.displayMedium),
                 const SizedBox(height: tDashboardPadding),
 
                 // Quick Access Buttons
@@ -40,30 +76,27 @@ class PatientDashboard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     QuickAccessButton(
-                      icon: Icons.medication,
-                      label: 'Order Medicine',
-                      onTap: () {
-                        // Order Medicine action
-                      },
+                        icon: Icons.medication,
+                        label: 'Order Medicine',
+                        onTap: () {}
                     ),
                     QuickAccessButton(
                       icon: Icons.local_hospital,
                       label: 'Call Nurse',
-                      onTap: () {
-                        // Call Nurse action
+                      onTap: () async {
+                        final prefs = await SharedPreferences.getInstance();
+                        prefs.containsKey('nurseRequestId')
+                            ? Get.to(() => NurseBookingScreen(selectedService: ''))
+                            : Get.to(() => ShowNurseServices());
                       },
                     ),
                     QuickAccessButton(
                       icon: Icons.science,
                       label: 'Book Lab',
-                      onTap: () {
-                        Navigator.push(
+                      onTap: () => Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => LabBookingScreen(),
-                          ),
-                        );
-                      },
+                          MaterialPageRoute(builder: (context) => LabBookingScreen())
+                      ).then((_) => _controller.fetchUnreadBookingsCount()),
                     ),
                   ],
                 ),
@@ -71,10 +104,11 @@ class PatientDashboard extends StatelessWidget {
 
                 // Services Grid
                 const Text(
-                  "Our Services",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    "Our Services",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
                 ),
-                GridView.count(
+
+                Obx(() => GridView.count(
                   crossAxisCount: 2,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -82,46 +116,42 @@ class PatientDashboard extends StatelessWidget {
                   crossAxisSpacing: 8,
                   children: [
                     ServiceCard(
-                      icon: Icons.medical_services,
-                      title: 'Medicine Delivery',
-                      onTap: () {
-                        // Navigate to Medicine Delivery
-                      },
+                        icon: Icons.medical_services,
+                        title: 'Medicine Delivery',
+                        onTap: () {}
                     ),
                     ServiceCard(
                       icon: Icons.medical_services_sharp,
-                      title: 'Nurse Assistance',
-                      onTap: () {
-                        // Navigate to Nurse Assistance
-                      },
+                      title: 'Nurse bookings',
+                      onTap: () => Get.to(
+                              () => MyBookedNursesScreen(
+                              patientEmail: _auth.currentUser?.email ?? ''
+                          )
+                      ),
                     ),
                     ServiceCard(
-                      icon: Icons.biotech,
-                      title: 'Lab Tests',
-                      onTap: () {
-                        // Navigate to Lab Tests
-                      },
+                        icon: Icons.biotech,
+                        title: 'Lab Tests',
+                        onTap: () {}
                     ),
                     ServiceCard(
                       icon: Icons.add_to_queue,
                       title: 'My Bookings',
-                      onTap: () {
-                        Navigator.push(
+                      showBadge: _controller.unreadCount.value > 0,
+                      onTap: () => Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => MyBookingsScreen(),
-                          ),
-                        );
-                      },
+                          MaterialPageRoute(builder: (context) => MyBookingsScreen())
+                      ).then((_) => _controller.fetchUnreadBookingsCount()),
                     ),
                   ],
-                ),
+                )),
+
                 const SizedBox(height: tDashboardPadding),
 
                 // Health Tips Section
                 const Text(
-                  "Health Tips",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    "Health Tips",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
                 ),
                 SizedBox(
                   height: 120,
@@ -146,22 +176,20 @@ class PatientDashboard extends StatelessWidget {
           type: BottomNavigationBarType.fixed,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.shopping_cart), label: "Orders"),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.message), label: "Messages"),
+            BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: "Orders"),
+            BottomNavigationBarItem(icon: Icon(Icons.message), label: "Messages"),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
           ],
           onTap: (index) {
             switch (index) {
               case 0:
-                Get.to(() => PatientDashboard());
+                Get.offAll(() => const PatientDashboard());
                 break;
               case 1:
-                // Get.to(() => OrdersScreen());
+              // Handle orders navigation
                 break;
               case 2:
-                Get.to(() => HomeScreen());
+                Get.to(() => ChatHomeScreen());
                 break;
               case 3:
                 Get.to(() => PatientProfileScreen());

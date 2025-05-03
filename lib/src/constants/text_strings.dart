@@ -1,6 +1,5 @@
 /* -- App Text Strings -- */
 
-
 // test_services_constants.dart
 const List<String> testServices = [
   'Blood Test',
@@ -36,22 +35,27 @@ const List<String> testServices = [
   'Synovial Fluid for RE',
 ];
 
-
-
 //MongoDB Texts
 // ignore: constant_identifier_names
 const MONGO_URL =
     "mongodb+srv://25362:talha8k83t@curalinkcluster.0xafs.mongodb.net/dbCuraLink?retryWrites=true&w=majority&appName=CuraLinkCluster";
 // ignore: constant_identifier_names
-const String COLLECTION_NAME = "users";
-const String USER_PATIENT_COLLECTION_NAME="userPatient";
-const String USER_NURSE_COLLECTION_NAME="userNurse";
-const String USER_LAB_COLLECTION_NAME= "userLab";
-const String USER_MEDICAL_STORE_COLLECTION_NAME="userMedicalStore";
-const String LAB_SERVICES="labServices";
-const String USER_VERIFICATION="userVerification";
-const String LAB_BOOKINGS="labBookings";
-const String PATIENT_LAB_BOOKINGS="patientLabBookings";
+const String USERS = "users";
+const String USER_PATIENT_COLLECTION_NAME = "userPatient";
+const String USER_NURSE_COLLECTION_NAME = "userNurse";
+const String USER_LAB_COLLECTION_NAME = "userLab";
+const String USER_MEDICAL_STORE_COLLECTION_NAME = "userMedicalStore";
+const String LAB_SERVICES = "labServices";
+const String USER_VERIFICATION = "userVerification";
+const String LAB_BOOKINGS = "labBookings";
+const String PATIENT_LAB_BOOKINGS = "patientLabBookings";
+const String MESSAGES_COLLECTION_NAME = "messages";
+const String LAB_RATING_COLLECTION = "labRating";
+const String NURSE_SERVICE_REQUESTS_COLLECTION = 'nurseServiceRequests';
+const String NURSE_BIDS_COLLECTION = 'nurseBids';
+const String PATIENT_NURSE_BOOKINGS_COLLECTION = 'patient_Nurse_Bookings';
+const String NURSE_RECEIVED_BOOKINGS_COLLECTION = 'nurse_Received_Bookings';
+
 const String ipAddress = "http://192.168.1.45:4000";
 // -- GLOBAL Texts
 const String tNo = "No";

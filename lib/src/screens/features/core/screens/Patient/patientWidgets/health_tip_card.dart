@@ -29,7 +29,7 @@ class HealthTipCard extends StatelessWidget {
             size: 40,
             color: isDarkTheme
                 ? Colors.green[300]
-                : Colors.green[700], // Adjust icon color based on theme
+                : Colors.green[700],
           ),
           const SizedBox(height: 8),
           Text(

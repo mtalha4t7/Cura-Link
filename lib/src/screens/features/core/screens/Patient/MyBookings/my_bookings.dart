@@ -1,8 +1,14 @@
+import 'package:bson/bson.dart';
 import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabWidgets/booking_card.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookings/rating_controller.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_bookings_card.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import '../../../../../../mongodb/mongodb.dart';
+import '../../../../../../repository/user_repository/user_repository.dart';
+import '../../../../authentication/models/chat_user_model.dart';
+import '../PatientChat/chat_screen.dart';
 import '../PatientControllers/my_bookings_controller.dart';
 
 class MyBookingsScreen extends StatefulWidget {
@@ -83,16 +89,16 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                         final booking = bookings[index];
                         final price = booking['price']?.toString() ?? '0.0';
                         return PatientBookingsCard(
-                          patientName: booking['patientName'],
-                          testName: booking['testName'],
-                          bookingDate: formatDate(booking['bookingDate']),
+                          labUserName: booking['labUserName'] ?? 'Unknown Lab',
+                          testName: booking['testName'] ?? 'Unknown Test',
+                          bookingDate: formatDate(booking['bookingDate'] ?? DateTime.now().toString()),
                           status: booking['status'] ?? 'Pending',
-                          price: price, // Explicitly specify the price parameter
+                          price: price,
                           isDark: isDarkTheme,
                           onAccept: () {
                             if(booking['status']=="Modified"){
                               _controller.updateBookingStatus(
-                                booking['bookingId'], // MongoDB ObjectId
+                                booking['bookingId'].toString(), // MongoDB ObjectId
                                 'Accepted',
                               );
                               setState(() {});
@@ -104,7 +110,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                                 ),
                               );
                             }
-
                           },
                           onReject: () {
                             if(booking['status']!="Accepted"){
@@ -136,6 +141,35 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                             }
 
                           },
+                          onMessage: () async {
+                            final userEmail =  booking['labUserEmail']?.toString();
+                                print(userEmail);
+                            if (userEmail == null) return;
+
+                            final user = await fetchUserData(userEmail);
+                            if (user != null && context.mounted) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChatScreen(user: user),
+                                ),
+                              );
+                            } else if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('User data not found.'),
+                                  duration: Duration(seconds: 3),
+                                ),
+                              );
+                            }
+                          }, onRate: () {
+                          _showRatingDialog(
+                            context,
+                            booking['labUserEmail'],
+                            booking['patientUserEmail'],
+                            booking['_id'], // NEW
+                          );
+                        },
                         );
                       },
                     );
@@ -149,6 +183,105 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         ),
       ),
     );
+  }
+
+  void _showRatingDialog(BuildContext context, String labEmail, String patientEmail, ObjectId bookingId) {
+    double rating = 3.0;
+    final TextEditingController reviewController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) => AlertDialog(
+            title: const Text('Rate the Lab'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('How was your experience?'),
+                const SizedBox(height: 10),
+                RatingBar.builder(
+                  initialRating: rating,
+                  minRating: 1,
+                  direction: Axis.horizontal,
+                  allowHalfRating: true,
+                  itemCount: 5,
+                  itemBuilder: (context, _) => const Icon(
+                    Icons.star,
+                    color: Colors.amber,
+                  ),
+                  onRatingUpdate: (newRating) {
+                    setState(() {
+                      rating = newRating;
+                    });
+                  },
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: reviewController,
+                  maxLines: 3,
+                  maxLength: 300,
+                  decoration: const InputDecoration(
+                    labelText: 'Write your review',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () => Navigator.pop(context),
+              ),
+              ElevatedButton(
+                child: const Text('Submit'),
+                onPressed: () async {
+                  final review = reviewController.text.trim();
+                  if (review.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please write a review before submitting')),
+                    );
+                    return;
+                  }
+
+                  try {
+                    await RatingsController.submitRating(
+                      labEmail: labEmail,
+                      userEmail: patientEmail,
+                      rating: rating,
+                      review: review,
+                      bookingId: bookingId,
+                    );
+
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Thanks for your rating!')),
+                    );
+                  } catch (e) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(e.toString())),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+
+
+  Future<ChatUserModelMongoDB?> fetchUserData(String email) async {
+    try {
+      final userData = await UserRepository.instance.getUserByEmailFromAllCollections(email);
+      return userData != null ? ChatUserModelMongoDB.fromMap(userData) : null;
+    } catch (e) {
+      debugPrint('Error fetching user data: $e');
+      return null;
+    }
   }
 
   void _showModifyDialog(BuildContext context, Map<String, dynamic> booking) async {
@@ -189,7 +322,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 
         // Confirm the changes and save
         _controller.updateBookingDate(
-          booking['_id'], // MongoDB ObjectId
+          booking['bookingId'], // MongoDB ObjectId
           formattedDate,
         );
         setState(() {}); // Refresh the UI after update

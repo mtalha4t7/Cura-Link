@@ -1,7 +1,9 @@
-import 'package:cura_link/src/utils/app_bindings.dart';
-import 'package:cura_link/src/utils/theme/theme.dart';
+import 'package:cura_link/src/notification_handler/notification_wraper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:cura_link/src/utils/app_bindings.dart';
+import 'package:cura_link/src/utils/theme/theme.dart';
+
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -16,7 +18,8 @@ class App extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: const Scaffold(
         body: Center(
-            child: CircularProgressIndicator()), // ✅ Initial loading screen
+          child: CircularProgressIndicator(), // Initial loading screen
+        ),
       ),
     );
   }

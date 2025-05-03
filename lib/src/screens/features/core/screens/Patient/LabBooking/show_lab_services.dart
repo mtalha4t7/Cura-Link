@@ -1,10 +1,14 @@
+import 'package:cura_link/src/notification_handler/send_notification.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/PatientControllers/show_services_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
+import '../../../../../../mongodb/mongodb.dart';
 import '../../../../../../repository/user_repository/user_repository.dart';
 import '../../../../../../shared prefrences/shared_prefrence.dart';
 import '../PatientControllers/lab_booking_controller.dart';
+import 'confirm_booking.dart';
 
 class ShowLabServices extends StatefulWidget {
   const ShowLabServices({super.key});
@@ -15,16 +19,16 @@ class ShowLabServices extends StatefulWidget {
 
 class _ShowLabServicesState extends State<ShowLabServices> {
   late ShowTestServiceController _controller;
-  late PatientLabBookingController _addBookingController;
+  late NurseBookingController _addBookingController;
   late Future<List<Map<String, dynamic>>> _services;
-  late String? email; // Make email nullable
+  late String? email; // to Make email nullable
   late String _patientName;
-
+  MongoDatabase mongoDatabase = MongoDatabase();
   @override
   void initState() {
     super.initState();
     _controller = ShowTestServiceController();
-    _addBookingController = PatientLabBookingController();
+    _addBookingController = NurseBookingController();
     email = FirebaseAuth.instance.currentUser ?.email; // Get email from Firebase
     _services = _loadEmailAndFetchServices();
     _initializePatientName(); // Call a separate function for async operations
@@ -33,8 +37,8 @@ class _ShowLabServicesState extends State<ShowLabServices> {
   Future<void> _initializePatientName() async {
     if (email != null) {
       _patientName = (await UserRepository().getPatientUserName(email!)) ?? "Unknown";
-    setState(() {}); // Update the state once the patient name is loaded
-  }
+      setState(() {}); // Update the state once the patient name is loaded
+    }
   }
 
 
@@ -53,12 +57,10 @@ class _ShowLabServicesState extends State<ShowLabServices> {
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(Duration(days: 365)), // One year from now
+      lastDate: DateTime.now().add(Duration(days: 365)),
     );
 
-    if (selectedDate == null) {
-      return; // User canceled the date picker
-    }
+    if (selectedDate == null) return;
 
     // Select time
     TimeOfDay? selectedTime = await showTimePicker(
@@ -66,11 +68,9 @@ class _ShowLabServicesState extends State<ShowLabServices> {
       initialTime: TimeOfDay.now(),
     );
 
-    if (selectedTime == null) {
-      return; // User canceled the time picker
-    }
+    if (selectedTime == null) return;
 
-    // Combine date and time into a DateTime object
+    // Combine date and time
     DateTime selectedDateTime = DateTime(
       selectedDate.year,
       selectedDate.month,
@@ -78,22 +78,68 @@ class _ShowLabServicesState extends State<ShowLabServices> {
       selectedTime.hour,
       selectedTime.minute,
     );
+
     String price = service['prize'].toString();
 
-    // Confirm booking
-    await _addBookingController.addBooking(
-      _patientName, // patientName as service name
+
+    String? bookingId = await _addBookingController.addBooking(
+      _patientName,
       service['serviceName'],
       price,
-      selectedDateTime.toIso8601String(), // selected date and time
+      selectedDateTime.toIso8601String(),
     );
 
-    // Refresh the services list after booking
+    if (bookingId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to book. Please try again.')),
+      );
+      return;
+    }
+
+    // 2. Fetch full booking from _patientBookingsCollection
+    final bookedService = await MongoDatabase.patientBookingsCollection
+        ?.findOne({'bookingId': bookingId});
+
+   final  labEmail=bookedService?['labUserEmail'];
+   final token = await mongoDatabase.getDeviceTokenByEmail(labEmail);
+   final patientName=bookedService?['patientUsername'];
+
+    await SendNotificationService.sendNotificationUsingApi(token: token, title: "Lab Booked by $patientName", body: " Check Booking", data: {
+    "screen": "ManageBookingScreen",
+    "bookingId": bookingId,
+    "patientName": patientName,
+    }, );
+    if (bookedService == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not find booking details.')),
+      );
+      return;
+    }
+
+    final String? labUserEmail = bookedService['labUserEmail']?.toString();
+    final String? labUserName = bookedService['labUserName']?.toString();
+
+    if (labUserEmail == null || labUserName == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Booking details incomplete.')),
+      );
+      return;
+    }
+
+    // 3. Go to confirmation screen
+    Get.to(() => BookingConfirmationScreen(
+      labName: labUserName,
+      bookingId: bookingId,
+      bookingTime: selectedDateTime,
+      recipientUserId: labUserEmail,
+    ));
+
+    // 4. Refresh UI
     setState(() {
       _services = _loadEmailAndFetchServices();
     });
 
-    // Show a confirmation message
+    // 5. Show confirmation message
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Booking confirmed for ${service['serviceName']}')),
     );
@@ -134,15 +180,15 @@ class _ShowLabServicesState extends State<ShowLabServices> {
                   trailing: IconButton(
                     icon: Icon(FontAwesomeIcons.cartPlus),
                     onPressed: () async {
-                     final checkTestBooking= await _addBookingController.checkBookingWithSameTestName(service['serviceName']);
-                     if(checkTestBooking){
-                       ScaffoldMessenger.of(context).showSnackBar(
-                         SnackBar(content: Text('You already Booked ${service['serviceName']} please cancel last one to proceed!')),
-                       );
-                     }else{
-                       _selectDateTimeAndBook(service);
-                     }
-                   // Open calendar and time picker
+                      final checkTestBooking= await _addBookingController.checkBookingWithSameTestName(service['serviceName']);
+                      if(checkTestBooking){
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('You already Booked ${service['serviceName']} please cancel last one to proceed!')),
+                        );
+                      }else{
+                        _selectDateTimeAndBook(service);
+                      }
+                      // Open calendar and time picker
                     },
                   ),
                   onTap: () {

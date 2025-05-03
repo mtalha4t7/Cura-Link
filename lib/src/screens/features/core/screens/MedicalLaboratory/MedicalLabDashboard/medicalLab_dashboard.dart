@@ -1,5 +1,13 @@
+import 'package:cura_link/src/mongodb/mongodb.dart';
+import 'package:cura_link/src/notification_handler/fcmServerKey.dart';
+import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabProfile/medicalLab_profile_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import '../../../../../../notification_handler/notification_server.dart';
+import '../../MedicalLaboratory/MedicalLabChat/chat_home.dart';
 import '../ManageBooking/ManageBooking.dart';
 import '../ManageLabTests/manage_test_screen.dart';
 import '../MedicalLabControllers/lab_dashboard_controller.dart';
@@ -18,13 +26,35 @@ class MedicalLabDashboard extends StatefulWidget {
 class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
   late DashboardController _controller;
   bool isVerified = false;
+NotificationService notificationService = NotificationService();
+MongoDatabase mongoDatabase= MongoDatabase();
+
+  String? _userDeviceToken;
+  late String _mail;
+
+
 
   @override
   void initState() {
     super.initState();
     _controller = DashboardController();
+
+    _mail= (FirebaseAuth.instance.currentUser?.email)!;
+    _initializeDeviceToken();
+    notificationService.requestNotificationPermission();
+    notificationService.firebaseInit(context);
+    notificationService.setupInteractMessage(context);
     _checkUserVerification();
   }
+
+
+  Future<void> _initializeDeviceToken() async {
+    _userDeviceToken = await notificationService.getDeviceToken();
+    await mongoDatabase.checkAndAddDeviceToken(_mail, _userDeviceToken!);
+  }
+
+
+
 
   /// Dynamically check user verification status
   void _checkUserVerification() async {
@@ -255,7 +285,11 @@ class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
                           ServiceCard(
                             icon: Icons.chat,
                             title: 'Chat with Patient',
-                            onTap: () {},
+                            onTap: () async {
+                              GetServerKey getServerKey= GetServerKey();
+                              String accessToken= await getServerKey.getServerTokenKey();
+                              print(accessToken);
+                            },
                           ),
                           ServiceCard(
                             icon: Icons.delivery_dining,
@@ -282,7 +316,21 @@ class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
             BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Chat"),
           ],
-          onTap: (index) {},
+          onTap: (index) {
+            switch (index) {
+              case 0:
+                Get.to(() => MedicalLabDashboard());
+                break;
+              case 1:
+                break;
+              case 2:
+                Get.to(() => ChatHomeScreen());
+                break;
+              case 3:
+                Get.to(() => MedicalLabProfileScreen());
+                break;
+            }
+          },
         ),
       ),
     );

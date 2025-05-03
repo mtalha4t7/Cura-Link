@@ -85,7 +85,7 @@ class DashboardController {
 
             print("User already registered with email: $assignedEmail");
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("User already registered with email: $assignedEmail")),
+              SnackBar(content: Text("User already registered with this email: $assignedEmail")),
             );
             onVerificationResult(false); // Failed verification due to already registered email
           } else {

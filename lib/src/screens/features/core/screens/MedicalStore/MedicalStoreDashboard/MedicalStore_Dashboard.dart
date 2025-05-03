@@ -1,12 +1,41 @@
+import 'package:cura_link/src/mongodb/mongodb.dart';
+import 'package:cura_link/src/notification_handler/notification_server.dart';
 import 'package:cura_link/src/screens/features/core/screens/MedicalStore/MedicalStoreProfile/MedicalStore_Profile_Screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../../../../../constants/sizes.dart';
+import '../../MedicalStore/MedicalStoreChat/chat_home.dart';
 import '../../MedicalLaboratory/MedicalLabWidgets/quick_access_button.dart';
 import '../../MedicalLaboratory/MedicalLabWidgets/service_card.dart';
 
-class MedicalStoreDashboard extends StatelessWidget {
+class MedicalStoreDashboard extends StatefulWidget {
   const MedicalStoreDashboard({super.key});
 
+  @override
+  State<MedicalStoreDashboard> createState() => _MedicalStoreDashboardState();
+}
+
+class _MedicalStoreDashboardState extends State<MedicalStoreDashboard> {
+  NotificationService notificationService = NotificationService();
+  MongoDatabase mongoDatabase= MongoDatabase();
+  late String _mail;
+  late String _userDeviceToken;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeAsyncStuff();
+  }
+
+  Future<void> _initializeAsyncStuff() async {
+    _mail = (FirebaseAuth.instance.currentUser?.email)!;
+    _userDeviceToken = await notificationService.getDeviceToken();
+    await mongoDatabase.checkAndAddDeviceToken(_mail, _userDeviceToken);
+    notificationService.requestNotificationPermission();
+    notificationService.firebaseInit(context);
+    notificationService.setupInteractMessage(context);
+  }
   @override
   Widget build(BuildContext context) {
     final txtTheme = Theme.of(context).textTheme;
@@ -146,16 +175,18 @@ class MedicalStoreDashboard extends StatelessWidget {
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
           ],
           onTap: (index) {
-            if (index == 3) {
-              // Navigate to Profile Screen
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const MedicalStoreProfileScreen()),
-              );
-            } else if (index == 1) {
-              // Navigate to Orders
-            } else if (index == 2) {
-              // Navigate to Inventory
+            switch (index) {
+              case 0:
+                Get.to(() => MedicalStoreDashboard());
+                break;
+              case 1:
+                break;
+              case 2:
+                Get.to(() => ChatHomeScreen());
+                break;
+              case 3:
+                Get.to(() => MedicalStoreProfileScreen());
+                break;
             }
           },
         ),

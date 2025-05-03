@@ -1,24 +1,85 @@
-import 'package:cura_link/src/screens/features/core/screens/Nurse/NurseProfile/Nurse_Profile_Screen.dart';
-import 'package:cura_link/src/screens/features/core/screens/Nurse/NurseProfile/Nurse_Update_Profile_Screen.dart';
+import 'package:cura_link/src/mongodb/mongodb.dart';
+import 'package:cura_link/src/screens/features/core/screens/Nurse/MyBookings/my_bookings_screen.dart';
+import 'package:cura_link/src/screens/features/core/screens/Nurse/NurseBookings/Nurse_Booking_Screen.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookings/my_bookings.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
+import 'package:get/get.dart';
+import 'package:cura_link/src/screens/features/core/screens/Nurse/NurseProfile/Nurse_Profile_Screen.dart';
+import '../../../../../../notification_handler/notification_server.dart';
+import '../../../../../../repository/user_repository/user_repository.dart';
+import '../../Nurse/NurseChat/chat_home.dart';
 import '../../MedicalLaboratory/MedicalLabWidgets/quick_access_button.dart';
 import '../../MedicalLaboratory/MedicalLabWidgets/service_card.dart';
+import '../NurseBookings/Nurse_Booking_Controller.dart';
+import 'Nurse_Dashboard_controller.dart';
 
 
-class NurseDashboard extends StatelessWidget {
-  const NurseDashboard({super.key});
+class NurseDashboard extends StatefulWidget {
+  NurseDashboard({super.key}) {
+    Get.put(NurseDashboardController(Get.find<UserRepository>()));
+    Get.put(BookingControllerNurse());
+  }
+
+  @override
+  State<NurseDashboard> createState() => _NurseDashboardState();
+}
+
+class _NurseDashboardState extends State<NurseDashboard> {
+  late Future<List<Map<String, dynamic>>> _latestBookingsFuture;
+  final emial= FirebaseAuth.instance.currentUser?.email;
+  NotificationService notificationService = NotificationService();
+  late String _userDeviceToken;
+  MongoDatabase mongoDatabase = MongoDatabase();
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeAsyncStuff();
+  }
+
+  Future<void> _initializeAsyncStuff() async {
+    _userDeviceToken = await notificationService.getDeviceToken();
+    await mongoDatabase.checkAndAddDeviceToken(emial!, _userDeviceToken);
+    notificationService.requestNotificationPermission();
+    _latestBookingsFuture = MongoDatabase().getUpcomingBookings(emial!);
+    notificationService.firebaseInit(context);
+    notificationService.setupInteractMessage(context);
+  }
 
   @override
   Widget build(BuildContext context) {
     final txtTheme = Theme.of(context).textTheme;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final controller = Get.find<NurseDashboardController>();
 
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
           title: Text("Nurse Dashboard", style: txtTheme.titleLarge),
           backgroundColor: isDark ? Colors.grey[900] : Colors.blue,
+          actions: [
+            Obx(() => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Row(
+                children: [
+                  Icon(
+                    controller.isAvailable.value ? Icons.circle : Icons.circle_outlined,
+                    color: controller.isAvailable.value ? Colors.green : Colors.red,
+                    size: 12,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    controller.isAvailable.value ? "Available" : "Unavailable",
+                    style: TextStyle(
+                      color: controller.isAvailable.value ? Colors.green : Colors.red,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            )),
+          ],
         ),
         drawer: Drawer(
           child: ListView(
@@ -33,131 +94,248 @@ class NurseDashboard extends StatelessWidget {
               ListTile(
                 leading: const Icon(Icons.dashboard),
                 title: const Text('Dashboard'),
-                onTap: () {
-                  // Navigate to dashboard
-                },
+                onTap: () {},
               ),
               ListTile(
                 leading: const Icon(Icons.book),
                 title: const Text('Bookings'),
-                onTap: () {
-                  // Navigate to bookings
-                },
+                onTap: () {},
               ),
             ],
           ),
         ),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Welcome Back, Nurse!", style: txtTheme.bodyMedium),
-                const SizedBox(height: 16.0),
+        body: Obx(() {
+          if (controller.isLoading.value && controller.nurse.value == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-                // Quick Access Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    QuickAccessButton(
-                      icon: Icons.book_online,
-                      label: 'Check Bookings',
-                      onTap: () {
-                        // Navigate to bookings
-                      },
-                    ),
-                    QuickAccessButton(
-                      icon: Icons.medical_services,
-                      label: 'Manage Services',
-                      onTap: () {
-                        // Navigate to manage services
-                      },
-                    ),
-                    QuickAccessButton(
-                      icon: Icons.settings,
-                      label: 'Settings',
-                      onTap: () {
-                        // Open settings
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16.0),
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Welcome Back, ${controller.nurse.value?.userName ?? 'Nurse'}!",
+                      style: txtTheme.bodyMedium),
+                  const SizedBox(height: 16.0),
 
-                // Bookings Section
-                const Text(
-                  "Current Bookings",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(
-                  height: 200,
-                  child: ListView.builder(
-                    itemCount: 5, // Replace with dynamic data
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        leading: const Icon(Icons.person),
-                        title: Text("Booking #$index"),
-                        subtitle: Text("Details of booking $index"),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.arrow_forward),
-                          onPressed: () {
-                            // Navigate to booking details
-                          },
+                  // Availability Toggle Button
+                  Center(
+                    child: GestureDetector(
+                      onTap: () => controller.toggleAvailability(),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: double.infinity,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          gradient: controller.isAvailable.value
+                              ? LinearGradient(
+                            colors: [
+                              Colors.green.shade400,
+                              Colors.green.shade700
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
+                              : LinearGradient(
+                            colors: [
+                              Colors.red.shade400,
+                              Colors.red.shade700
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: controller.isAvailable.value
+                                  ? Colors.green.withOpacity(0.4)
+                                  : Colors.red.withOpacity(0.4),
+                              blurRadius: 10,
+                              spreadRadius: 2,
+                              offset: const Offset(0, 5),
+                            )
+                          ],
                         ),
-                      );
-                    },
+                        child: Stack(
+                          children: [
+                            Center(
+                              child: controller.isLoading.value
+                                  ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                                  : Row(
+                                mainAxisAlignment:
+                                MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    controller.isAvailable.value
+                                        ? Icons.check_circle
+                                        : Icons.cancel,
+                                    color: Colors.white,
+                                    size: 30,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    controller.isAvailable.value
+                                        ? "You're Available for Work"
+                                        : "You're Not Available",
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Positioned(
+                              right: 20,
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 300),
+                                child: controller.isLoading.value
+                                    ? const SizedBox()
+                                    : Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    controller.isAvailable.value
+                                        ? Icons.toggle_on
+                                        : Icons.toggle_off,
+                                    color: Colors.white,
+                                    size: 30,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16.0),
+                  const SizedBox(height: 20),
 
-                // Services Section
-                const Text(
-                  "Services You Provide",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  children: [
-                    ServiceCard(
-                      icon: Icons.local_hospital,
-                      title: 'Nursing Care',
-                      onTap: () {
-                        // Navigate to Nursing Care details
+                  // Quick Access Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      QuickAccessButton(
+                        icon: Icons.book_online,
+                        label: 'Check Bookings',
+                        onTap: () {
+                          Get.to(() =>NurseBookingsScreen());
+                        },
+                      ),
+                      QuickAccessButton(
+                        icon: Icons.medical_services,
+                        label: 'Manage Bookings',
+                        onTap: () {
+
+                          Get.to(() => MyBookingsNurseScreen());
+                        },
+                      ),
+                      QuickAccessButton(
+                        icon: Icons.settings,
+                        label: 'Settings',
+                        onTap: () {},
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16.0),
+
+                  // Bookings Section
+                  const Text(
+                    "Current Booking",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(
+                    height: 200,
+                    child: FutureBuilder<List<Map<String, dynamic>>>(
+                      future: _latestBookingsFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                          return Center(child: Text('Error: ${snapshot.error}'));
+                        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return const Center(child: Text('No current bookings found.'));
+                        } else {
+                          final bookings = snapshot.data!;
+                          return ListView.builder(
+                            itemCount: bookings.length,
+                            itemBuilder: (context, index) {
+                              final booking = bookings[index];
+                              return ListTile(
+                                leading: const Icon(Icons.person),
+                                title: Text("Patient: ${booking['patientName'] ?? 'Unknown'}"),
+                                subtitle: Text("Date: ${booking['status']}"),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.arrow_forward),
+                                  onPressed: () {
+                                    Get.to(() => MyBookingsNurseScreen());
+                                  },
+                                ),
+                              );
+                            },
+                          );
+                        }
                       },
                     ),
-                    ServiceCard(
-                      icon: Icons.healing,
-                      title: 'Wound Care',
-                      onTap: () {
-                        // Navigate to Wound Care details
-                      },
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 16.0),
+
+                  // Services Section
+                  const Text(
+                    "Services You Provide",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    children: [
+                      ServiceCard(
+                        icon: Icons.local_hospital,
+                        title: 'Nursing Care',
+                        onTap: () {},
+                      ),
+                      ServiceCard(
+                        icon: Icons.healing,
+                        title: 'Wound Care',
+                        onTap: () {},
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ),
+          );
+        }),
         bottomNavigationBar: BottomNavigationBar(
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
             BottomNavigationBarItem(icon: Icon(Icons.book), label: "Bookings"),
+            BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Chat"),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
           ],
           onTap: (index) {
-            if (index == 2) {
-              // Navigate to ProfileScreen
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const NurseProfileScreen()),
-              );
-            } else {
-              // Handle other navigation
+            switch (index) {
+              case 0:
+                Get.to(() => NurseDashboard());
+                break;
+              case 1:
+                break;
+              case 2:
+                Get.to(() => ChatHomeScreen());
+                break;
+              case 3:
+                Get.to(() => NurseProfileScreen());
+                break;
             }
           },
           backgroundColor: isDark ? Colors.grey[850] : Colors.white,
@@ -168,3 +346,5 @@ class NurseDashboard extends StatelessWidget {
     );
   }
 }
+
+

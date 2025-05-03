@@ -14,6 +14,7 @@ class Assets {
   static const String imagesAppLogoSplashDark = 'assets/images/appLogoSplashDark.png';
   static const String imagesAppLogoSplashLight = 'assets/images/appLogoSplashLight.png';
   static const String imagesGetStarted = 'assets/images/getStarted.jpg';
+  static const String imagesIcBackgroud = 'assets/images/ic_backgroud.png';
   static const String imagesLabOnboardImage1 = 'assets/images/labOnboardImage1.jpg';
   static const String imagesLabOnboardImage2 = 'assets/images/labOnboardImage2.jpg';
   static const String imagesLabOnboardImage3 = 'assets/images/labOnboardImage3.jpg';
@@ -31,6 +32,9 @@ class Assets {
   static const String imagesSplash = 'assets/images/Splash.png';
   static const String logoFacebookLogo = 'assets/logo/facebook-logo.png';
   static const String logoGoogleLogo = 'assets/logo/google-logo.png';
+  static const String logoPhone = 'assets/logo/phone.png';
+  static const String mapThemesDarkStyle = 'assets/mapThemes/dark_style.json';
+  static const String mapThemesLightStyle = 'assets/mapThemes/light_style.json';
   static const String onBoardingImagesOnBoardingImage1 = 'assets/images/on_boarding_images/on-boarding-image-1.jpg';
   static const String onBoardingImagesOnBoardingImage2 = 'assets/images/on_boarding_images/on-boarding-image-2.png';
   static const String onBoardingImagesOnBoardingImage3 = 'assets/images/on_boarding_images/on-boarding-image-3.png';

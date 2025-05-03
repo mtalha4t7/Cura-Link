@@ -1,33 +1,40 @@
+import 'package:bson/bson.dart';
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/LabBooking/temp_userModel.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import '../../../../../../mongodb/mongodb.dart';
 import '../../../../../../shared prefrences/shared_prefrence.dart';
 import '../../../../../../utils/helper/helper_controller.dart';
 import '../../../../authentication/models/user_model.dart';
 
-class PatientLabBookingController {
+class NurseBookingController {
   // Fetch user bookings from the MongoDB collection
   final _userRepo = UserRepository();
 
 
+
+
+
   // Add a new booking to the MongoDB collection
-  Future<void> addBooking(String patientName,
+  Future<String?> addBooking(
+      String patientName,
       String testName,
       String price,
-      String bookingDate,) async {
+      String bookingDate,
+      ) async {
     final user = FirebaseAuth.instance.currentUser;
     final patientUserEmail = user?.email;
 
     final userEmail = await loadEmail();
+    final userName = await loadName();
 
     if (userEmail == null) {
       print("Error: User not logged in.");
-      return;
+      return null;
     }
 
     try {
-      // Check if a similar booking already exists in the main bookings collection
       final existingBooking = await MongoDatabase.bookingsCollection?.findOne({
         'userEmail': userEmail,
         'patientName': patientName,
@@ -36,50 +43,53 @@ class PatientLabBookingController {
       });
 
       if (existingBooking == null) {
-        // Insert the booking into the main bookings collection with the price
         final result = await MongoDatabase.bookingsCollection?.insertOne({
           'labUserEmail': userEmail,
+          'labUserName': userName,
           'patientUserEmail': patientUserEmail,
           'patientName': patientName,
           'testName': testName,
           'bookingDate': bookingDate,
-          'price': price, // Store price in the booking
-          'status': 'Pending', // Initialize with a default status
+          'price': price,
+          'status': 'Pending',
         });
+
         if (result != null && result.isSuccess) {
-          // Access the generated _id from the result's 'document' field
           final bookingId = result.document?['_id']?.toHexString();
 
           if (bookingId != null) {
-            // Insert the booking into the patient bookings collection with the bookingId
             await MongoDatabase.patientBookingsCollection?.insertOne({
               'bookingId': bookingId,
-              // Use the generated _id from bookingsCollection as bookingId
               'patientUserEmail': patientUserEmail,
+              'labUserEmail': userEmail,
+              'labUserName': userName,
               'patientName': patientName,
               'testName': testName,
               'bookingDate': bookingDate,
               'price': price,
-              // Store price in the patient booking
               'status': 'Pending',
-              // Initialize with a default status
             });
 
-            print(
-                'Booking added successfully to bookingsCollection and patientBookingsCollection.');
+            print('Booking added successfully.');
+            return bookingId;
           } else {
             print('Error: Generated bookingId is null.');
+            return null;
           }
         } else {
           print('Error inserting booking into bookingsCollection.');
+          return null;
         }
       } else {
         print('Booking already exists.');
+        return null;
       }
     } catch (e) {
       print('Error adding booking: $e');
+      return null;
     }
   }
+
 
   // Remove a booking from the MongoDB collection
   Future<void> removeBooking(String patientName) async {
@@ -130,26 +140,78 @@ class PatientLabBookingController {
   }
 
   // Fetch all users from the MongoDB collection
-  Future<List<ShowLabUserModel>> fetchAllUsers() async {
+  Future<List<ShowLabUserModel>> fetchAllLabUsers() async {
     try {
-      // Fetching all users from the collection
-      final userCollection = await _userRepo.getAllUsers(
-          MongoDatabase.userLabCollection);
+      debugPrint("Fetching users from lab collection...");
+      final userCollection = await _userRepo.getAllUsers(MongoDatabase.userLabCollection);
+      debugPrint("Received ${userCollection.length} raw user records");
 
-      // Filtering users with userVerified == "1"
-      List<ShowLabUserModel> allUsers = userCollection
-          .where((user) => user['userVerified'] == '1')
+      final List<ShowLabUserModel> allUsers = userCollection
+          .where((user) =>
+      user != null &&
+          user['userVerified'] == '1' &&
+          user['userAddress'] != null &&
+          user['userName'] != null
+      )
           .map((user) {
-        return ShowLabUserModel.fromJson(user);
-      }).toList();
+        try {
+          // Convert ObjectId to String if needed
+          final modifiedUser = Map<String, dynamic>.from(user);
+          if (modifiedUser['_id'] != null && modifiedUser['_id'] is ObjectId) {
+            modifiedUser['_id'] = modifiedUser['_id'].toString();
+          }
+          return ShowLabUserModel.fromJson(modifiedUser);
+        } catch (e) {
+          debugPrint("Error parsing user: $e");
+          return null;
+        }
+      })
+          .whereType<ShowLabUserModel>()
+          .toList();
 
+      debugPrint("Returning ${allUsers.length} verified labs");
       return allUsers;
     } catch (e) {
-      print('Error fetching users: $e');
-      return [];
+      debugPrint("Error in fetchAllUsers: $e");
+      rethrow;
     }
   }
+  Future<List<ShowLabUserModel>> fetchAllNurseUsers() async {
+    try {
+      debugPrint("Fetching users from Nurse collection...");
+      final userCollection = await _userRepo.getAllUsers(MongoDatabase.userNurseCollection);
+      debugPrint("Received ${userCollection.length} raw user records");
 
+      final List<ShowLabUserModel> allUsers = userCollection
+          .where((user) =>
+      user != null &&
+          user['userVerified'] == '1' &&
+          user['userAddress'] != null &&
+          user['userName'] != null
+      )
+          .map((user) {
+        try {
+          // Convert ObjectId to String if needed
+          final modifiedUser = Map<String, dynamic>.from(user);
+          if (modifiedUser['_id'] != null && modifiedUser['_id'] is ObjectId) {
+            modifiedUser['_id'] = modifiedUser['_id'].toString();
+          }
+          return ShowLabUserModel.fromJson(modifiedUser);
+        } catch (e) {
+          debugPrint("Error parsing user: $e");
+          return null;
+        }
+      })
+          .whereType<ShowLabUserModel>()
+          .toList();
+
+      debugPrint("Returning ${allUsers.length} verified labs");
+      return allUsers;
+    } catch (e) {
+      debugPrint("Error in fetchAllUsers: $e");
+      rethrow;
+    }
+  }
 
   Future<List<UserModel>> getAllUsers() async {
     try {

@@ -72,6 +72,16 @@ Future<String?> loadEmail() async {
   final prefs = await SharedPreferences.getInstance();
   return prefs.getString('email');
 }
+Future<void> saveName(String name) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('name', name);
+}
+
+
+Future<String?> loadName() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString('name');
+}
 
 Future<void> saveLabName(String name) async {
   final prefs = await SharedPreferences.getInstance();
