@@ -107,9 +107,11 @@ class _ShowLabServicesState extends State<ShowLabServices> {
     }
 
     final labEmail = bookedService['labUserEmail'];
-    final patientName = bookedService['patientUsername'];
+    final patientName = bookedService['patientName'];
+    final patientEmail = bookedService['patientUserEmail'];
 
-    print('✅ Booking found. Lab email: $labEmail, Patient name: $patientName');
+
+    print('✅ Booking found. Lab email: $patientEmail, Patient name: $patientName');
 
     final token = await mongoDatabase.getDeviceTokenByEmail(labEmail);
 
@@ -123,9 +125,7 @@ class _ShowLabServicesState extends State<ShowLabServices> {
         title: "Lab Booked by $patientName",
         body: "Check Booking",
         data: {
-          "screen": "ManageBookingScreen",
-          "bookingId": bookingId,
-          "patientName": patientName,
+          "message": "CheckBookings",
         },
       );
 

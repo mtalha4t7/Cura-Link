@@ -1,4 +1,5 @@
 import 'package:cura_link/src/mongodb/mongodb.dart';
+import 'package:cura_link/src/notification_handler/fcmServerKey.dart';
 import 'package:cura_link/src/screens/features/core/screens/Nurse/MyBookings/my_bookings_screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/Nurse/NurseBookings/Nurse_Booking_Screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookings/my_bookings.dart';
@@ -31,6 +32,7 @@ class _NurseDashboardState extends State<NurseDashboard> {
   NotificationService notificationService = NotificationService();
   late String _userDeviceToken;
   MongoDatabase mongoDatabase = MongoDatabase();
+  final GetServerKey _getServerKey = GetServerKey();
 
   @override
   void initState() {
@@ -40,7 +42,7 @@ class _NurseDashboardState extends State<NurseDashboard> {
 
   Future<void> _initializeAsyncStuff() async {
     _userDeviceToken = await notificationService.getDeviceToken();
-    await mongoDatabase.checkAndAddDeviceToken(emial!, _userDeviceToken);
+    await mongoDatabase.updateDeviceTokenForUser(emial!, _userDeviceToken);
     notificationService.requestNotificationPermission();
     _latestBookingsFuture = MongoDatabase().getUpcomingBookings(emial!);
     notificationService.firebaseInit(context);
@@ -240,7 +242,10 @@ class _NurseDashboardState extends State<NurseDashboard> {
                       QuickAccessButton(
                         icon: Icons.settings,
                         label: 'Settings',
-                        onTap: () {},
+                        onTap: () async {
+                          final key = await _getServerKey.getServerTokenKey();
+                          print(key);
+                        },
                       ),
                     ],
                   ),

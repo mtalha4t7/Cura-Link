@@ -129,36 +129,31 @@ class MongoDatabase {
     }
   }
     // adding device token if not available
-   Future<void> checkAndAddDeviceToken(
-     String email,
-    String deviceToken,
-  ) async {
-    final collections = [
-      _userPatientCollection,
-      _userLabCollection,
-      _userNurseCollection,
-      _userMedicalStoreCollection,
-    ];
+   Future<void> updateDeviceTokenForUser(
+       String email,
+       String deviceToken,
+       ) async {
+     final collections = [
+       _userPatientCollection,
+       _userLabCollection,
+       _userNurseCollection,
+       _userMedicalStoreCollection,
+     ];
 
-    for (var collection in collections) {
-      if (collection == null) continue;
+     for (var collection in collections) {
+       if (collection == null) continue;
 
-      final userDoc = await collection.findOne({"userEmail": email});
+       final userDoc = await collection.findOne({"userEmail": email});
 
-      if (userDoc != null) {
-        final existingToken = userDoc['userDeviceToken'];
-
-        // If field is missing or empty
-        if (existingToken == null || existingToken.toString().isEmpty) {
-          await collection.updateOne(
-            where.eq("userEmail", email),
-            modify.set("userDeviceToken", deviceToken),
-          );
-        }
-        // Once found and processed in one collection, stop checking others
-        break;
-      }
-    }
+       if (userDoc != null) {
+         await collection.updateOne(
+           where.eq("userEmail", email),
+           modify.set("userDeviceToken", deviceToken),
+         );
+         // Stop after updating in the first matching collection
+         break;
+       }
+     }
   }
   Future<String?> getDeviceTokenByEmail(String email) async {
     final collections = [

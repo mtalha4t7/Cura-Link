@@ -49,7 +49,7 @@ MongoDatabase mongoDatabase= MongoDatabase();
 
   Future<void> _initializeDeviceToken() async {
     _userDeviceToken = await notificationService.getDeviceToken();
-    await mongoDatabase.checkAndAddDeviceToken(_mail, _userDeviceToken!);
+    await mongoDatabase.updateDeviceTokenForUser(_mail, _userDeviceToken!);
   }
 
 

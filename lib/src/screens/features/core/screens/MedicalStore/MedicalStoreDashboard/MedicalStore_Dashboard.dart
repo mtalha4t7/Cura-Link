@@ -31,7 +31,7 @@ class _MedicalStoreDashboardState extends State<MedicalStoreDashboard> {
   Future<void> _initializeAsyncStuff() async {
     _mail = (FirebaseAuth.instance.currentUser?.email)!;
     _userDeviceToken = await notificationService.getDeviceToken();
-    await mongoDatabase.checkAndAddDeviceToken(_mail, _userDeviceToken);
+    await mongoDatabase.updateDeviceTokenForUser(_mail, _userDeviceToken);
     notificationService.requestNotificationPermission();
     notificationService.firebaseInit(context);
     notificationService.setupInteractMessage(context);

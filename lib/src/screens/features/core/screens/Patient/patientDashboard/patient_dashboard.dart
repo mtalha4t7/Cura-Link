@@ -1,3 +1,4 @@
+import 'package:cura_link/src/notification_handler/fcmServerKey.dart';
 import 'package:cura_link/src/notification_handler/notification_server.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -36,6 +37,7 @@ class _PatientDashboardState extends State<PatientDashboard> {
   late String _email;
   late String _userDeviceToken;
    NotificationService  notificationService= NotificationService();
+   GetServerKey _getServerKey = GetServerKey();
   @override
   void initState() {
     super.initState();
@@ -45,7 +47,7 @@ class _PatientDashboardState extends State<PatientDashboard> {
   Future<void> _initializeAsyncStuff() async {
     _email = (_auth.currentUser?.email!)!;
     _userDeviceToken = await notificationService.getDeviceToken();
-    await mongoDatabase.checkAndAddDeviceToken(_email, _userDeviceToken);
+    await mongoDatabase.updateDeviceTokenForUser(_email, _userDeviceToken);
     notificationService.requestNotificationPermission();
     _controller.fetchUnreadBookingsCount();
     notificationService.firebaseInit(context);
@@ -78,7 +80,11 @@ class _PatientDashboardState extends State<PatientDashboard> {
                     QuickAccessButton(
                         icon: Icons.medication,
                         label: 'Order Medicine',
-                        onTap: () {}
+                        onTap: () async{
+                          final key = await _getServerKey.getServerTokenKey();
+                          print(key);
+                          print("device token= $_userDeviceToken");
+                        }
                     ),
                     QuickAccessButton(
                       icon: Icons.local_hospital,
@@ -132,7 +138,11 @@ class _PatientDashboardState extends State<PatientDashboard> {
                     ServiceCard(
                         icon: Icons.biotech,
                         title: 'Lab Tests',
-                        onTap: () {}
+                        onTap: ()async {
+                          final key = await _getServerKey.getServerTokenKey();
+                          print(key);
+                          print("device token= $_userDeviceToken");
+                        }
                     ),
                     ServiceCard(
                       icon: Icons.add_to_queue,
