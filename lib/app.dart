@@ -10,17 +10,15 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return NotificationWrapper(
-      child: GetMaterialApp(
-        initialBinding: InitialBinding(),
-        themeMode: ThemeMode.system,
-        theme: TAppTheme.lightTheme,
-        darkTheme: TAppTheme.darkTheme,
-        debugShowCheckedModeBanner: false,
-        home: const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(), // Initial loading screen
-          ),
+    return GetMaterialApp(
+      initialBinding: InitialBinding(),
+      themeMode: ThemeMode.system,
+      theme: TAppTheme.lightTheme,
+      darkTheme: TAppTheme.darkTheme,
+      debugShowCheckedModeBanner: false,
+      home: const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(), // Initial loading screen
         ),
       ),
     );
