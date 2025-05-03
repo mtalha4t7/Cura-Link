@@ -29,6 +29,8 @@ class _MedicalStoreDashboardState extends State<MedicalStoreDashboard> {
     _userDeviceToken=await notificationService.getDeviceToken();
     mongoDatabase.checkAndAddDeviceToken(_mail, _userDeviceToken);
     notificationService.requestNotificationPermission();
+    notificationService.firebaseInit(context);
+    notificationService.setupInteractMessage(context);
     super.initState();
   }
   @override

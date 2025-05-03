@@ -41,6 +41,8 @@ MongoDatabase mongoDatabase= MongoDatabase();
     _userDeviceToken=await notificationService.getDeviceToken();
     mongoDatabase.checkAndAddDeviceToken(_mail, _userDeviceToken);
     notificationService.requestNotificationPermission();
+    notificationService.firebaseInit(context);
+    notificationService.setupInteractMessage(context);
     _checkUserVerification();
   }
 

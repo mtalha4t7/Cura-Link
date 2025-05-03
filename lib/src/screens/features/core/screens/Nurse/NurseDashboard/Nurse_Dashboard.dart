@@ -39,6 +39,8 @@ class _NurseDashboardState extends State<NurseDashboard> {
     mongoDatabase.checkAndAddDeviceToken(emial!, _userDeviceToken);
     notificationService.requestNotificationPermission();
     _latestBookingsFuture = MongoDatabase().getUpcomingBookings(emial!);
+    notificationService.firebaseInit(context);
+    notificationService.setupInteractMessage(context);
   }
 
   @override

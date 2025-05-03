@@ -44,6 +44,8 @@ class _PatientDashboardState extends State<PatientDashboard> {
     mongoDatabase.checkAndAddDeviceToken(_email!, _userDeviceToken);
     notificationService.requestNotificationPermission();
     _controller.fetchUnreadBookingsCount();
+    notificationService.firebaseInit(context);
+    notificationService.setupInteractMessage(context);
   }
 
 
