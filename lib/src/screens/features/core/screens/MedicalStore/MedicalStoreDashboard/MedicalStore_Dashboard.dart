@@ -22,16 +22,19 @@ class _MedicalStoreDashboardState extends State<MedicalStoreDashboard> {
   late String _mail;
   late String _userDeviceToken;
 
-
   @override
-  void initState() async {
-    _mail= (FirebaseAuth.instance.currentUser?.email)!;
-    _userDeviceToken=await notificationService.getDeviceToken();
-    mongoDatabase.checkAndAddDeviceToken(_mail, _userDeviceToken);
+  void initState() {
+    super.initState();
+    _initializeAsyncStuff();
+  }
+
+  Future<void> _initializeAsyncStuff() async {
+    _mail = (FirebaseAuth.instance.currentUser?.email)!;
+    _userDeviceToken = await notificationService.getDeviceToken();
+    await mongoDatabase.checkAndAddDeviceToken(_mail, _userDeviceToken);
     notificationService.requestNotificationPermission();
     notificationService.firebaseInit(context);
     notificationService.setupInteractMessage(context);
-    super.initState();
   }
   @override
   Widget build(BuildContext context) {

@@ -29,23 +29,29 @@ class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
 NotificationService notificationService = NotificationService();
 MongoDatabase mongoDatabase= MongoDatabase();
 
-  late String _userDeviceToken;
+  String? _userDeviceToken;
   late String _mail;
 
 
+
   @override
-  void initState() async{
+  void initState() {
     super.initState();
     _controller = DashboardController();
+
     _mail= (FirebaseAuth.instance.currentUser?.email)!;
-    _userDeviceToken=await notificationService.getDeviceToken();
-    mongoDatabase.checkAndAddDeviceToken(_mail, _userDeviceToken);
+    _initializeDeviceToken();
     notificationService.requestNotificationPermission();
     notificationService.firebaseInit(context);
     notificationService.setupInteractMessage(context);
     _checkUserVerification();
   }
 
+
+  Future<void> _initializeDeviceToken() async {
+    _userDeviceToken = await notificationService.getDeviceToken();
+    await mongoDatabase.checkAndAddDeviceToken(_mail, _userDeviceToken!);
+  }
 
 
 

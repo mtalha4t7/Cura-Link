@@ -37,19 +37,22 @@ class _PatientDashboardState extends State<PatientDashboard> {
   late String _userDeviceToken;
    NotificationService  notificationService= NotificationService();
   @override
-  void initState() async {
+  void initState() {
     super.initState();
-    _email= (_auth.currentUser?.email!)!;
-    _userDeviceToken=await notificationService.getDeviceToken();
-    mongoDatabase.checkAndAddDeviceToken(_email!, _userDeviceToken);
+    _initializeAsyncStuff();
+  }
+
+  Future<void> _initializeAsyncStuff() async {
+    _email = (_auth.currentUser?.email!)!;
+    _userDeviceToken = await notificationService.getDeviceToken();
+    await mongoDatabase.checkAndAddDeviceToken(_email, _userDeviceToken);
     notificationService.requestNotificationPermission();
     _controller.fetchUnreadBookingsCount();
     notificationService.firebaseInit(context);
     notificationService.setupInteractMessage(context);
   }
 
-
-  @override
+    @override
   Widget build(BuildContext context) {
     final txtTheme = Theme.of(context).textTheme;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;

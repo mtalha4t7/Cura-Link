@@ -33,10 +33,14 @@ class _NurseDashboardState extends State<NurseDashboard> {
   MongoDatabase mongoDatabase = MongoDatabase();
 
   @override
-  void initState() async {
+  void initState() {
     super.initState();
-    _userDeviceToken=await notificationService.getDeviceToken();
-    mongoDatabase.checkAndAddDeviceToken(emial!, _userDeviceToken);
+    _initializeAsyncStuff();
+  }
+
+  Future<void> _initializeAsyncStuff() async {
+    _userDeviceToken = await notificationService.getDeviceToken();
+    await mongoDatabase.checkAndAddDeviceToken(emial!, _userDeviceToken);
     notificationService.requestNotificationPermission();
     _latestBookingsFuture = MongoDatabase().getUpcomingBookings(emial!);
     notificationService.firebaseInit(context);
