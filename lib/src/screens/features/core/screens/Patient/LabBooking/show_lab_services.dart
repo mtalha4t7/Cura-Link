@@ -95,7 +95,7 @@ class _ShowLabServicesState extends State<ShowLabServices> {
       return;
     }
 
-    // 2. Fetch full booking from _patientBookingsCollection
+    // 2. Fetch full booking from _patientBookingsCollectionbbb
     final bookedService = await MongoDatabase.patientBookingsCollection
         ?.findOne({'bookingId': bookingId});
 
