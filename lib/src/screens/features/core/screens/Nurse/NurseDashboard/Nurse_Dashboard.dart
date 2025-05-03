@@ -27,7 +27,7 @@ class NurseDashboard extends StatefulWidget {
 
 class _NurseDashboardState extends State<NurseDashboard> {
   late Future<List<Map<String, dynamic>>> _latestBookingsFuture;
-  final emial= FirebaseAuth.instance.currentUser?.email.toString();
+  final emial= FirebaseAuth.instance.currentUser?.email;
   NotificationService notificationService = NotificationService();
   late String _userDeviceToken;
   MongoDatabase mongoDatabase = MongoDatabase();

@@ -143,7 +143,7 @@ class MongoDatabase {
     for (var collection in collections) {
       if (collection == null) continue;
 
-      final userDoc = await collection.findOne({"email": email});
+      final userDoc = await collection.findOne({"userEmail": email});
 
       if (userDoc != null) {
         final existingToken = userDoc['userDeviceToken'];
@@ -151,7 +151,7 @@ class MongoDatabase {
         // If field is missing or empty
         if (existingToken == null || existingToken.toString().isEmpty) {
           await collection.updateOne(
-            where.eq("email", email),
+            where.eq("userEmail", email),
             modify.set("userDeviceToken", deviceToken),
           );
         }
