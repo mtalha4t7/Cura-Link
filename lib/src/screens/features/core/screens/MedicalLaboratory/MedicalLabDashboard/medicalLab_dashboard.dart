@@ -1,8 +1,7 @@
 import 'package:cura_link/src/mongodb/mongodb.dart';
-import 'package:cura_link/src/notification_handler/fcmServerKey.dart';
 import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabProfile/medicalLab_profile_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -286,9 +285,7 @@ MongoDatabase mongoDatabase= MongoDatabase();
                             icon: Icons.chat,
                             title: 'Chat with Patient',
                             onTap: () async {
-                              GetServerKey getServerKey= GetServerKey();
-                              String accessToken= await getServerKey.getServerTokenKey();
-                              print(accessToken);
+                            Get.to(ChatHomeScreen());
                             },
                           ),
                           ServiceCard(
@@ -311,10 +308,10 @@ MongoDatabase mongoDatabase= MongoDatabase();
           unselectedItemColor: isDark ? Colors.white70 : Colors.black54,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: "Dashboard"),
-            BottomNavigationBarItem(icon: Icon(Icons.analytics), label: "Reports"),
             BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: "Appointments"),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
             BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Chat"),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+
           ],
           onTap: (index) {
             switch (index) {

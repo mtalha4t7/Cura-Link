@@ -3,12 +3,11 @@ import 'package:cura_link/src/screens/features/core/screens/Patient/PatientContr
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:get/get.dart';
 import '../../../../../../mongodb/mongodb.dart';
 import '../../../../../../repository/user_repository/user_repository.dart';
 import '../../../../../../shared prefrences/shared_prefrence.dart';
 import '../PatientControllers/lab_booking_controller.dart';
-import 'confirm_booking.dart';
+
 
 class ShowLabServices extends StatefulWidget {
   const ShowLabServices({super.key});
@@ -126,13 +125,7 @@ class _ShowLabServicesState extends State<ShowLabServices> {
       return;
     }
 
-    // 3. Go to confirmation screen
-    Get.to(() => BookingConfirmationScreen(
-      labName: labUserName,
-      bookingId: bookingId,
-      bookingTime: selectedDateTime,
-      recipientUserId: labUserEmail,
-    ));
+
 
     // 4. Refresh UI
     setState(() {
