@@ -107,7 +107,7 @@ class NurseBookingsScreen extends StatelessWidget {
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: const Text('Cancel'),
-              ),
+              ),//jj
               ElevatedButton(
                 onPressed: () async {
                   final price = double.tryParse(priceController.text.trim());
