@@ -1,13 +1,23 @@
 import 'package:flutter/material.dart';
 
-class TPageRoute{
-
-  static pageRoute(BuildContext context, int durationInMS,dynamic className ){
-    Navigator.push(
+class TPageRoute {
+  static Future<T?> pageRoute<T>(
+      BuildContext context,
+      int durationInMS,
+      Widget className,
+      ) {
+    return Navigator.push<T>(
       context,
-      PageRouteBuilder(
+      PageRouteBuilder<T>(
         transitionDuration: Duration(milliseconds: durationInMS),
-        pageBuilder: (_, __, ___) => className,
+        pageBuilder: (context, animation, secondaryAnimation) => className,
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          // Add your custom transition here
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
       ),
     );
   }

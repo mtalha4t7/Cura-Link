@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:logger/logger.dart';
 
@@ -6,8 +8,40 @@ import '../../../../../../mongodb/mongodb.dart';
 import '../../../../../../repository/user_repository/user_repository.dart';
 import '../../../../authentication/models/chat_user_model.dart';
 
-class MyBookedNursesController {
+class MyBookedNursesController extends GetxController {
+
   final Logger _logger = Logger();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  var totalReceivedBookingsCount = 0.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchTotalReceivedBookingsCount();
+  }
+  // Fetch all received bookings count for current nurse (without filtering status)
+  Future<void> fetchTotalReceivedBookingsCount() async {
+    final userEmail = _auth.currentUser?.email;
+    if (userEmail == null) {
+      print('User not logged in.');
+      totalReceivedBookingsCount.value = 0;
+      return;
+    }
+
+    try {
+      final bookings = await MongoDatabase.patientNurseBookingsCollection?.find(
+        where.eq('patientEmail', userEmail.trim().toLowerCase())
+            .sortBy('bookingDate', descending: false),
+      ).toList();
+      totalReceivedBookingsCount.value = bookings?.length ?? 0;
+      print('Total bookings count fetched: ${totalReceivedBookingsCount.value}');
+    } catch (e) {
+      print('Error fetching total received bookings count: $e');
+      totalReceivedBookingsCount.value = 0;
+    }
+  }
+
+
 
   /// Fetch all nurse bookings for a specific patient.
   Future<List<Map<String, dynamic>>> fetchNurseBookings(String patientEmail) async {

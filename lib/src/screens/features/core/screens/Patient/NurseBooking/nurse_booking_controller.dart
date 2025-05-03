@@ -1,22 +1,14 @@
-
-import 'package:cura_link/src/repository/user_repository/user_repository.dart';
-import 'package:cura_link/src/screens/features/core/screens/Patient/NurseBooking/temp_user_NurseModel.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
-
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-
 import 'package:mongo_dart/mongo_dart.dart';
-
 import '../../../../../../mongodb/mongodb.dart';
-import '../../../models/nurse_Recieved_Bookings_Model.dart';
-import '../../../models/patient_Nurse_Booking_Model.dart';
 import 'bid_model.dart';
 import 'nurseModel.dart';
 class NurseBookingController extends GetxController {
 
   final mongoDatabase = MongoDatabase();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+
 
   Future<String> createServiceRequest({
     required String serviceType,
@@ -110,7 +102,7 @@ class NurseBookingController extends GetxController {
         'patientName': patientName,
         'price': price,
         'status': 'accepted',
-        'createdAt': DateTime.now(),
+        'createdAt': DateTime.now().toUtc(),
       };
 
       // 6. Insert into patient collection

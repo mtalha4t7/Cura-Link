@@ -8,7 +8,8 @@ import '../../../../../constants/text_strings.dart';
 import '../../../../../utils/animations/fade_in_animation/animation_design.dart';
 import '../../../../../utils/animations/fade_in_animation/fade_in_animation_controller.dart';
 import '../../../../../utils/animations/fade_in_animation/fade_in_animation_model.dart';
-import '../signup/signup_screen.dart';
+import '../login/login_screen.dart';
+
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -82,7 +83,7 @@ class WelcomeScreen extends StatelessWidget {
                             title: 'Patient',
                             onTap: () async {
                               await saveUserType("Patient");
-                              Get.to(() => const SignupScreen());
+                              Get.to(() => const LoginScreen());
                             },
                           ),
                         ),
@@ -93,7 +94,7 @@ class WelcomeScreen extends StatelessWidget {
                             title: 'Medic-Store',
                             onTap: () async {
                               await saveUserType("Medical-Store");
-                              Get.to(() => const SignupScreen());
+                              Get.to(() => const LoginScreen());
                             },
                           ),
                         ),
@@ -107,7 +108,7 @@ class WelcomeScreen extends StatelessWidget {
                             title: 'Nurse',
                             onTap: () async {
                               await saveUserType("Nurse");
-                              Get.to(() => const SignupScreen());
+                              Get.to(() => const LoginScreen());
                             },
                           ),
                         ),
@@ -118,7 +119,7 @@ class WelcomeScreen extends StatelessWidget {
                             title: 'Lab',
                             onTap: () async {
                               await saveUserType("Lab");
-                              Get.to(() => const SignupScreen());
+                              Get.to(() => const LoginScreen());
                             },
                           ),
                         ),

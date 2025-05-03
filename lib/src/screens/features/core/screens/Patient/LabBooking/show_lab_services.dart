@@ -123,7 +123,7 @@ class _ShowLabServicesState extends State<ShowLabServices> {
       final notificationSent = await SendNotificationService.sendNotificationUsingApi(
         token: token,
         title: "Lab Booked by $patientName",
-        body: "Check Booking",
+        body: "Tap to check bookings",
         data: {
           "screen": "ManageBookingScreen",
         },

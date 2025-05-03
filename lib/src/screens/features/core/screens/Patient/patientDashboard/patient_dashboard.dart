@@ -1,11 +1,10 @@
 import 'package:cura_link/src/notification_handler/fcmServerKey.dart';
 import 'package:cura_link/src/notification_handler/notification_server.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookedNurses/my_booked_nurses_screen_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookedNurses/my_booked_nurses_screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookings/my_bookings.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/NurseBooking/nurse_booking.dart';
@@ -31,13 +30,15 @@ class PatientDashboard extends StatefulWidget {
 }
 
 class _PatientDashboardState extends State<PatientDashboard> {
-  final MyBookingsController _controller = Get.put(MyBookingsController());
+  final MyBookingsController _myBookingController = Get.put(MyBookingsController());
+  final MyBookedNursesController _myBookedNursesController = Get.put(MyBookedNursesController());
   final FirebaseAuth _auth = FirebaseAuth.instance;
   MongoDatabase mongoDatabase = MongoDatabase();
   late String _email;
   late String _userDeviceToken;
-   NotificationService  notificationService= NotificationService();
-   GetServerKey _getServerKey = GetServerKey();
+  NotificationService notificationService = NotificationService();
+  GetServerKey _getServerKey = GetServerKey();
+
   @override
   void initState() {
     super.initState();
@@ -49,12 +50,13 @@ class _PatientDashboardState extends State<PatientDashboard> {
     _userDeviceToken = await notificationService.getDeviceToken();
     await mongoDatabase.updateDeviceTokenForUser(_email, _userDeviceToken);
     notificationService.requestNotificationPermission();
-    _controller.fetchUnreadBookingsCount();
+    _myBookingController.fetchUnreadBookingsCount();
+    _myBookedNursesController.fetchTotalReceivedBookingsCount();
     notificationService.firebaseInit(context);
     notificationService.setupInteractMessage(context);
   }
 
-    @override
+  @override
   Widget build(BuildContext context) {
     final txtTheme = Theme.of(context).textTheme;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
@@ -78,13 +80,13 @@ class _PatientDashboardState extends State<PatientDashboard> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     QuickAccessButton(
-                        icon: Icons.medication,
-                        label: 'Order Medicine',
-                        onTap: () async{
-                          final key = await _getServerKey.getServerTokenKey();
-                          print(key);
-                          print("device token= $_userDeviceToken");
-                        }
+                      icon: Icons.medication,
+                      label: 'Order Medicine',
+                      onTap: () async {
+                        final key = await _getServerKey.getServerTokenKey();
+                        print(key);
+                        print("device token= $_userDeviceToken");
+                      },
                     ),
                     QuickAccessButton(
                       icon: Icons.local_hospital,
@@ -100,9 +102,9 @@ class _PatientDashboardState extends State<PatientDashboard> {
                       icon: Icons.science,
                       label: 'Book Lab',
                       onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => LabBookingScreen())
-                      ).then((_) => _controller.fetchUnreadBookingsCount()),
+                        context,
+                        MaterialPageRoute(builder: (context) => LabBookingScreen()),
+                      ).then((_) => _myBookingController.fetchUnreadBookingsCount()),
                     ),
                   ],
                 ),
@@ -110,8 +112,8 @@ class _PatientDashboardState extends State<PatientDashboard> {
 
                 // Services Grid
                 const Text(
-                    "Our Services",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
+                  "Our Services",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
 
                 Obx(() => GridView.count(
@@ -122,36 +124,37 @@ class _PatientDashboardState extends State<PatientDashboard> {
                   crossAxisSpacing: 8,
                   children: [
                     ServiceCard(
-                        icon: Icons.medical_services,
-                        title: 'Medicine Delivery',
-                        onTap: () {}
+                      icon: Icons.medical_services,
+                      title: 'Medicine Delivery',
+                      onTap: () {},
                     ),
                     ServiceCard(
                       icon: Icons.medical_services_sharp,
+                      showBadge: _myBookedNursesController.totalReceivedBookingsCount.value > 0,
                       title: 'Nurse bookings',
                       onTap: () => Get.to(
-                              () => MyBookedNursesScreen(
-                              patientEmail: _auth.currentUser?.email ?? ''
-                          )
+                            () => MyBookedNursesScreen(
+                          patientEmail: _auth.currentUser?.email ?? '',
+                        ),
                       ),
                     ),
                     ServiceCard(
-                        icon: Icons.biotech,
-                        title: 'Lab Tests',
-                        onTap: ()async {
-                          final key = await _getServerKey.getServerTokenKey();
-                          print(key);
-                          print("device token= $_userDeviceToken");
-                        }
+                      icon: Icons.biotech,
+                      title: 'Lab Tests',
+                      onTap: () async {
+                        final key = await _getServerKey.getServerTokenKey();
+                        print(key);
+                        print("device token= $_userDeviceToken");
+                      },
                     ),
                     ServiceCard(
                       icon: Icons.add_to_queue,
                       title: 'My Bookings',
-                      showBadge: _controller.unreadCount.value > 0,
+                      showBadge: _myBookingController.unreadCount.value > 0,
                       onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => MyBookingsScreen())
-                      ).then((_) => _controller.fetchUnreadBookingsCount()),
+                        context,
+                        MaterialPageRoute(builder: (context) => MyBookingsScreen()),
+                      ).then((_) => _myBookingController.fetchUnreadBookingsCount()),
                     ),
                   ],
                 )),
@@ -160,8 +163,8 @@ class _PatientDashboardState extends State<PatientDashboard> {
 
                 // Health Tips Section
                 const Text(
-                    "Health Tips",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
+                  "Health Tips",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(
                   height: 120,

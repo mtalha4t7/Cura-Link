@@ -208,7 +208,7 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
                           onLocation: () =>
                               _launchMaps(booking['location']),
                           formattedDate:
-                          _formatDate(booking['bookingDate']),
+                          _formatDate(booking['createdAt']),
                           showActions: _currentFilter == 'upcoming',
                           onCancel: () => _cancelBooking(
                               booking['_id'].toString()),
