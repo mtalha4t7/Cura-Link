@@ -1,3 +1,4 @@
+import 'package:cura_link/src/notification_handler/send_notification.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/PatientControllers/show_services_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +23,7 @@ class _ShowLabServicesState extends State<ShowLabServices> {
   late Future<List<Map<String, dynamic>>> _services;
   late String? email; // to Make email nullable
   late String _patientName;
-
+  MongoDatabase mongoDatabase = MongoDatabase();
   @override
   void initState() {
     super.initState();
@@ -80,7 +81,7 @@ class _ShowLabServicesState extends State<ShowLabServices> {
 
     String price = service['prize'].toString();
 
-    // 1. Add booking and get bookingId
+
     String? bookingId = await _addBookingController.addBooking(
       _patientName,
       service['serviceName'],
@@ -99,6 +100,15 @@ class _ShowLabServicesState extends State<ShowLabServices> {
     final bookedService = await MongoDatabase.patientBookingsCollection
         ?.findOne({'bookingId': bookingId});
 
+   final  labEmail=bookedService?['labUserEmail'];
+   final token = await mongoDatabase.getDeviceTokenByEmail(labEmail);
+   final patientName=bookedService?['patientUsername'];
+
+    await SendNotificationService.sendNotificationUsingApi(token: token, title: "Lab Booked by $patientName", body: " Check Booking", data: {
+    "screen": "ManageBookingScreen",
+    "bookingId": bookingId,
+    "patientName": patientName,
+    }, );
     if (bookedService == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Could not find booking details.')),

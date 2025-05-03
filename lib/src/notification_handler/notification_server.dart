@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import '../screens/features/core/screens/Nurse/MyBookings/my_bookings_screen.dart';
+
 class NotificationService {
   //initialising firebase message plugin
   FirebaseMessaging messaging = FirebaseMessaging.instance;
@@ -177,30 +179,24 @@ class NotificationService {
       BuildContext context,
       RemoteMessage message,
       ) async {
-    print(
-        "Navigating to appointments screen. Hit here to handle the message. Message data: ${message.data}");
-    //
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (context) => NotificationScreen(message: message),
-    //   ),
-    // );
+    print("Navigating to screen. Message data: ${message.data}");
 
-    // if (message.data['screen'] == 'cart') {
-    //   Navigator.push(
-    //     context,
-    //     MaterialPageRoute(
-    //       builder: (context) => const CartScreen(),
-    //     ),
-    //   );
-    // } else {
-    //   Navigator.push(
-    //     context,
-    //     MaterialPageRoute(
-    //       builder: (context) => NotificationScreen(message: message),
-    //     ),
-    //   );
-    // }
+    String? screen = message.data['screen'];
+
+    if (screen == 'ManageBookingScreen') {
+      // Navigate to ManageBookingScreen
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const MyBookingsNurseScreen(),
+        ),
+      );
+    } else {
+      // Default action or other screen logic
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No matching screen found for notification.")),
+      );
+    }
   }
+
 }

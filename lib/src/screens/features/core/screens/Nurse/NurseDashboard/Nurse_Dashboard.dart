@@ -234,7 +234,7 @@ class _NurseDashboardState extends State<NurseDashboard> {
                         label: 'Manage Bookings',
                         onTap: () {
 
-                          Get.to(() => MyBookingsNurseScreen(nurseEmail: emial!));
+                          Get.to(() => MyBookingsNurseScreen());
                         },
                       ),
                       QuickAccessButton(
@@ -275,7 +275,7 @@ class _NurseDashboardState extends State<NurseDashboard> {
                                 trailing: IconButton(
                                   icon: const Icon(Icons.arrow_forward),
                                   onPressed: () {
-                                    Get.to(() => MyBookingsNurseScreen(nurseEmail: emial!));
+                                    Get.to(() => MyBookingsNurseScreen());
                                   },
                                 ),
                               );

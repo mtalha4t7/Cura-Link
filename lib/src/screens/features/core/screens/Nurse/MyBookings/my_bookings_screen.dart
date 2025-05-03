@@ -1,4 +1,5 @@
 import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabChat/chat_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -8,9 +9,7 @@ import 'my_bookings_nurse_card.dart';
 import 'my_bookins_screen_controller.dart';
 
 class MyBookingsNurseScreen extends StatefulWidget {
-  final String nurseEmail;
-
-  const MyBookingsNurseScreen({super.key, required this.nurseEmail});
+  const MyBookingsNurseScreen({super.key});
 
   @override
   _MyBookingsNurseScreenState createState() => _MyBookingsNurseScreenState();
@@ -20,20 +19,26 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
   final MyBookingsNurseController _controller = MyBookingsNurseController();
   late Future<List<Map<String, dynamic>>> _bookingsFuture;
   String _currentFilter = 'upcoming';
-  late final String email;
+  String? email;
 
   @override
   void initState() {
     super.initState();
-    email = widget.nurseEmail;
-    _loadBookings();
+    _initializeAsyncStuff();
+  }
+
+  void _initializeAsyncStuff() async {
+    email = FirebaseAuth.instance.currentUser?.email;
+    if (email != null) {
+      _loadBookings();
+    }
   }
 
   void _loadBookings() {
     setState(() {
       _bookingsFuture = _currentFilter == 'upcoming'
-          ? _controller.getUpcomingBookings(widget.nurseEmail)
-          : _controller.getPastBookings(widget.nurseEmail);
+          ? _controller.getUpcomingBookings(email!)
+          : _controller.getPastBookings(email!);
     });
   }
 
@@ -80,12 +85,10 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
     final user = await _controller.fetchUserData(patientEmail);
     if (user != null && mounted) {
       Get.to(() => ChatScreen(user: user));
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not fetch user data for chat')),
-        );
-      }
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not fetch user data for chat')),
+      );
     }
   }
 
@@ -110,7 +113,7 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
 
     if (confirmed == true && mounted) {
       final success = await _controller.cancelBooking(bookingId);
-      if (success && mounted) {
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Booking cancelled successfully')),
         );
@@ -148,20 +151,16 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
             child: DropdownButton<String>(
               value: _currentFilter,
               items: const [
-                DropdownMenuItem(
-                  value: 'upcoming',
-                  child: Text('Upcoming'),
-                ),
-                DropdownMenuItem(
-                  value: 'past',
-                  child: Text('Past'),
-                ),
+                DropdownMenuItem(value: 'upcoming', child: Text('Upcoming')),
+                DropdownMenuItem(value: 'past', child: Text('Past')),
               ],
               onChanged: (value) {
                 if (value != null) {
                   setState(() {
                     _currentFilter = value;
-                    _loadBookings();
+                    if (email != null) {
+                      _loadBookings();
+                    }
                   });
                 }
               },
@@ -176,7 +175,9 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        child: Column(
+        child: email == null
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -192,8 +193,10 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: _bookingsFuture,
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                  if (snapshot.connectionState ==
+                      ConnectionState.waiting) {
+                    return const Center(
+                        child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
                     return Center(
                       child: Text('Error: ${snapshot.error}'),
@@ -203,9 +206,11 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
                     if (bookings.isEmpty) {
                       return Center(
                         child: Text(
-                          'No ${_currentFilter} appointments found.',
+                          'No $_currentFilter appointments found.',
                           style: theme.textTheme.bodyLarge?.copyWith(
-                            color: isDarkTheme ? Colors.white70 : Colors.black54,
+                            color: isDarkTheme
+                                ? Colors.white70
+                                : Colors.black54,
                           ),
                         ),
                       );
@@ -219,12 +224,18 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
                         return NurseBookingCard(
                           booking: booking,
                           isDark: isDarkTheme,
-                          onChat: () => _startChat(booking['patientEmail']),
-                          onLocation: () => _launchMaps(booking['location'] ?? ''),
-                          formattedDate: _formatDate(booking['bookingDate'] ?? booking['createdAt']),
+                          onChat: () =>
+                              _startChat(booking['patientEmail']),
+                          onLocation: () => _launchMaps(
+                              booking['location'] ?? ''),
+                          formattedDate: _formatDate(
+                            booking['bookingDate'] ?? booking['createdAt'],
+                          ),
                           showActions: _currentFilter == 'upcoming',
-                          onCancel: () => _cancelBooking(booking['_id'].toString()),
-                          onComplete: () => _completeBooking(booking['_id'].toString()),
+                          onCancel: () =>
+                              _cancelBooking(booking['_id'].toString()),
+                          onComplete: () =>
+                              _completeBooking(booking['_id'].toString()),
                         );
                       },
                     );

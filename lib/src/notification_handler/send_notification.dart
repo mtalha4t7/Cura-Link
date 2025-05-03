@@ -14,7 +14,7 @@ class SendNotificationService {
     String serverKey = await GetServerKey().getServerTokenKey();
     print("notification server key => ${serverKey}");
     String url =
-        "https://fcm.googleapis.com/v1/projects/easyshopping-ce06a/messages:send";
+        "https://fcm.googleapis.com/v1/projects/cura-link-36b0c/messages:send";
 
     var headers = <String, String>{
       'Content-Type': 'application/json',

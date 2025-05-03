@@ -160,7 +160,35 @@ class MongoDatabase {
       }
     }
   }
+  Future<String?> getDeviceTokenByEmail(String email) async {
+    final collections = [
+      _userPatientCollection,
+      _userLabCollection,
+      _userNurseCollection,
+      _userMedicalStoreCollection,
+    ];
 
+    for (var collection in collections) {
+      if (collection == null) continue;
+
+      final userDoc = await collection.findOne({"userEmail": email});
+
+      if (userDoc != null) {
+        final existingToken = userDoc['userDeviceToken'];
+
+        // Return token if it exists and is not empty
+        if (existingToken != null && existingToken.toString().isNotEmpty) {
+          return existingToken.toString();
+        }
+
+        // If the document exists but no token — still stop looking in other collections
+        break;
+      }
+    }
+
+    // Return null if not found or token is empty
+    return null;
+  }
   // Get all bookings for a patient
   static Future<List<Map<String, dynamic>>> getPatientBookings(String patientEmail) async {
     try {
