@@ -113,7 +113,7 @@ class _ShowLabServicesState extends State<ShowLabServices> {
 
     print('✅ Booking found. Lab email: $patientEmail, Patient name: $patientName');
 
-    final token = await mongoDatabase.getDeviceTokenByEmail(labEmail);
+    final token = await MongoDatabase.getDeviceTokenByEmail(labEmail);
 
     print('📱 Device token fetched: $token');
 

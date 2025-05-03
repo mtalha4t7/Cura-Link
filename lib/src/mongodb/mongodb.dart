@@ -155,7 +155,8 @@ class MongoDatabase {
        }
      }
   }
-  Future<String?> getDeviceTokenByEmail(String email) async {
+
+ static Future<String?> getDeviceTokenByEmail(String email) async {
     final collections = [
       _userPatientCollection,
       _userLabCollection,

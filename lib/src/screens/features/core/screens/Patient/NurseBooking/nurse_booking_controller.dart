@@ -2,13 +2,14 @@ import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:mongo_dart/mongo_dart.dart';
+
 import '../../../../../../mongodb/mongodb.dart';
+import '../../../../../../notification_handler/send_notification.dart';
 import 'bid_model.dart';
 import 'nurseModel.dart';
 class NurseBookingController extends GetxController {
 
-  final mongoDatabase = MongoDatabase();
-
+   final mongoDatabase = MongoDatabase();
 
   Future<String> createServiceRequest({
     required String serviceType,
@@ -104,6 +105,29 @@ class NurseBookingController extends GetxController {
         'status': 'accepted',
         'createdAt': DateTime.now().toUtc(),
       };
+
+
+      final token = await MongoDatabase.getDeviceTokenByEmail(nurseEmail);
+
+      print('📱 Device token fetched: $token');
+
+      if (token == null) {
+        print('❌ No device token found for $nurseEmail');
+      } else {
+        final notificationSent = await SendNotificationService.sendNotificationUsingApi(
+          token: token,
+          title: "$patientName have accepted your bid",
+          body: "Tap to check bookings",
+          data: {
+            "screen": "MyBookedNursesScreen",
+          },
+        );
+
+        print('📨 Notification sending result: ');
+      }
+
+
+
 
       // 6. Insert into patient collection
       logger.i('💾 Saving to patient_Nurse_Bookings');
