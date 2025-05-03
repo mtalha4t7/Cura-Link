@@ -125,7 +125,7 @@ class _ShowLabServicesState extends State<ShowLabServices> {
         title: "Lab Booked by $patientName",
         body: "Check Booking",
         data: {
-          "message": "CheckBookings",
+          "screen": "ManageBookingScreen",
         },
       );
 

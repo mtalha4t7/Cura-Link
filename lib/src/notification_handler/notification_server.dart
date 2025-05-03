@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/ManageBooking/ManageBooking.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -188,7 +189,7 @@ class NotificationService {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => const MyBookingsNurseScreen(),
+          builder: (context) => const ManageBookingScreen(),
         ),
       );
     } else {
