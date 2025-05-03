@@ -108,7 +108,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           ),
         );
       },
-    ) ?? false;
+    ) ?? false; // Ensures a default value of false is returned if the dialog is dismissed.
   }
 
   @override
@@ -139,7 +139,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: FutureBuilder<List<Map<String, dynamic>>>(
+              child: FutureBuilder<List<Map<String, dynamic>>>(  // Fetch the bookings data
                 future: _controller.fetchUserBookings(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -172,17 +172,25 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                           status: booking['status'] ?? 'Pending',
                           price: price,
                           isDark: isDarkTheme,
-                          onAccept: () {
+                          onAccept: () async {
                             if (booking['status'] == "Modified") {
-                              _controller.updateBookingStatus(
-                                booking['bookingId'].toString(),
-                                'Accepted',
+                              final confirmed = await _showConfirmationDialog(
+                                context,
+                                'Accept Booking',
+                                'Are you sure you want to accept this booking?',
+                                Icons.check_circle_outline,
                               );
-                              setState(() {});
+                              if (confirmed) {
+                                _controller.updateBookingStatus(
+                                  booking['bookingId'].toString(),
+                                  'Accepted',
+                                );
+                                setState(() {});
+                              }
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('You can only Accept, When booking is modified by Lab'),
+                                  content: Text('You can only accept when booking is modified by Lab'),
                                   duration: const Duration(seconds: 3),
                                 ),
                               );
@@ -203,7 +211,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Once Accepted, you cannot cancel the booking'),
+                                  content: Text('Once accepted, you cannot cancel the booking'),
                                   duration: const Duration(seconds: 3),
                                 ),
                               );
@@ -223,7 +231,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Booking is accepted, you cannot Modify This Booking'),
+                                  content: Text('Booking is accepted, you cannot modify this booking'),
                                   duration: const Duration(seconds: 3),
                                 ),
                               );
@@ -272,6 +280,49 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     );
   }
 
+  // Modify the booking details
+  void _showModifyDialog(BuildContext context, Map<String, dynamic> booking) async {
+    final TextEditingController modifyDateController =
+    TextEditingController(text: booking['bookingDate']);
+    DateTime selectedDate = DateTime.parse(booking['bookingDate']);
+
+    DateTime? newDate = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+
+    if (newDate != null) {
+      TimeOfDay? newTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(selectedDate),
+      );
+
+      if (newTime != null) {
+        final DateTime combinedDateTime = DateTime(
+          newDate.year,
+          newDate.month,
+          newDate.day,
+          newTime.hour,
+          newTime.minute,
+        );
+
+        String formattedDate = DateFormat('yyyy-MM-dd HH:mm').format(combinedDateTime);
+
+        modifyDateController.text = formattedDate;
+
+        _controller.updateBookingDate(
+          booking['bookingId'],
+          formattedDate,
+        );
+        setState(() {});
+        Navigator.pop(context);
+      }
+    }
+  }
+
+  // Show the rating dialog for lab booking
   void _showRatingDialog(BuildContext context, String labEmail, String patientEmail, ObjectId bookingId) {
     double rating = 3.0;
     final TextEditingController reviewController = TextEditingController();
@@ -359,6 +410,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     );
   }
 
+  // Fetch user data from the database
   Future<ChatUserModelMongoDB?> fetchUserData(String email) async {
     try {
       final userData = await UserRepository.instance.getUserByEmailFromAllCollections(email);
@@ -368,46 +420,4 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       return null;
     }
   }
-
-  void _showModifyDialog(BuildContext context, Map<String, dynamic> booking) async {
-    final TextEditingController modifyDateController =
-    TextEditingController(text: booking['bookingDate']);
-    DateTime selectedDate = DateTime.parse(booking['bookingDate']);
-
-    DateTime? newDate = await showDatePicker(
-      context: context,
-      initialDate: selectedDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-
-    if (newDate != null) {
-      TimeOfDay? newTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(selectedDate),
-      );
-
-      if (newTime != null) {
-        final DateTime combinedDateTime = DateTime(
-          newDate.year,
-          newDate.month,
-          newDate.day,
-          newTime.hour,
-          newTime.minute,
-        );
-
-        String formattedDate = DateFormat('yyyy-MM-dd HH:mm').format(combinedDateTime);
-
-        modifyDateController.text = formattedDate;
-
-        _controller.updateBookingDate(
-          booking['bookingId'],
-          formattedDate,
-        );
-        setState(() {});
-        Navigator.pop(context);
-      }
-    }
-  }
 }
-

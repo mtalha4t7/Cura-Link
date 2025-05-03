@@ -23,7 +23,11 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
   }
 
   Future<bool> _showConfirmationDialog(
-      BuildContext context, String title, String message, IconData icon) async {
+      BuildContext context,
+      String title,
+      String message,
+      IconData icon,
+      ) async {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -40,18 +44,21 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
             curve: Curves.easeOutBack,
           ),
           child: AlertDialog(
-            backgroundColor:
-            isDark ? Colors.grey[900] : Colors.white,
+            backgroundColor: isDark ? Colors.grey[900] : Colors.white,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16)),
+              borderRadius: BorderRadius.circular(16),
+            ),
             title: Row(
               children: [
                 Icon(icon, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold)),
+                  child: Text(
+                    title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -60,7 +67,10 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
               style: theme.textTheme.bodyMedium,
             ),
             actionsPadding: const EdgeInsets.only(
-                bottom: 12, right: 12, left: 12),
+              bottom: 12,
+              right: 12,
+              left: 12,
+            ),
             actions: [
               TextButton(
                 style: TextButton.styleFrom(
@@ -85,8 +95,7 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
           ),
         );
       },
-    ) ??
-        false;
+    ) ?? false; // Default to false if the dialog is dismissed.
   }
 
   @override
@@ -117,7 +126,7 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: FutureBuilder<List<Map<String, dynamic>>>(
+              child: FutureBuilder<List<Map<String, dynamic>>>(  // Fetch the bookings data
                 future: _controller.fetchUserBookings(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -142,8 +151,7 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
                       itemCount: bookings.length,
                       itemBuilder: (context, index) {
                         final booking = bookings[index];
-                        final price =
-                            booking['price']?.toString() ?? '0.0';
+                        final price = booking['price']?.toString() ?? '0.0';
 
                         return BookingCard(
                           patientName: booking['patientName'] ?? 'Unknown',
@@ -238,6 +246,7 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
     );
   }
 
+  // Modify the booking details
   void _showModifyDialog(
       BuildContext context, Map<String, dynamic> booking) async {
     final TextEditingController modifyDateController =
