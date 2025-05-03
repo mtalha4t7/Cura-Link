@@ -9,17 +9,84 @@ class ManageBookingScreen extends StatefulWidget {
   @override
   _ManageBookingScreenState createState() => _ManageBookingScreenState();
 }
+
 class _ManageBookingScreenState extends State<ManageBookingScreen> {
   final BookingController _controller = BookingController();
 
-  // Function to format date
   String formatDate(String rawDate) {
     try {
       final parsedDate = DateTime.parse(rawDate);
       return DateFormat.yMMMMEEEEd().add_jm().format(parsedDate);
     } catch (e) {
-      return rawDate; // Fallback to raw date if parsing fails
+      return rawDate;
     }
+  }
+
+  Future<bool> _showConfirmationDialog(
+      BuildContext context, String title, String message, IconData icon) async {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return await showGeneralDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: "Confirmation",
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (_, __, ___) => const SizedBox.shrink(),
+      transitionBuilder: (context, animation, _, __) {
+        return ScaleTransition(
+          scale: CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutBack,
+          ),
+          child: AlertDialog(
+            backgroundColor:
+            isDark ? Colors.grey[900] : Colors.white,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: [
+                Icon(icon, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+            content: Text(
+              message,
+              style: theme.textTheme.bodyMedium,
+            ),
+            actionsPadding: const EdgeInsets.only(
+                bottom: 12, right: 12, left: 12),
+            actions: [
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: theme.colorScheme.secondary,
+                ),
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () => Navigator.of(context).pop(true),
+                icon: const Icon(Icons.check),
+                label: const Text('Confirm'),
+              ),
+            ],
+          ),
+        );
+      },
+    ) ??
+        false;
   }
 
   @override
@@ -49,8 +116,6 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
               ),
             ),
             const SizedBox(height: 20),
-
-            // Bookings List
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: _controller.fetchUserBookings(),
@@ -58,9 +123,7 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
-                    return Center(
-                      child: Text('Error: ${snapshot.error}'),
-                    );
+                    return Center(child: Text('Error: ${snapshot.error}'));
                   } else if (snapshot.hasData) {
                     final bookings = snapshot.data!;
                     if (bookings.isEmpty) {
@@ -68,7 +131,9 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
                         child: Text(
                           'No bookings found.',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: isDarkTheme ? Colors.white54 : Colors.black54,
+                            color: isDarkTheme
+                                ? Colors.white54
+                                : Colors.black54,
                           ),
                         ),
                       );
@@ -77,59 +142,86 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
                       itemCount: bookings.length,
                       itemBuilder: (context, index) {
                         final booking = bookings[index];
-                        final price = booking['price']?.toString() ?? '0.0'; // Ensure price is String
+                        final price =
+                            booking['price']?.toString() ?? '0.0';
 
                         return BookingCard(
                           patientName: booking['patientName'] ?? 'Unknown',
                           testName: booking['testName'] ?? 'Unknown Test',
-                          bookingDate: formatDate(booking['bookingDate'] ?? ''),
+                          bookingDate: formatDate(
+                              booking['bookingDate'] ?? ''),
                           status: booking['status'] ?? 'Pending',
                           price: price,
                           isDark: isDarkTheme,
-                          onAccept: () {
-                            if(booking['status']!="Modified"){
-                              _controller.updateBookingStatus(
-                                booking['_id'].toHexString(), // Convert ObjectId to String
+                          onAccept: () async {
+                            final confirm = await _showConfirmationDialog(
+                              context,
+                              'Accept Booking',
+                              'Are you sure you want to accept this booking?',
+                              Icons.check_circle_outline,
+                            );
+                            if (!confirm) return;
+
+                            if (booking['status'] != "Modified") {
+                              await _controller.updateBookingStatus(
+                                booking['_id'].toHexString(),
                                 'Accepted',
                               );
                               setState(() {});
-                            }else{
+                            } else {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Once modified, patient can accept this booking.'),
-                                    duration: const Duration(seconds: 3), // Duration of SnackBar
-                                  ),
+                                const SnackBar(
+                                  content: Text(
+                                      'Once modified, patient can accept this booking.'),
+                                  duration: Duration(seconds: 3),
+                                ),
                               );
                             }
                           },
-                          onReject: () {
-                            if(booking['status']!="Accepted"){
-                              _controller.rejectAndDeleteBooking(
-                                  booking['_id'].toHexString()
+                          onReject: () async {
+                            final confirm = await _showConfirmationDialog(
+                              context,
+                              'Reject Booking',
+                              'Are you sure you want to reject this booking?',
+                              Icons.cancel_outlined,
+                            );
+                            if (!confirm) return;
+
+                            if (booking['status'] != "Accepted") {
+                              await _controller.rejectAndDeleteBooking(
+                                booking['_id'].toHexString(),
                               );
                               setState(() {});
-                            }else{
+                            } else {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Booking is already accepted!'),
-                                  duration: const Duration(seconds: 3), // Duration of SnackBar
+                                const SnackBar(
+                                  content: Text(
+                                      'Booking is already accepted!'),
+                                  duration: Duration(seconds: 3),
                                 ),
                               );
                             }
-
                           },
-                          onModify: () {
-                            if(booking['status']!="Accepted"){
+                          onModify: () async {
+                            final confirm = await _showConfirmationDialog(
+                              context,
+                              'Modify Booking',
+                              'Do you want to modify the date/time for this booking?',
+                              Icons.edit_calendar_outlined,
+                            );
+                            if (!confirm) return;
+
+                            if (booking['status'] != "Accepted") {
                               _showModifyDialog(context, booking);
-                            }else{
+                            } else {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('You cannot modify accepted Booking!'),
-                                  duration: const Duration(seconds: 3), // Duration of SnackBar
+                                const SnackBar(
+                                  content: Text(
+                                      'You cannot modify accepted Booking!'),
+                                  duration: Duration(seconds: 3),
                                 ),
                               );
                             }
-
                           },
                         );
                       },
@@ -146,12 +238,12 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
     );
   }
 
-  void _showModifyDialog(BuildContext context, Map<String, dynamic> booking) async {
+  void _showModifyDialog(
+      BuildContext context, Map<String, dynamic> booking) async {
     final TextEditingController modifyDateController =
     TextEditingController(text: booking['bookingDate']);
     DateTime selectedDate = DateTime.parse(booking['bookingDate']);
 
-    // Show the date picker
     DateTime? newDate = await showDatePicker(
       context: context,
       initialDate: selectedDate,
@@ -160,14 +252,12 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
     );
 
     if (newDate != null) {
-      // Show the time picker
       TimeOfDay? newTime = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(selectedDate),
       );
 
       if (newTime != null) {
-        // Combine the selected date and time
         final DateTime combinedDateTime = DateTime(
           newDate.year,
           newDate.month,
@@ -176,24 +266,21 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
           newTime.minute,
         );
 
-        // Format the combined DateTime
-        String formattedDate = DateFormat('yyyy-MM-dd HH:mm').format(combinedDateTime);
-
-        // Update the TextField
+        String formattedDate =
+        DateFormat('yyyy-MM-dd HH:mm').format(combinedDateTime);
         modifyDateController.text = formattedDate;
 
-        // Update the booking date and set status to "Modified"
         await _controller.updateBookingDate(
-          booking['_id'].toHexString(), // Convert ObjectId to String
+          booking['_id'].toHexString(),
           formattedDate,
         );
         await _controller.updateBookingStatus(
-          booking['_id'].toHexString(), // Convert ObjectId to String
-          'Modified', // Change status to "Modified"
+          booking['_id'].toHexString(),
+          'Modified',
         );
 
-        setState(() {}); // Refresh the UI after update
-        Navigator.pop(context); // Close the dialog
+        setState(() {});
+        Navigator.pop(context);
       }
     }
   }

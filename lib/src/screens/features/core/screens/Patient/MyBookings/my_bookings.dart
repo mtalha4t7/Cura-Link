@@ -21,14 +21,94 @@ class MyBookingsScreen extends StatefulWidget {
 class _MyBookingsScreenState extends State<MyBookingsScreen> {
   final MyBookingsController _controller = MyBookingsController();
 
-  // Function to format date
   String formatDate(String rawDate) {
     try {
       final parsedDate = DateTime.parse(rawDate);
       return DateFormat.yMMMMEEEEd().add_jm().format(parsedDate);
     } catch (e) {
-      return rawDate; // Fallback to raw date if parsing fails
+      return rawDate;
     }
+  }
+
+  Future<bool> _showConfirmationDialog(
+      BuildContext context,
+      String title,
+      String message,
+      IconData icon,
+      ) async {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return await showGeneralDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: "Confirmation",
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (_, __, ___) => const SizedBox.shrink(),
+      transitionBuilder: (context, animation, _, __) {
+        return ScaleTransition(
+          scale: CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutBack,
+          ),
+          child: AlertDialog(
+            backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Row(
+              children: [
+                Icon(icon, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              message,
+              style: theme.textTheme.bodyMedium,
+            ),
+            actionsPadding: const EdgeInsets.only(
+              bottom: 16,
+              right: 16,
+              left: 16,
+            ),
+            actions: [
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: theme.colorScheme.secondary,
+                  textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                ),
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                onPressed: () => Navigator.of(context).pop(true),
+                icon: const Icon(Icons.check),
+                label: const Text('Confirm'),
+              ),
+            ],
+          ),
+        );
+      },
+    ) ?? false;
   }
 
   @override
@@ -58,8 +138,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
               ),
             ),
             const SizedBox(height: 20),
-
-            // Bookings List
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: _controller.fetchUserBookings(),
@@ -77,8 +155,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                         child: Text(
                           'No bookings found.',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color:
-                            isDarkTheme ? Colors.white54 : Colors.black54,
+                            color: isDarkTheme ? Colors.white54 : Colors.black54,
                           ),
                         ),
                       );
@@ -96,56 +173,65 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                           price: price,
                           isDark: isDarkTheme,
                           onAccept: () {
-                            if(booking['status']=="Modified"){
+                            if (booking['status'] == "Modified") {
                               _controller.updateBookingStatus(
-                                booking['bookingId'].toString(), // MongoDB ObjectId
+                                booking['bookingId'].toString(),
                                 'Accepted',
                               );
                               setState(() {});
-                            }else{
+                            } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('You can only Accept,When booking is modified by Lab'),
-                                  duration: const Duration(seconds: 3), // Duration of SnackBar
+                                  content: Text('You can only Accept, When booking is modified by Lab'),
+                                  duration: const Duration(seconds: 3),
                                 ),
                               );
                             }
                           },
-                          onReject: () {
-                            if(booking['status']!="Accepted"){
-
-                              _controller.rejectAndDeleteBooking(booking['bookingId']);
-                              setState(() {});
-                            }else{
+                          onReject: () async {
+                            if (booking['status'] != "Accepted") {
+                              final confirmed = await _showConfirmationDialog(
+                                context,
+                                'Cancel Booking',
+                                'Are you sure you want to cancel this booking?',
+                                Icons.cancel,
+                              );
+                              if (confirmed) {
+                                _controller.rejectAndDeleteBooking(booking['bookingId']);
+                                setState(() {});
+                              }
+                            } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('Once Accepted, you cannot cancel the booking'),
-                                  duration: const Duration(seconds: 3), // Duration of SnackBar
+                                  duration: const Duration(seconds: 3),
                                 ),
                               );
-
                             }
-
                           },
-                          onModify: () {
-                            if(booking['status']!="Accepted"){
-                              _showModifyDialog(context, booking);
-                            }
-                            else{
+                          onModify: () async {
+                            if (booking['status'] != "Accepted") {
+                              final confirmed = await _showConfirmationDialog(
+                                context,
+                                'Modify Booking',
+                                'Are you sure you want to change the booking time?',
+                                Icons.edit_calendar,
+                              );
+                              if (confirmed) {
+                                _showModifyDialog(context, booking);
+                              }
+                            } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('Booking is accepted, you cannot Modify This Booking'),
-                                  duration: const Duration(seconds: 3), // Duration of SnackBar
+                                  duration: const Duration(seconds: 3),
                                 ),
                               );
                             }
-
                           },
                           onMessage: () async {
-                            final userEmail =  booking['labUserEmail']?.toString();
-                                print(userEmail);
+                            final userEmail = booking['labUserEmail']?.toString();
                             if (userEmail == null) return;
-
                             final user = await fetchUserData(userEmail);
                             if (user != null && context.mounted) {
                               Navigator.push(
@@ -162,14 +248,15 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                                 ),
                               );
                             }
-                          }, onRate: () {
-                          _showRatingDialog(
-                            context,
-                            booking['labUserEmail'],
-                            booking['patientUserEmail'],
-                            booking['_id'], // NEW
-                          );
-                        },
+                          },
+                          onRate: () {
+                            _showRatingDialog(
+                              context,
+                              booking['labUserEmail'],
+                              booking['patientUserEmail'],
+                              booking['_id'],
+                            );
+                          },
                         );
                       },
                     );
@@ -272,8 +359,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     );
   }
 
-
-
   Future<ChatUserModelMongoDB?> fetchUserData(String email) async {
     try {
       final userData = await UserRepository.instance.getUserByEmailFromAllCollections(email);
@@ -289,7 +374,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     TextEditingController(text: booking['bookingDate']);
     DateTime selectedDate = DateTime.parse(booking['bookingDate']);
 
-    // Show the date picker
     DateTime? newDate = await showDatePicker(
       context: context,
       initialDate: selectedDate,
@@ -298,14 +382,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     );
 
     if (newDate != null) {
-      // Show the time picker
       TimeOfDay? newTime = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(selectedDate),
       );
 
       if (newTime != null) {
-        // Combine the selected date and time
         final DateTime combinedDateTime = DateTime(
           newDate.year,
           newDate.month,
@@ -314,20 +396,18 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           newTime.minute,
         );
 
-        // Format the combined DateTime
         String formattedDate = DateFormat('yyyy-MM-dd HH:mm').format(combinedDateTime);
 
-        // Update the TextField
         modifyDateController.text = formattedDate;
 
-        // Confirm the changes and save
         _controller.updateBookingDate(
-          booking['bookingId'], // MongoDB ObjectId
+          booking['bookingId'],
           formattedDate,
         );
-        setState(() {}); // Refresh the UI after update
-        Navigator.pop(context); // Close the dialog
+        setState(() {});
+        Navigator.pop(context);
       }
     }
   }
 }
+
