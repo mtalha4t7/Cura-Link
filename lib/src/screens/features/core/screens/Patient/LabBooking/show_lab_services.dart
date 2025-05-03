@@ -80,7 +80,6 @@ class _ShowLabServicesState extends State<ShowLabServices> {
 
     String price = service['prize'].toString();
 
-
     String? bookingId = await _addBookingController.addBooking(
       _patientName,
       service['serviceName'],
@@ -95,24 +94,42 @@ class _ShowLabServicesState extends State<ShowLabServices> {
       return;
     }
 
-    // 2. Fetch full booking from _patientBookingsCollectionbbb
+    // Fetch full booking
     final bookedService = await MongoDatabase.patientBookingsCollection
         ?.findOne({'bookingId': bookingId});
 
-   final  labEmail=bookedService?['labUserEmail'];
-   final token = await mongoDatabase.getDeviceTokenByEmail(labEmail);
-   final patientName=bookedService?['patientUsername'];
-
-    await SendNotificationService.sendNotificationUsingApi(token: token, title: "Lab Booked by $patientName", body: " Check Booking", data: {
-    "screen": "ManageBookingScreen",
-    "bookingId": bookingId,
-    "patientName": patientName,
-    }, );
     if (bookedService == null) {
+      print('❌ Could not find booking with ID: $bookingId');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Could not find booking details.')),
       );
       return;
+    }
+
+    final labEmail = bookedService['labUserEmail'];
+    final patientName = bookedService['patientUsername'];
+
+    print('✅ Booking found. Lab email: $labEmail, Patient name: $patientName');
+
+    final token = await mongoDatabase.getDeviceTokenByEmail(labEmail);
+
+    print('📱 Device token fetched: $token');
+
+    if (token == null) {
+      print('❌ No device token found for $labEmail');
+    } else {
+      final notificationSent = await SendNotificationService.sendNotificationUsingApi(
+        token: token,
+        title: "Lab Booked by $patientName",
+        body: "Check Booking",
+        data: {
+          "screen": "ManageBookingScreen",
+          "bookingId": bookingId,
+          "patientName": patientName,
+        },
+      );
+
+      print('📨 Notification sending result: ');
     }
 
     final String? labUserEmail = bookedService['labUserEmail']?.toString();
@@ -124,19 +141,8 @@ class _ShowLabServicesState extends State<ShowLabServices> {
       );
       return;
     }
-
-
-
-    // 4. Refresh UI
-    setState(() {
-      _services = _loadEmailAndFetchServices();
-    });
-
-    // 5. Show confirmation message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Booking confirmed for ${service['serviceName']}')),
-    );
   }
+
 
   @override
   Widget build(BuildContext context) {
