@@ -2,6 +2,7 @@ import 'package:cura_link/src/network_manager.dart';
 import 'package:cura_link/src/notification_handler/notification_server.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:path/path.dart';
@@ -15,7 +16,7 @@ Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   await GetStorage.init();
-
+  await dotenv.load(fileName: ".env");
   // Initialize MongoDB
   await MongoDatabase.connect();
 
@@ -24,8 +25,6 @@ Future<void> main() async {
       .then((_) => Get.put(AuthenticationRepository()));
   Get.put(NetworkManager());
   // Initialize Notification Service
-  final notificationService = NotificationService();
-  await notificationService.initialize();
 
   runApp(const App());
   FlutterNativeSplash.remove();

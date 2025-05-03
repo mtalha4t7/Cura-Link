@@ -1,4 +1,7 @@
+import 'package:cura_link/src/mongodb/mongodb.dart';
+import 'package:cura_link/src/notification_handler/notification_server.dart';
 import 'package:cura_link/src/screens/features/core/screens/MedicalStore/MedicalStoreProfile/MedicalStore_Profile_Screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../../../constants/sizes.dart';
@@ -6,9 +9,28 @@ import '../../MedicalStore/MedicalStoreChat/chat_home.dart';
 import '../../MedicalLaboratory/MedicalLabWidgets/quick_access_button.dart';
 import '../../MedicalLaboratory/MedicalLabWidgets/service_card.dart';
 
-class MedicalStoreDashboard extends StatelessWidget {
+class MedicalStoreDashboard extends StatefulWidget {
   const MedicalStoreDashboard({super.key});
 
+  @override
+  State<MedicalStoreDashboard> createState() => _MedicalStoreDashboardState();
+}
+
+class _MedicalStoreDashboardState extends State<MedicalStoreDashboard> {
+  NotificationService notificationService = NotificationService();
+  MongoDatabase mongoDatabase= MongoDatabase();
+  late String _mail;
+  late String _userDeviceToken;
+
+
+  @override
+  void initState() async {
+    _mail= (FirebaseAuth.instance.currentUser?.email)!;
+    _userDeviceToken=await notificationService.getDeviceToken();
+    mongoDatabase.checkAndAddDeviceToken(_mail, _userDeviceToken);
+    notificationService.requestNotificationPermission();
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
     final txtTheme = Theme.of(context).textTheme;

@@ -108,6 +108,7 @@ dependencies:
   flutter_local_notifications: ^19.1.0
   flutter_dotenv: ^5.2.1
   googleapis_auth: ^2.0.0
+  app_settings: ^6.1.1
 flutter_native_splash:
   color: "#ffffff"  # Background color for light mode
   image: assets/images/appLogoSplashLight.png  # Light mode logo
@@ -199,4 +200,5 @@ flutter:
     - assets/images/on_boarding_images/
     - assets/mapThemes/light_style.json
     - assets/mapThemes/dark_style.json
+    - .env
 

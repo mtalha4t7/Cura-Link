@@ -1,4 +1,7 @@
+import 'package:cura_link/src/mongodb/mongodb.dart';
+import 'package:cura_link/src/notification_handler/fcmServerKey.dart';
 import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabProfile/medicalLab_profile_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,45 +25,27 @@ class MedicalLabDashboard extends StatefulWidget {
 }
 class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
   late DashboardController _controller;
-  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   bool isVerified = false;
+NotificationService notificationService = NotificationService();
+MongoDatabase mongoDatabase= MongoDatabase();
+
+  late String _userDeviceToken;
+  late String _mail;
+
 
   @override
-  void initState() {
+  void initState() async{
     super.initState();
     _controller = DashboardController();
-    _setupFCM();
+    _mail= (FirebaseAuth.instance.currentUser?.email)!;
+    _userDeviceToken=await notificationService.getDeviceToken();
+    mongoDatabase.checkAndAddDeviceToken(_mail, _userDeviceToken);
+    notificationService.requestNotificationPermission();
     _checkUserVerification();
   }
 
-  Future<void> _setupFCM() async {
-    try {
-      final settings = await _fcm.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-        provisional: false,
-      );
 
-      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        debugPrint('User granted notification permissions');
-      }
 
-      final token = await _fcm.getToken();
-      if (token != null) {
-        await _saveTokenToDatabase(token);
-        debugPrint('FCM Token: $token');
-      }
-
-      _fcm.onTokenRefresh.listen(_saveTokenToDatabase);
-    } catch (e) {
-      debugPrint('Error setting up FCM: $e');
-    }
-  }
-
-  Future<void> _saveTokenToDatabase(String token) async {
-    NotificationService().saveToken(token);
-  }
 
 
   /// Dynamically check user verification status
@@ -292,7 +277,11 @@ class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
                           ServiceCard(
                             icon: Icons.chat,
                             title: 'Chat with Patient',
-                            onTap: () {},
+                            onTap: () async {
+                              GetServerKey getServerKey= GetServerKey();
+                              String accessToken= await getServerKey.getServerTokenKey();
+                              print(accessToken);
+                            },
                           ),
                           ServiceCard(
                             icon: Icons.delivery_dining,

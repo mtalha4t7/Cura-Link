@@ -128,7 +128,38 @@ class MongoDatabase {
       logger.i('MongoDB connection closed');
     }
   }
+    // adding device token if not available
+   Future<void> checkAndAddDeviceToken(
+     String email,
+    String deviceToken,
+  ) async {
+    final collections = [
+      _userPatientCollection,
+      _userLabCollection,
+      _userNurseCollection,
+      _userMedicalStoreCollection,
+    ];
 
+    for (var collection in collections) {
+      if (collection == null) continue;
+
+      final userDoc = await collection.findOne({"email": email});
+
+      if (userDoc != null) {
+        final existingToken = userDoc['userDeviceToken'];
+
+        // If field is missing or empty
+        if (existingToken == null || existingToken.toString().isEmpty) {
+          await collection.updateOne(
+            where.eq("email", email),
+            modify.set("userDeviceToken", deviceToken),
+          );
+        }
+        // Once found and processed in one collection, stop checking others
+        break;
+      }
+    }
+  }
 
   // Get all bookings for a patient
   static Future<List<Map<String, dynamic>>> getPatientBookings(String patientEmail) async {

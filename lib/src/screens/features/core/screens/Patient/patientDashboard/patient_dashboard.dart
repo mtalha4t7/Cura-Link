@@ -31,44 +31,21 @@ class PatientDashboard extends StatefulWidget {
 
 class _PatientDashboardState extends State<PatientDashboard> {
   final MyBookingsController _controller = Get.put(MyBookingsController());
-  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
+  MongoDatabase mongoDatabase = MongoDatabase();
+  late String _email;
+  late String _userDeviceToken;
+   NotificationService  notificationService= NotificationService();
   @override
-  void initState() {
+  void initState() async {
     super.initState();
-    _setupFCM();
+    _email= (_auth.currentUser?.email!)!;
+    _userDeviceToken=await notificationService.getDeviceToken();
+    mongoDatabase.checkAndAddDeviceToken(_email!, _userDeviceToken);
+    notificationService.requestNotificationPermission();
     _controller.fetchUnreadBookingsCount();
   }
 
-  Future<void> _setupFCM() async {
-    try {
-      final settings = await _fcm.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-        provisional: false,
-      );
-
-      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        debugPrint('User granted notification permissions');
-      }
-
-      final token = await _fcm.getToken();
-      if (token != null) {
-        await _saveTokenToDatabase(token);
-        debugPrint('FCM Token: $token');
-      }
-
-      _fcm.onTokenRefresh.listen(_saveTokenToDatabase);
-    } catch (e) {
-      debugPrint('Error setting up FCM: $e');
-    }
-  }
-
-  Future<void> _saveTokenToDatabase(String token) async {
-     NotificationService().saveToken(token);
-  }
 
   @override
   Widget build(BuildContext context) {

@@ -19,32 +19,30 @@ class _NotificationWrapperState extends State<NotificationWrapper> {
   @override
   void initState() {
     super.initState();
-    _initializeNotifications();
+
     _setupNotificationListeners();
   }
 
-  Future<void> _initializeNotifications() async {
-    await _notificationService.initialize();
-  }
+
 
   void _setupNotificationListeners() {
     // Foreground messages
-    FirebaseMessaging.onMessage.listen((message) {
-      _notificationService.handleForegroundMessage(message);
-    });
-
-    // Background messages
-    FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      _notificationService.handleBackgroundMessage(message);
-    });
-
-    // Terminated state messages
-    FirebaseMessaging.instance.getInitialMessage().then((message) {
-      if (message != null) {
-        _notificationService.handleBackgroundMessage(message);
-      }
-    });
-  }
+    // FirebaseMessaging.onMessage.listen((message) {
+    //   _notificationService.handleForegroundMessage(message);
+    // });
+    //
+    // // Background messages
+    // FirebaseMessaging.onMessageOpenedApp.listen((message) {
+    //   _notificationService.handleBackgroundMessage(message);
+    // });
+    //
+    // // Terminated state messages
+    // FirebaseMessaging.instance.getInitialMessage().then((message) {
+    //   if (message != null) {
+    //     _notificationService.handleBackgroundMessage(message);
+    //   }
+    // });
+   }
 
   @override
   Widget build(BuildContext context) {

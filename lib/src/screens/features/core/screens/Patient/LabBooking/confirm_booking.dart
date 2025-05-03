@@ -18,25 +18,25 @@ class BookingConfirmationScreen extends StatelessWidget {
     required this.recipientUserId,
   });
 
-  Future<void> _confirmBooking() async {
-    try {
-      // 1. Perform your booking confirmation logic here
-
-      // 2. Send notification
-      await NotificationService().sendBookingConfirmation(
-        recipientUserId: recipientUserId,
-        labName: labName,
-        bookingId: bookingId,
-        bookingTime: bookingTime,
-      );
-
-      // 3. Show success message
-      Get.snackbar('Success', 'Booking confirmed and notification sent');
-
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to confirm booking: ${e.toString()}');
-    }
-  }
+  // Future<void> _confirmBooking() async {
+  //   try {
+  //     // 1. Perform your booking confirmation logic here
+  //
+  //     // 2. Send notification
+  //     await NotificationService().sendBookingConfirmation(
+  //       recipientUserId: recipientUserId,
+  //       labName: labName,
+  //       bookingId: bookingId,
+  //       bookingTime: bookingTime,
+  //     );
+  //
+  //     // 3. Show success message
+  //     Get.snackbar('Success', 'Booking confirmed and notification sent');
+  //
+  //   } catch (e) {
+  //     Get.snackbar('Error', 'Failed to confirm booking: ${e.toString()}');
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -48,10 +48,10 @@ class BookingConfirmationScreen extends StatelessWidget {
           children: [
             Text('Confirm booking at $labName'),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _confirmBooking,
-              child: const Text('Confirm Booking'),
-            ),
+            // ElevatedButton(
+            //   onPressed: _confirmBooking,
+            //   child: const Text('Confirm Booking'),
+            // ),
           ],
         ),
       ),

@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cura_link/src/screens/features/core/screens/Nurse/NurseProfile/Nurse_Profile_Screen.dart';
+import '../../../../../../notification_handler/notification_server.dart';
 import '../../../../../../repository/user_repository/user_repository.dart';
 import '../../Nurse/NurseChat/chat_home.dart';
 import '../../MedicalLaboratory/MedicalLabWidgets/quick_access_button.dart';
@@ -27,10 +28,16 @@ class NurseDashboard extends StatefulWidget {
 class _NurseDashboardState extends State<NurseDashboard> {
   late Future<List<Map<String, dynamic>>> _latestBookingsFuture;
   final emial= FirebaseAuth.instance.currentUser?.email.toString();
+  NotificationService notificationService = NotificationService();
+  late String _userDeviceToken;
+  MongoDatabase mongoDatabase = MongoDatabase();
 
   @override
-  void initState() {
+  void initState() async {
     super.initState();
+    _userDeviceToken=await notificationService.getDeviceToken();
+    mongoDatabase.checkAndAddDeviceToken(emial!, _userDeviceToken);
+    notificationService.requestNotificationPermission();
     _latestBookingsFuture = MongoDatabase().getUpcomingBookings(emial!);
   }
 

@@ -8,6 +8,7 @@ class UserModelMongoDB {
   String? userPassword;
   String? userType;
   String? userAddress;
+  String? userDeviceToken;
 
   UserModelMongoDB({
     this.userId,
@@ -17,6 +18,7 @@ class UserModelMongoDB {
     required this.userPassword,
     this.userType,
     this.userAddress,
+    this.userDeviceToken
   });
 
   /// Converts the object into a Map
@@ -29,6 +31,7 @@ class UserModelMongoDB {
       'userPassword': userPassword,
       'userType': userType,
       'userAddress': userAddress,
+      'userDeviceToken':userDeviceToken
     };
   }
 
@@ -43,6 +46,7 @@ class UserModelMongoDB {
       userType: dataMap['userType'] as String?,
       userPassword: dataMap['userPassword'] as String?,
       userPhone: dataMap['userPhone'] as String?,
+      userDeviceToken: dataMap['userDeviceToken'] as String?,
     );
   }
 
