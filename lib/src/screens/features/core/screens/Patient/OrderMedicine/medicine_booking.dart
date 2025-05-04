@@ -69,21 +69,37 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
     final requestId = prefs.getString('medicalRequestId');
 
     if (requestId != null && mounted) {
-      setState(() {
-        _requestId = requestId;
-        _isLoading = false;
-        _isResuming = true;
-      });
-
       // Load saved data
       _deliveryAddressController.text = prefs.getString('medicalDeliveryAddress') ?? '';
       _notesController.text = prefs.getString('medicalNotes') ?? '';
+
+      // Check if there's a saved prescription image
+      final base64Image = prefs.getString('prescription_image');
+      if (base64Image != null) {
+        try {
+          final bytes = base64Decode(base64Image);
+          final tempDir = Directory.systemTemp;
+          final file = File('${tempDir.path}/prescription_${DateTime.now().millisecondsSinceEpoch}.png');
+          _prescriptionImage = await file.writeAsBytes(bytes);
+        } catch (e) {
+          debugPrint('Error loading saved prescription image: $e');
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _requestId = requestId;
+          _isLoading = false;
+          _isResuming = true;
+        });
+      }
 
       _startBidPolling();
     } else {
       await prefs.remove('medicalRequestId');
       await prefs.remove('medicalDeliveryAddress');
       await prefs.remove('medicalNotes');
+      await prefs.remove('prescription_image');
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -100,6 +116,16 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
     await prefs.setString('medicalRequestId', _requestId!);
     await prefs.setString('medicalDeliveryAddress', _deliveryAddressController.text);
     await prefs.setString('medicalNotes', _notesController.text);
+    if (_prescriptionImage != null) {
+      try {
+        final bytes = await _prescriptionImage!.readAsBytes();
+        final base64Image = base64Encode(bytes);
+        await prefs.setString('prescription_image', base64Image);
+      } catch (e) {
+        debugPrint('Error saving prescription image: $e');
+      }
+    }
+
   }
 
   Future<void> _clearRequestFromPrefs() async {
@@ -107,6 +133,7 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
     await prefs.remove('medicalRequestId');
     await prefs.remove('medicalDeliveryAddress');
     await prefs.remove('medicalNotes');
+    await prefs.remove('prescription_image');
   }
 
   Future<File?> getPrescriptionImageFromPrefs() async {
