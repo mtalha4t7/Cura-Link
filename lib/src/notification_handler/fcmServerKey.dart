@@ -24,6 +24,7 @@ class GetServerKey {
     }),
      scopes,
     );
+
     final accessServerKey = client.credentials.accessToken.data;
     return accessServerKey;
   }

@@ -8,12 +8,15 @@ import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../../../mongodb/mongodb.dart';
+import '../../../../../../notification_handler/send_notification.dart';
 import 'bid_model.dart';
 
 class NurseBookingScreen extends StatefulWidget {
-  final String selectedService;
+  final String selectedServiceName;
+  final String selectedServicePrice;
 
-  const NurseBookingScreen({super.key, required this.selectedService});
+  const NurseBookingScreen({super.key, required this.selectedServiceName, required this.selectedServicePrice});
 
   @override
   _NurseBookingScreenState createState() => _NurseBookingScreenState();
@@ -49,6 +52,28 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
         _isLoading = false;
         _isResuming = true;
       });
+      final availableNurses = await MongoDatabase.getAvailableNurses();
+
+      if (availableNurses != null) {
+        for (var nurse in availableNurses) {
+          final deviceToken = nurse['userDeviceToken'];
+          final userName = nurse['userName'];
+          if (deviceToken != null && deviceToken.isNotEmpty) {
+            print("device Token ================== $deviceToken");
+            await SendNotificationService.sendNotificationUsingApi(
+              token: deviceToken,
+              title: "$userName check New Booking Request",
+              body: "Someone has requested a service. Tap to bid!",
+              data: {
+                "screen": "NurseBookingsScreen",
+              },
+            );
+          }
+        }
+        print("Notification send");
+      } else {
+        print("No available nurses found.");
+      }
       _startBidPolling();
     } else {
       await prefs.remove('nurseRequestId');
@@ -74,7 +99,8 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('nurseRequestId', _requestId!);
-    await prefs.setString('nurseService', widget.selectedService);
+    await prefs.setString('nurseService', widget.selectedServiceName);
+    await prefs.setString('nurseServicePrice', widget.selectedServicePrice);
     await prefs.setDouble('requestLat', _currentLocation!.latitude);
     await prefs.setDouble('requestLng', _currentLocation!.longitude);
   }
@@ -83,6 +109,7 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('nurseRequestId');
     await prefs.remove('nurseService');
+    await prefs.remove('nurseServicePrice');
     await prefs.remove('requestLat');
     await prefs.remove('requestLng');
   }
@@ -140,10 +167,34 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
 
       // Call controller to create request (MongoDB auto-generates _id)
       final requestId = await _controller.createServiceRequest(
-        serviceType: widget.selectedService,
+        serviceType: widget.selectedServiceName,
         location: _currentLocation!,
-        patientEmail: patientEmail,
+        patientEmail: patientEmail, price: widget.selectedServicePrice,
       );
+      final availableNurses = await MongoDatabase.getAvailableNurses();
+
+      if (availableNurses != null) {
+        for (var nurse in availableNurses) {
+          final deviceToken = nurse['userDeviceToken'];
+          final userName = nurse['userName'];
+          if (deviceToken != null && deviceToken.isNotEmpty) {
+            print("device Token ================== $deviceToken");
+            await SendNotificationService.sendNotificationUsingApi(
+              token: deviceToken,
+              title: "$userName check New Booking Request",
+              body: "Someone has requested a service. Tap to bid!",
+              data: {
+                "screen": "NurseBookingsScreen",
+              },
+            );
+          }
+        }
+        print("Notification send");
+      } else {
+        print("No available nurses found.");
+      }
+
+
 
       // Save the Mongo ObjectId (hex string)
       setState(() => _requestId = requestId);
@@ -254,6 +305,9 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
 
         print('Nurse Emails: $nurseEmails');
         print('Nurse Names: $nurseNames');
+
+
+
 
         setState(() {
           _bids = bids; 
@@ -428,7 +482,7 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
         ),
         const SizedBox(height: 10),
         Text(
-          'We\'re sending your request for "${widget.selectedService}"',
+          'We\'re sending your request for "${widget.selectedServiceName}"',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium,
         ),

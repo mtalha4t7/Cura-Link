@@ -128,6 +128,17 @@ class MongoDatabase {
       logger.i('MongoDB connection closed');
     }
   }
+
+
+  static Future<List<Map<String, dynamic>>?> getAvailableNurses() async {
+    final collection =  _userNurseCollection; // or "users" if stored there
+    final nurses = await collection?.find({'isAvailable': true}).toList();
+    return nurses;
+  }
+
+
+
+
     // adding device token if not available
    Future<void> updateDeviceTokenForUser(
        String email,
@@ -280,11 +291,13 @@ class MongoDatabase {
     required String patientEmail,
     required String serviceType,
     required LatLng location,
+    required String servicePrice
   }) async {
     try {
       final request = {
         'patientEmail': patientEmail,
         'serviceType': serviceType,
+        'servicePrice':servicePrice,
         'location': {
           'type': 'Point',
           'coordinates': [location.longitude, location.latitude],
@@ -295,6 +308,8 @@ class MongoDatabase {
       };
 
       final result = await _nurseServiceRequestsCollection?.insertOne(request);
+
+
       return result?.id.toHexString() ?? '';
     } catch (e, stackTrace) {
       logger.e('Error creating service request', error: e, stackTrace: stackTrace);

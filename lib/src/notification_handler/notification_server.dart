@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../screens/features/core/screens/Nurse/MyBookings/my_bookings_screen.dart';
+import '../screens/features/core/screens/Nurse/NurseBookings/Nurse_Booking_Screen.dart';
 
 class NotificationService {
   //initialising firebase message plugin
@@ -192,7 +193,15 @@ class NotificationService {
           builder: (context) => const ManageBookingScreen(),
         ),
       );
-    } else {
+    }else if(screen=='NurseBookingsScreen'){
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const NurseBookingsScreen(),
+        ),
+      );
+    }
+    else {
       // Default action or other screen logic
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("No matching screen found for notification.")),

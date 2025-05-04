@@ -94,7 +94,7 @@ class _PatientDashboardState extends State<PatientDashboard> {
                       onTap: () async {
                         final prefs = await SharedPreferences.getInstance();
                         prefs.containsKey('nurseRequestId')
-                            ? Get.to(() => NurseBookingScreen(selectedService: ''))
+                            ? Get.to(() => NurseBookingScreen(selectedServiceName: '',selectedServicePrice: '',))
                             : Get.to(() => ShowNurseServices());
                       },
                     ),

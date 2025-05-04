@@ -15,14 +15,17 @@ class NurseBookingController extends GetxController {
     required String serviceType,
     required LatLng location,
     required String patientEmail,
+    required String price
   }) async {
     final result = await MongoDatabase.createServiceRequest(
       patientEmail: patientEmail,
       serviceType: serviceType,
+      servicePrice:price,
       location: location,
     );
 
     if (result.isNotEmpty) {
+
       return result; // already a hex string
     } else {
       throw Exception('Failed to insert service request');
