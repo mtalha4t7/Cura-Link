@@ -15,12 +15,20 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 
+
+        <activity
+            android:name="com.google.mlkit.vision.text.TextRecognitionActivity"
+            android:exported="false" />
+
+
+
         <!-- Add this meta-data for Google Maps API -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyBoajIOM-op5L4bO0Y7F4OlnQbKxVwk_bU"/>
 
         <!-- Existing content -->
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -30,6 +38,8 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
+
+
 
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"

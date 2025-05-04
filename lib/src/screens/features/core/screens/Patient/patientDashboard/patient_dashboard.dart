@@ -21,6 +21,7 @@ import 'package:cura_link/src/screens/features/core/screens/Patient/LabBooking/l
 
 import '../../../../../../constants/sizes.dart';
 import '../../../../../../mongodb/mongodb.dart';
+import '../OrderMedicine/show_Medical_store_services.dart';
 
 class PatientDashboard extends StatefulWidget {
   const PatientDashboard({super.key});
@@ -83,9 +84,7 @@ class _PatientDashboardState extends State<PatientDashboard> {
                       icon: Icons.medication,
                       label: 'Order Medicine',
                       onTap: () async {
-                        final key = await _getServerKey.getServerTokenKey();
-                        print(key);
-                        print("device token= $_userDeviceToken");
+                        Get.to(() => MedicalStoreServicesScreen());
                       },
                     ),
                     QuickAccessButton(
