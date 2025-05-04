@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientDashboard/patient_dashboard.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,15 +9,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'medical_store_model.dart';
 import 'medicne_booking_request_controller.dart';
 
-
 class MedicalStoreRequestScreen extends StatefulWidget {
   final List<Map<String, dynamic>> selectedMedicines;
-  final File? prescriptionImage;
 
   const MedicalStoreRequestScreen({
     super.key,
     required this.selectedMedicines,
-    this.prescriptionImage,
   });
 
   @override
@@ -36,11 +34,26 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
   final _deliveryAddressController = TextEditingController();
   final _notesController = TextEditingController();
   final double _deliveryFee = 50.0;
+  File? _prescriptionImage;
 
   @override
   void initState() {
     super.initState();
-    _checkExistingRequest();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    await _loadPrescriptionImage();
+    await _checkExistingRequest();
+  }
+
+  Future<void> _loadPrescriptionImage() async {
+    final image = await getPrescriptionImageFromPrefs();
+    if (mounted) {
+      setState(() {
+        _prescriptionImage = image;
+      });
+    }
   }
 
   @override
@@ -71,7 +84,9 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
       await prefs.remove('medicalRequestId');
       await prefs.remove('medicalDeliveryAddress');
       await prefs.remove('medicalNotes');
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -94,6 +109,23 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
     await prefs.remove('medicalNotes');
   }
 
+  Future<File?> getPrescriptionImageFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final base64Image = prefs.getString('prescription_image');
+
+    if (base64Image == null) return null;
+
+    try {
+      final bytes = base64Decode(base64Image);
+      final tempDir = Directory.systemTemp;
+      final file = File('${tempDir.path}/prescription_${DateTime.now().millisecondsSinceEpoch}.png');
+      return await file.writeAsBytes(bytes);
+    } catch (e) {
+      debugPrint('Error loading prescription image: $e');
+      return null;
+    }
+  }
+
   Future<void> _createServiceRequest() async {
     try {
       final patientEmail = _auth.currentUser?.email;
@@ -109,7 +141,7 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
         patientEmail: patientEmail,
         deliveryAddress: _deliveryAddressController.text,
         total: _calculateTotal(),
-        prescriptionImage: widget.prescriptionImage,
+        prescriptionImage: _prescriptionImage,
       );
 
       setState(() {
@@ -157,6 +189,7 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
     try {
       _bidTimer?.cancel();
       if (_requestId != null) {
+
         await _controller.cancelRequest(_requestId!);
         await _clearRequestFromPrefs();
       }
@@ -397,7 +430,7 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
           const SizedBox(height: 20),
 
           // Prescription Section (if exists)
-          if (widget.prescriptionImage != null) ...[
+          if (_prescriptionImage != null) ...[
             _buildSectionTitle('Prescription'),
             Card(
               child: Padding(
@@ -407,7 +440,7 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: Image.file(
-                        widget.prescriptionImage!,
+                        _prescriptionImage!,
                         height: 200,
                         width: double.infinity,
                         fit: BoxFit.contain,

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:get/get.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import 'dart:io';
@@ -9,6 +11,7 @@ import 'order_model.dart';
 class MedicalStoreController extends GetxController {
   final mongoDatabase = MongoDatabase();
 
+
   Future<String> createMedicalRequest({
     required List<Map<String, dynamic>> medicines,
     required String patientEmail,
@@ -17,40 +20,46 @@ class MedicalStoreController extends GetxController {
     File? prescriptionImage,
   }) async {
     try {
-      String? prescriptionImageUrl;
+      String? encodedImage;
+      String requestType;
+      List<Map<String, dynamic>>? medicineList;
 
-      // Upload prescription if exists
       if (prescriptionImage != null) {
-        prescriptionImageUrl = await _uploadPrescriptionImage(prescriptionImage);
-      }
-
-      // Create request document
-      final requestData = {
-        'patientEmail': patientEmail,
-        'medicines': medicines.map((m) => {
+        // Encode image to Base64
+        final bytes = await prescriptionImage.readAsBytes();
+        encodedImage = base64Encode(bytes);
+        requestType = 'prescription';
+        medicineList = []; // Don't include medicine details
+      } else {
+        requestType = 'notPrescription';
+        medicineList = medicines.map((m) => {
           'name': m['name'],
           'price': m['price'],
           'quantity': m['quantity'] ?? 1,
           'category': m['category'],
-        }).toList(),
-        'prescriptionImage': prescriptionImageUrl,
+        }).toList();
+      }
+
+      final requestData = {
+        'patientEmail': patientEmail,
+        'medicines': medicineList,
+        'prescriptionImage': encodedImage,
         'deliveryAddress': deliveryAddress,
         'subtotal': total - 50, // Assuming 50 is delivery fee
         'deliveryFee': 50.0,
         'total': total,
         'status': 'pending', // pending, bid_submitted, accepted, completed
+        'requestType': requestType, // <-- new field
         'createdAt': DateTime.now().toUtc(),
         'updatedAt': DateTime.now().toUtc(),
       };
 
-      // Insert into MongoDB
       final result = await MongoDatabase.medicalRequestsCollection?.insertOne(requestData);
 
       if (result?.isSuccess != true || result?.id == null) {
         throw Exception('Failed to create medical request');
       }
 
-      // Notify available stores
       await _notifyMedicalStores(result!.id.toString());
 
       return result.id.toString();
@@ -60,12 +69,6 @@ class MedicalStoreController extends GetxController {
     }
   }
 
-  Future<String?> _uploadPrescriptionImage(File image) async {
-    // Implement your MongoDB GridFS or external storage upload logic here
-    // For demo purposes, we'll just return a dummy URL
-    await Future.delayed(Duration(seconds: 1)); // Simulate upload delay
-    return 'prescriptions/${DateTime.now().millisecondsSinceEpoch}.jpg';
-  }
 
   Future<void> _notifyMedicalStores(String requestId) async {
     try {
@@ -278,18 +281,33 @@ class MedicalStoreController extends GetxController {
       print('Error notifying store: $e');
     }
   }
-
+  String cleanObjectId(String rawId) {
+    if (rawId.contains('ObjectId')) {
+      // Remove 'ObjectId("', 'ObjectId(\'', and ending '")' or '\')'
+      return rawId
+          .replaceAll('ObjectId("', '')
+          .replaceAll('ObjectId(\'', '')
+          .replaceAll('")', '')
+          .replaceAll('\')', '');
+    }
+    return rawId;
+  }
   Future<void> cancelRequest(String requestId) async {
     try {
-      await MongoDatabase.medicalRequestsCollection?.updateOne(
-        where.id(ObjectId.parse(requestId)),
-        modify.set('status', 'cancelled'),
-      );
+      // Make sure requestId is clean (just the 24-char hex string)
+      final cleanId = cleanObjectId(requestId);
 
-      // Optionally notify stores/bidders about cancellation
+      print('================= $cleanId');
+
+          await MongoDatabase.medicalRequestsCollection?.updateOne(
+          where.id(ObjectId.parse(cleanId)),
+    modify.set('status', 'cancelled'),
+    );
+
+    // Optionally notify stores/bidders about cancellation
     } catch (e) {
-      print('Error cancelling request: $e');
-      rethrow;
+    print('Error cancelling request: $e');
+    rethrow;
     }
   }
 

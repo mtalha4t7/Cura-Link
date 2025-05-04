@@ -1,6 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
+
+import 'medicine_booking.dart';
 
 class MedicalStoreServicesScreen extends StatefulWidget {
   const MedicalStoreServicesScreen({super.key});
@@ -175,13 +181,7 @@ class _MedicalStoreServicesScreenState extends State<MedicalStoreServicesScreen>
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Order placed successfully!'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
+              Get.to(() => MedicalStoreRequestScreen(selectedMedicines: otcSelected,));
             },
             child: const Text('Confirm Order'),
           ),
@@ -190,7 +190,7 @@ class _MedicalStoreServicesScreenState extends State<MedicalStoreServicesScreen>
     );
   }
 
-  void _sendPrescription() {
+  void _sendPrescription() async {
     if (_prescriptionImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -201,14 +201,23 @@ class _MedicalStoreServicesScreenState extends State<MedicalStoreServicesScreen>
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Prescription sent successfully!'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    try {
+      final bytes = await _prescriptionImage!.readAsBytes();
+      final base64Image = base64Encode(bytes);
 
-    // You can also send `_prescriptionImage` and `selectedMedicines` to backend here
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('prescription_image', base64Image);
+
+      Get.to(() => MedicalStoreRequestScreen(selectedMedicines: [],));
+    } catch (e) {
+      print('Error saving prescription image: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to process prescription image'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   @override
