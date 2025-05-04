@@ -299,15 +299,14 @@ class MedicalStoreController extends GetxController {
 
       print('================= $cleanId');
 
-          await MongoDatabase.medicalRequestsCollection?.updateOne(
-          where.id(ObjectId.parse(cleanId)),
-    modify.set('status', 'cancelled'),
-    );
+      await MongoDatabase.medicalRequestsCollection?.deleteOne(
+        where.id(ObjectId.parse(cleanId)),
+      );
 
-    // Optionally notify stores/bidders about cancellation
+      // Optionally notify stores/bidders about cancellation
     } catch (e) {
-    print('Error cancelling request: $e');
-    rethrow;
+      print('Error cancelling request: $e');
+      rethrow;
     }
   }
 
