@@ -23,7 +23,26 @@ class NurseBookingController extends GetxController {
       servicePrice:price,
       location: location,
     );
+    final availableNurses = await MongoDatabase.getAvailableNurses();
 
+    if (availableNurses != null && availableNurses.isNotEmpty) {
+      for (var nurse in availableNurses) {
+        final deviceToken = nurse['userDeviceToken'];
+        final userName = nurse['userName'];
+        if (deviceToken != null && deviceToken.isNotEmpty) {
+          await SendNotificationService.sendNotificationUsingApi(
+            token: deviceToken,
+            title: "$userName check New Booking Request",
+            body: "Someone has requested a $serviceType service. Tap to bid!",
+            data: {
+              "screen": "NurseBookingsScreen",
+            },
+          );
+        }
+      }
+    } else {
+      print("No available nurses found.");
+    }
     if (result.isNotEmpty) {
 
       return result; // already a hex string

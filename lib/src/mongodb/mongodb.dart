@@ -28,13 +28,10 @@ class MongoDatabase {
   static DbCollection? _nurseBidsCollection;
   static DbCollection? _patientNurseBookingsCollection;
   static DbCollection? _nurseReceivedBookingsCollection;
+  static DbCollection? _medicalBidsCollection;
+ static DbCollection? _medicalRequestsCollection;
+static DbCollection? _medicalOrdersCollection;
 
-
-
-
-
-
-  // Update getters to include new collections
 
   // Connect to MongoDB and initialize the collections
   static Future<void> connect() async {
@@ -61,6 +58,11 @@ class MongoDatabase {
       _nurseBidsCollection = _db!.collection(NURSE_BIDS_COLLECTION);
       _patientNurseBookingsCollection = _db!.collection(PATIENT_NURSE_BOOKINGS_COLLECTION);
       _nurseReceivedBookingsCollection = _db!.collection(NURSE_RECEIVED_BOOKINGS_COLLECTION);
+      _medicalBidsCollection = _db!.collection('storeBids');
+      _medicalRequestsCollection = _db!.collection('storeServiceRequests');
+      _medicalOrdersCollection = _db!.collection('medicalOrderCollection');
+
+
 
 
 
@@ -108,6 +110,12 @@ class MongoDatabase {
 
   static DbCollection? get labRatingCollection => _labRating;
   static Db? get db => _db;
+  static DbCollection? get  medicalBidsCollection =>  _medicalBidsCollection;
+static DbCollection? get  medicalRequestsCollection =>  _medicalRequestsCollection;
+static DbCollection? get  medicalOrdersCollection =>  _medicalOrdersCollection;
+
+
+
   // Close the MongoDB connection
   static Future<void> close() async {
     if (_db != null) {
@@ -124,10 +132,39 @@ class MongoDatabase {
       _users = null;
       _messagesCollection = null;
       _labRating= null;
+      _medicalBidsCollection=null;
+      _medicalRequestsCollection=null;
+      _medicalOrdersCollection=null;
 
       logger.i('MongoDB connection closed');
     }
   }
+
+
+
+
+  static Future<List<Map<String, dynamic>>> getMedicalStores() async {
+    try {
+      if (_userMedicalStoreCollection == null) {
+        logger.w('Medical store collection is not initialized');
+        return [];
+      }
+
+      // Find all medical stores that are marked as available
+      final stores = await _userMedicalStoreCollection?.find(
+          where.eq('isAvailable', true)
+      ).toList();
+
+      logger.i('Fetched ${stores?.length ?? 0} available medical stores');
+      return stores ?? [];
+    } catch (e, stackTrace) {
+      logger.e('Error fetching medical stores',
+          error: e,
+          stackTrace: stackTrace);
+      return [];
+    }
+  }
+
 
 
   static Future<List<Map<String, dynamic>>?> getAvailableNurses() async {
