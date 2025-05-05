@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../../../constants/colors.dart';
 import '../../../models/dashboard/categories_model.dart';
 
-class PatientDashboardCategories extends StatelessWidget {
-  const PatientDashboardCategories({
+class MedicalStoreDashboardCategories extends StatelessWidget {
+  const MedicalStoreDashboardCategories({
     super.key,
     required this.txtTheme,
   });
