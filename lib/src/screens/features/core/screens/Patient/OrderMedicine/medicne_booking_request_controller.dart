@@ -95,10 +95,11 @@ class MedicalStoreController extends GetxController {
 
   Future<List<MedicalStoreBid>> fetchBidsForRequest(String requestId) async {
     try {
+      final cleanId = cleanObjectId(requestId);
       final bids = await MongoDatabase.medicalBidsCollection?.find(
-          where.eq('requestId', requestId)
+          where.eq('requestId', cleanId)
       ).toList();
-
+      print(bids);
       return bids?.map((b) => MedicalStoreBid.fromMap(b)).toList() ?? [];
     } catch (e) {
       print('Error fetching bids: $e');

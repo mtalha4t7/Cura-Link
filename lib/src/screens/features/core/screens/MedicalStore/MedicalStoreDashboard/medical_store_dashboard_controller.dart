@@ -1,60 +1,206 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mongo_dart/mongo_dart.dart';
+import '../../../../../../mongodb/mongodb.dart';
+import '../../../../../../repository/user_repository/user_repository.dart';
+import '../../../models/medical_store_user_medel.dart';
 
 class MedicalStoreDashboardController extends GetxController {
-  RxList<Map<String, dynamic>> bookings = <Map<String, dynamic>>[].obs;
-  RxBool isLoading = true.obs;
-
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  var isLoading = false.obs;
+  var isAvailable = false.obs;
+  var isVerified = false.obs;
+  final String? userEmail = FirebaseAuth.instance.currentUser?.email;
+  var store = Rx<MedicalStoreModelMongoDB?>(null);
 
   @override
   void onInit() {
     super.onInit();
-    fetchBookings();
+    fetchMedicalStoreData();
   }
 
-  Future<void> fetchBookings() async {
+  Future<void> fetchMedicalStoreData() async {
     try {
-      isLoading.value = true;
+      isLoading(true);
+      final currentUser = FirebaseAuth.instance.currentUser;
 
-      String uid = _auth.currentUser?.uid ?? '';
+      if (currentUser?.email == null) {
+        throw Exception('No authenticated user');
+      }
 
-      // Assuming medical store UID is used to filter
-      QuerySnapshot querySnapshot = await _firestore
-          .collection('bookings')
-          .where('storeId', isEqualTo: uid)
-          .get();
-
-      bookings.value = querySnapshot.docs
-          .map((doc) => {'id': doc.id, ...doc.data() as Map<String, dynamic>})
-          .toList();
+      final data = await UserRepository.instance.getMedicalStoreUserByEmail(currentUser!.email!);
+      if (data != null) {
+        store.value = MedicalStoreModelMongoDB.fromDataMap(data);
+        isVerified(store.value?.userVerified == "1");
+        isAvailable(store.value?.isAvailable ?? false);
+      } else {
+        throw Exception('No nurse data found for this user');
+      }
     } catch (e) {
-      print('Error fetching bookings: $e');
+      Get.snackbar('Error', 'Failed to fetch data: ${e.toString()}');
     } finally {
-      isLoading.value = false;
+      isLoading(false);
     }
   }
 
-  Future<void> updateBookingStatus(String bookingId, String status) async {
+  Future<void> toggleAvailability() async {
     try {
-      await _firestore.collection('bookings').doc(bookingId).update({
-        'status': status,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      fetchBookings(); // Refresh
+      isLoading(true);
+      final newStatus = !isAvailable.value;
+      isAvailable(newStatus);
+
+      await UserRepository.instance.updateMedicalStoreUser(
+        userEmail ?? '',
+        {'isAvailable': newStatus},
+      );
+
+      Get.snackbar('Success', newStatus
+          ? 'Store is now available for orders'
+          : 'Store is now unavailable');
     } catch (e) {
-      print('Error updating status: $e');
+      isAvailable(!isAvailable.value); // revert change
+      Get.snackbar('Error', 'Failed to update: ${e.toString()}');
+    } finally {
+      isLoading(false);
     }
   }
 
-  Future<void> saveDeviceToken(String token) async {
-    String uid = _auth.currentUser?.uid ?? '';
-    if (uid.isNotEmpty) {
-      await _firestore.collection('users').doc(uid).update({
-        'deviceToken': token,
-      });
+  Future<void> checkUserVerification(Function(bool) updateVerificationStatus) async {
+    try {
+      final userDoc = await MongoDatabase.findUserMedicalStore(userEmail!);
+      if (userDoc != null) {
+        final String? userVerifiedString = userDoc['userVerified'] as String?;
+        final bool isUserVerified = userVerifiedString == "1";
+        updateVerificationStatus(isUserVerified);
+      } else {
+        updateVerificationStatus(false);
+      }
+    } catch (e) {
+      updateVerificationStatus(false);
     }
   }
+
+  Future<void> verifyStore(
+      String nic, String license, BuildContext context, Function(bool) onVerificationResult) async {
+    try {
+      final collection = MongoDatabase.userVerification;
+      final existingVerification = await MongoDatabase.checkVerification(
+        nic: nic,
+        licence: license,
+        collection: collection,
+      );
+
+      if (existingVerification) {
+        final userDoc = await collection?.findOne({'userNic': nic});
+        if (userDoc != null) {
+          if (userDoc['assignedEmail'] != "") {
+            Get.snackbar("Error", "This license is already registered");
+            onVerificationResult(false);
+          } else {
+            final updateResult = await updateVerificationFields(nic, {
+              'assignedEmail': userEmail,
+            }, context);
+
+            if (updateResult) {
+              final updateResultStatus = await updateUserFields(userEmail!, {
+                'userVerified': "1",
+              });
+              onVerificationResult(updateResultStatus);
+            } else {
+              onVerificationResult(false);
+            }
+          }
+        } else {
+          onVerificationResult(false);
+        }
+      } else {
+        onVerificationResult(false);
+      }
+    } catch (e) {
+      onVerificationResult(false);
+    }
+  }
+
+
+  Future<bool> updateUserFields(
+      String email, Map<String, dynamic> fieldsToUpdate) async {
+    try {
+      final query = {'userEmail': email};
+      final modifyBuilder = ModifierBuilder();
+
+      // Add each field to the ModifierBuilder
+      fieldsToUpdate.forEach((key, value) {
+        modifyBuilder.set(key, value);
+      });
+
+      // Perform the update operation
+      final result = await MongoDatabase.userMedicalStoreCollection?.updateOne(
+        query,
+        modifyBuilder,
+      );
+
+      // Check the update result
+      if (result?.nMatched == 0) {
+        print('No document matched the given email.');
+        return false; // No document found for the user
+      } else if (result?.nModified == 0) {
+        print(
+            'The document was matched, but no modification was made (fields might be the same).');
+        return false; // No change was made
+      } else {
+        print('User fields updated successfully.');
+        return true; // Update successful
+      }
+    } catch (e) {
+      print('Error updating user fields: $e');
+      return false; // Error during the update process
+    }
+  }
+
+
+
+
+  Future<bool> updateVerificationFields(
+      String nic, Map<String, dynamic> fieldsToUpdate, BuildContext context) async {
+    try {
+      final query = {'userNic': nic};
+      final modifyBuilder = ModifierBuilder();
+
+      // Add each field to the ModifierBuilder
+      fieldsToUpdate.forEach((key, value) {
+        modifyBuilder.set(key, value);
+      });
+
+      // Perform the update operation
+      final result = await MongoDatabase.userVerification?.updateOne(
+        query,
+        modifyBuilder,
+      );
+
+      // Check the update result
+      if (result?.nMatched == 0) {
+        print('No document matched the given NIC.');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No document found for the provided NIC.")),
+        );
+        return false; // No document found for the NIC
+      } else if (result?.nModified == 0) {
+        print('The document was matched, but no modification was made (fields might be the same).');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No updates made to the document.")),
+        );
+        return false; // No change was made
+      } else {
+        print('User fields updated successfully.');
+        return true; // Update successful
+      }
+    } catch (e) {
+      print('Error updating user fields: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error updating user data.")),
+      );
+      return false; // Error during the update process
+    }
+  }
+
 }

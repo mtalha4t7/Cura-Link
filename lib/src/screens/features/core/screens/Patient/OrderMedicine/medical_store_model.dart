@@ -88,15 +88,16 @@ class MedicalStoreBid {
   factory MedicalStoreBid.fromMap(Map<String, dynamic> map) {
     return MedicalStoreBid(
       id: map['_id'].toString(),
-      requestId: map['requestId'],
-      storeName: map['storeName'],
-      storeEmail: map['storeEmail'],
-      originalAmount: map['originalAmount'].toDouble(),
-      bidAmount: map['bidAmount'].toDouble(),
-      status: map['status'],
-      storeRating: map['storeRating']?.toDouble() ?? 0.0, // <-- Safe parse
-      createdAt: DateTime.parse(map['createdAt']),
+      requestId: map['requestId'] ?? '',
+      storeName: map['storeName'] ?? 'Unknown Store',
+      storeEmail: map['storeEmail'] ?? '',
+      originalAmount: (map['originalAmount'] ?? map['price'] ?? 0).toDouble(),
+      bidAmount: (map['bidAmount'] ?? map['price'] ?? 0).toDouble(),
+      status: map['status'] ?? 'pending',
+      storeRating: (map['storeRating'] ?? 0).toDouble(),
+      createdAt: DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now(),
     );
   }
+
 }
 

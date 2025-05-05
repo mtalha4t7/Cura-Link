@@ -8,14 +8,22 @@ import 'package:get_storage/get_storage.dart';
 import 'package:photo_view/photo_view.dart';
 
 
-class CheckForRequestsScreen extends StatelessWidget {
+class CheckForRequestsScreen extends StatefulWidget {
   const CheckForRequestsScreen({super.key});
+
+
+  @override
+  State<CheckForRequestsScreen> createState() => _CheckForRequestsScreenState();
+}
+
+class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<CheckForRequestsController>();
+    final CheckForRequestsController controller = Get.put(CheckForRequestsController());
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+
 
     return Scaffold(
       appBar: AppBar(
@@ -261,7 +269,6 @@ class CheckForRequestsScreen extends StatelessWidget {
     if (medicines == null || medicines.isEmpty) {
       return [const Text('No medicines specified')];
     }
-
     return medicines.map((medicine) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
@@ -496,7 +503,6 @@ class CheckForRequestsScreen extends StatelessWidget {
     );
   }
 
-
   void _showFullScreenPrescription(BuildContext context, String imageUrl) {
     showDialog(
       context: context,
@@ -525,7 +531,6 @@ class CheckForRequestsScreen extends StatelessWidget {
           ),
     );
   }
-
 
   Widget _buildPriceAdjustButton({
     required IconData icon,
@@ -831,6 +836,7 @@ class CheckForRequestsScreen extends StatelessWidget {
 
                           controller.submitBid(
                             cleanRequestId,
+
                             price,
                             name ?? "Unknown Store",
                           );
