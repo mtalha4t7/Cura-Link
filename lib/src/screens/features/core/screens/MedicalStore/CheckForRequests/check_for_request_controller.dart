@@ -1,18 +1,17 @@
 import 'dart:async';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import '../../../../../../mongodb/mongodb.dart';
 import '../../../../../../repository/user_repository/user_repository.dart';
-import '../../../models/nurse_model.dart';
+import '../../../models/medical_store_user_medel.dart';
 
 
-class BookingControllerNurse extends GetxController {
+class CheckForRequestsController extends GetxController {
   final _userRepository = UserRepository();
   var isLoading = false.obs;
   var isAvailable = false.obs;
-  var nurse = Rx<NurseModelMongoDB?>(null);
+  var medicalStore = Rx<MedicalStoreModelMongoDB?>(null);
   var isVerified = false.obs;
   var activeRequests = <Map<String, dynamic>>[].obs;
   Timer? pollingTimer;
@@ -20,23 +19,24 @@ class BookingControllerNurse extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchNurseData();
+    fetchMedicalStoreData();
     fetchActiveRequests();
-    fetchActiveRequests();
+    startPolling();
   }
+
   @override
   void onClose() {
     pollingTimer?.cancel();
     super.onClose();
   }
+
   void startPolling() {
     pollingTimer = Timer.periodic(Duration(seconds: 10), (_) {
-      fetchActiveRequests(); // Call your MongoDB fetch logic
+      fetchActiveRequests();
     });
   }
 
-// Add this method to your controller
-  Future<void> fetchNurseData() async {
+  Future<void> fetchMedicalStoreData() async {
     try {
       isLoading(true);
       final currentUser = FirebaseAuth.instance.currentUser;
@@ -45,10 +45,10 @@ class BookingControllerNurse extends GetxController {
         throw Exception('No authenticated user');
       }
 
-      final data = await _userRepository.getNurseUserByEmail(currentUser!.email!);
-      nurse.value = NurseModelMongoDB.fromDataMap(data ?? {});
-      isVerified(nurse.value?.userVerified == "1");
-      isAvailable(nurse.value?.isAvailable ?? false);
+      final data = await _userRepository.getMedicalStoreUserByEmail(currentUser!.email!);
+      medicalStore.value = MedicalStoreModelMongoDB.fromDataMap(data ?? {});
+      isVerified(medicalStore.value?.userVerified == "1");
+      isAvailable(medicalStore.value?.isAvailable ?? false);
 
     } catch (e) {
       Get.snackbar('Error', 'Failed to fetch data: ${e.toString()}');
@@ -57,16 +57,14 @@ class BookingControllerNurse extends GetxController {
     }
   }
 
-
-  // Fetches service requests assigned to this nurse (or nearby in the future)
   Future<void> fetchActiveRequests() async {
     print('🔄 Starting to fetch active requests...');
     try {
       isLoading(true);
-      final nurseEmail = nurse.value?.userEmail ?? '';
-      print('👩⚕️ Current nurse email: $nurseEmail');
+      final storeEmail = medicalStore.value?.userEmail ?? '';
+      print('🏥 Current medical store email: $storeEmail');
 
-      final requests = await MongoDatabase.getNurseServiceRequests(nurseEmail);
+      final requests = await MongoDatabase.getStoreServiceRequests(storeEmail);
       print('✅ Successfully fetched ${requests.length} raw requests from DB:');
       requests.forEach((req) => print('   - ${req.toString()}'));
 
@@ -84,34 +82,56 @@ class BookingControllerNurse extends GetxController {
     }
   }
 
-  Future<void> submitBid(String requestId, double price, String nurseName) async {
+  Future<void> submitBid(
+      String requestId,
+      double price,
+      String storeName, {
+        String? prescriptionDetails,
+      }) async {
     try {
-
       isLoading(true);
-       print("===================="+nurseName);
-      await MongoDatabase.submitBid(
-        nurseName: nurseName,
+      print("====================" + storeName);
+
+      // Prepare bid data
+      final bidData = {
+        'storeName': storeName,
+        'storeEmail': medicalStore.value?.userEmail ?? '',
+        'price': price,
+        'submittedAt': DateTime.now(),
+        if (prescriptionDetails != null)
+          'prescriptionDetails': prescriptionDetails,
+      };
+
+      await MongoDatabase.submitStoreBid(
         requestId: requestId,
-        nurseEmail: nurse.value?.userEmail ?? '',
-        price: price,
+        bidData: bidData,
       );
-      Get.snackbar('Success', 'Bid submitted successfully');
+
+      Get.snackbar(
+        'Success',
+        prescriptionDetails != null
+            ? 'Prescription bid submitted successfully'
+            : 'Bid submitted successfully',
+      );
+
       await fetchActiveRequests();
     } catch (e) {
-      Get.snackbar('Error', 'Failed to submit bid: ${e.toString()}');
+      Get.snackbar(
+        'Error',
+        'Failed to submit bid: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading(false);
     }
   }
 
-
-
-  Future<Map<String, dynamic>> getNurseLocation() async {
+  Future<Map<String, dynamic>> getStoreLocation() async {
     try {
-      final nurseData = await MongoDatabase.userNurseCollection?.findOne(
-          where.eq('userEmail', nurse.value?.userEmail)
+      final storeData = await MongoDatabase.userMedicalStoreCollection?.findOne(
+          where.eq('userEmail', medicalStore.value?.userEmail)
       );
-      return nurseData?['location'] ?? {};
+      return storeData?['location'] ?? {};
     } catch (e) {
       return {};
     }

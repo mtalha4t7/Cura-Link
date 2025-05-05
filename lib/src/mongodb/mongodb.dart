@@ -140,7 +140,52 @@ static DbCollection? get  medicalOrdersCollection =>  _medicalOrdersCollection;
     }
   }
 
+  static Future<void> submitStoreBid({
+    required String requestId,
+    required Map<String, dynamic> bidData,
+  }) async {
+    try {
+      // Validate request ID
+      ObjectId requestObjectId;
+      try {
+        requestObjectId = ObjectId.parse(requestId);
+      } catch (e) {
+        throw Exception('Invalid request ID format');
+      }
 
+      // Check if request exists
+      final request = await _medicalRequestsCollection?.findOne(
+        where.id(requestObjectId),
+      );
+
+      if (request == null) {
+        throw Exception('Request not found');
+      }
+
+      // Prepare bid document
+      final bidDocument = {
+        ...bidData,
+        'requestId': requestId,
+        'status': 'pending',
+        'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
+      };
+
+      // Add bid to bids collection
+      await _medicalBidsCollection?.insertOne(bidDocument);
+
+      // Update request with bid reference
+      await _medicalRequestsCollection?.updateOne(
+        where.id(requestObjectId),
+        modify.push('bids', bidDocument),
+      );
+
+      logger.i('Store bid submitted successfully for request $requestId');
+    } catch (e, stackTrace) {
+      logger.e('Error submitting store bid', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
 
 
   static Future<List<Map<String, dynamic>>> getMedicalStores() async {
@@ -866,6 +911,20 @@ static DbCollection? get  medicalOrdersCollection =>  _medicalOrdersCollection;
   static Future<List<Map<String, dynamic>>> getNurseServiceRequests(String nurseEmail) async {
     try {
       final requests = await _nurseServiceRequestsCollection?.find(
+          where.eq('status', 'open')
+              .sortBy('createdAt', descending: true)
+      ).toList();
+
+      return requests ?? [];
+
+    } catch (e, stackTrace) {
+      logger.e('Error fetching nurse requests', error: e, stackTrace: stackTrace);
+      return [];
+    }
+  }
+static Future<List<Map<String, dynamic>>> getStoreServiceRequests(String nurseEmail) async {
+    try {
+      final requests = await _medicalRequestsCollection?.find(
           where.eq('status', 'open')
               .sortBy('createdAt', descending: true)
       ).toList();
