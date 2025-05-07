@@ -143,96 +143,72 @@ class MyBookingsController extends GetxController {
 
 
   // Update the status of a booking
-  Future<void> updateBookingStatus(String bookingId, String newStatus) async {
+  Future<void> updateBookingStatus(
+      String bookingId,
+      String newStatus, {
+        String? lastModifiedBy,
+      }) async {
     try {
-      print('Attempting to update booking ID: $bookingId to status: $newStatus');
-
-
-
-      // Update the status in bookingsCollection
-      final result = await MongoDatabase.bookingsCollection?.updateOne(
-        {'_id': ObjectId.parse(bookingId)}, // Use ObjectId for labBookings
-        {'\$set': {'status': newStatus}},
-      );
-
-      if (result != null && result.isSuccess) {
-        print('Booking status updated successfully in bookings collection.');
-      } else {
-        print('Update failed in bookings collection. Result: $result');
-      }
-
-      // Check if a matching document exists in patientBookingsCollection
-      final existingPatientBooking = await MongoDatabase.patientBookingsCollection?.findOne({
-        'bookingId': ObjectId.parse(bookingId), // Use string for patientBookings
-      });
-
-      print('Existing booking in patientBookings collection: $existingPatientBooking');
-
-      if (existingPatientBooking != null) {
-        // Update the status in patientBookingsCollection
-        final updateResult = await MongoDatabase.patientBookingsCollection?.updateOne(
-          {'bookingId': ObjectId.parse(bookingId)}, // Match as string
-          {'\$set': {'status': newStatus}},
-        );
-
-        if (updateResult != null && updateResult.isSuccess) {
-          print('Booking status updated successfully in patientBookings collection.');
-        } else {
-          print('Update failed in patientBookings collection. Result: $updateResult');
+      final updateDoc = {
+        '\$set': {
+          'status': newStatus,
+          if (lastModifiedBy != null) 'lastModifiedBy': lastModifiedBy,
         }
-      } else {
-        print('No matching document found in patientBookings collection. Skipping update.');
-      }
-    } catch (e) {
-      print('Error updating booking status: $e');
-    }
-  }
+      };
 
-
-
-
-// Update the booking date
-  Future<void> updateBookingDate(String bookingId, String newDate) async {
-    try {
-      print('Attempting to update booking date for booking ID: $bookingId to date: $newDate');
-
-      // Update in main bookings collection
-      final result = await MongoDatabase.bookingsCollection?.updateOne(
-        {'bookingId': bookingId},
-        {'\$set': {'bookingDate': newDate}},
+      // Update in bookingsCollection
+      await MongoDatabase.bookingsCollection?.updateOne(
+        {'_id': ObjectId.parse(bookingId)},
+        updateDoc,
       );
-
-      if (result != null && result.isSuccess) {
-        print('Booking date updated successfully in bookings collection.');
-      } else {
-        print('Update failed in bookings collection. Result: $result');
-      }
 
       // Update in patientBookingsCollection
-      final existingPatientBooking = await MongoDatabase.patientBookingsCollection?.findOne({
-        'bookingId':bookingId,
-      });
-
-      print('Existing booking in patientBookings collection: $existingPatientBooking');
-
-      if (existingPatientBooking != null) {
-        final updateResult = await MongoDatabase.patientBookingsCollection?.updateOne(
-          {'bookingId': bookingId},
-          {'\$set': {'bookingDate': newDate}},
-        );
-
-        if (updateResult != null && updateResult.isSuccess) {
-          print('Booking date updated successfully in patientBookings collection.');
-        } else {
-          print('Update failed in patientBookings collection. Result: $updateResult');
-        }
-      } else {
-        print('No matching document found in patientBookings collection. Skipping update.');
-      }
+      await MongoDatabase.patientBookingsCollection?.updateOne(
+        {'bookingId': ObjectId.parse(bookingId).toHexString()},
+        updateDoc,
+      );
     } catch (e) {
-      print('Error updating booking date: $e');
+      print('Error updating booking status: $e');
+      rethrow;
     }
   }
 
 
+
+  // Update the booking date
+// Update the booking date
+  Future<void> updateBookingDateAndStatus(
+      String bookingId,
+      String newDate,
+      String newStatus, {
+        required String lastModifiedBy,
+      }) async {
+    try {
+      final updateDoc = {
+        '\$set': {
+          'bookingDate': newDate,
+          'status': newStatus,
+          'lastModifiedBy': lastModifiedBy,
+        }
+      };
+
+      // Update in bookingsCollection
+      await MongoDatabase.bookingsCollection?.updateOne(
+        {'_id': ObjectId.parse(bookingId)},
+        updateDoc,
+      );
+
+      // Update in patientBookingsCollection
+      await MongoDatabase.patientBookingsCollection?.updateOne(
+        {'bookingId': ObjectId.parse(bookingId).toHexString()},
+        updateDoc,
+      );
+    } catch (e) {
+      print('Error updating booking: $e');
+      rethrow;
+    }
+  }
 }
+
+
+

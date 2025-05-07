@@ -123,51 +123,33 @@ class BookingController {
     }
   }
 
-  Future<void> updateBookingStatus(String bookingId, String newStatus) async {
+  Future<void> updateBookingStatus(
+      String bookingId,
+      String newStatus, {
+        String? lastModifiedBy,
+      }) async {
     try {
-      print('Attempting to update booking ID: $bookingId to status: $newStatus');
-
-      final objectId = ObjectId.parse(bookingId);
-      print('Parsed ObjectId: $objectId');
-
-      // Update the status in bookingsCollection
-      final result = await MongoDatabase.bookingsCollection?.updateOne(
-        {'_id': objectId},
-        {'\$set': {'status': newStatus}},
-      );
-      final result1 = await MongoDatabase.patientBookingsCollection?.updateOne(
-        {'_id': objectId},
-        {'\$set': {'status': newStatus}},
-      );
-      if (result != null && result.isSuccess) {
-        print('Booking status updated successfully in bookings collection.');
-      } else {
-        print('Update failed in bookings collection. Result: $result');
-      }
-
-      // Check if a matching document exists in patientBookingsCollection
-      final existingPatientBooking = await MongoDatabase.patientBookingsCollection?.findOne({
-        'bookingId': objectId.toHexString(), // Query as a string
-      });
-      print('Existing booking in patientBookings collection: $existingPatientBooking');
-
-      if (existingPatientBooking != null) {
-        // Update the status in patientBookingsCollection
-        final updateResult = await MongoDatabase.patientBookingsCollection?.updateOne(
-          {'bookingId': objectId.toHexString()}, // Query as a string
-          {'\$set': {'status': newStatus}},
-        );
-
-        if (updateResult != null && updateResult.isSuccess) {
-          print('Booking status updated successfully in patientBookings collection.');
-        } else {
-          print('Update failed in patientBookings collection. Result: $updateResult');
+      final updateDoc = {
+        '\$set': {
+          'status': newStatus,
+          if (lastModifiedBy != null) 'lastModifiedBy': lastModifiedBy,
         }
-      } else {
-        print('No matching document found in patientBookings collection. Skipping update.');
-      }
+      };
+
+      // Update in bookingsCollection
+      await MongoDatabase.bookingsCollection?.updateOne(
+        {'_id': ObjectId.parse(bookingId)},
+        updateDoc,
+      );
+
+      // Update in patientBookingsCollection
+      await MongoDatabase.patientBookingsCollection?.updateOne(
+        {'bookingId': ObjectId.parse(bookingId).toHexString()},
+        updateDoc,
+      );
     } catch (e) {
       print('Error updating booking status: $e');
+      rethrow;
     }
   }
 
@@ -175,50 +157,35 @@ class BookingController {
 
   // Update the booking date
 // Update the booking date
-  Future<void> updateBookingDate(String bookingId, String newDate) async {
+  Future<void> updateBookingDateAndStatus(
+      String bookingId,
+      String newDate,
+      String newStatus, {
+        required String lastModifiedBy,
+      }) async {
     try {
-      print('Attempting to update booking date for booking ID: $bookingId to date: $newDate');
+      final updateDoc = {
+        '\$set': {
+          'bookingDate': newDate,
+          'status': newStatus,
+          'lastModifiedBy': lastModifiedBy,
+        }
+      };
 
-      // Convert bookingId to ObjectId
-      final objectId = ObjectId.parse(bookingId);
-      final bookingIdAsString = objectId.toHexString(); // Convert to string for patientBookingsCollection
-
-      // Update the bookingDate in bookingsCollection
-      final result = await MongoDatabase.bookingsCollection?.updateOne(
-        {'_id': objectId}, // Filter by ObjectId
-        {'\$set': {'bookingDate': newDate}}, // Update the booking date
+      // Update in bookingsCollection
+      await MongoDatabase.bookingsCollection?.updateOne(
+        {'_id': ObjectId.parse(bookingId)},
+        updateDoc,
       );
 
-      if (result != null && result.isSuccess) {
-        print('Booking date updated successfully in bookings collection.');
-      } else {
-        print('Update failed in bookings collection. Result: $result');
-      }
-
-      // Check if a matching document exists in patientBookingsCollection
-      final existingPatientBooking = await MongoDatabase.patientBookingsCollection?.findOne({
-        'bookingId': bookingIdAsString, // Query as a string
-      });
-
-      print('Existing booking in patientBookings collection: $existingPatientBooking');
-
-      if (existingPatientBooking != null) {
-        // Update the bookingDate in patientBookingsCollection
-        final updateResult = await MongoDatabase.patientBookingsCollection?.updateOne(
-          {'bookingId': bookingIdAsString}, // Match as string
-          {'\$set': {'bookingDate': newDate}},
-        );
-
-        if (updateResult != null && updateResult.isSuccess) {
-          print('Booking date updated successfully in patientBookings collection.');
-        } else {
-          print('Update failed in patientBookings collection. Result: $updateResult');
-        }
-      } else {
-        print('No matching document found in patientBookings collection. Skipping update.');
-      }
+      // Update in patientBookingsCollection
+      await MongoDatabase.patientBookingsCollection?.updateOne(
+        {'bookingId': ObjectId.parse(bookingId).toHexString()},
+        updateDoc,
+      );
     } catch (e) {
-      print('Error updating booking date: $e');
+      print('Error updating booking: $e');
+      rethrow;
     }
   }
 }

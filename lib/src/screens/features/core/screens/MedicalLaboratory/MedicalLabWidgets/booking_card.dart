@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
-
+import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabWidgets/message_button.dart';
 class BookingCard extends StatelessWidget {
   final String patientName;
   final String testName;
   final String bookingDate;
   final String status;
-  final String price; // Ensure price is String
+  final String price;
   final bool isDark;
+  final bool showAcceptButton;
   final VoidCallback onAccept;
   final VoidCallback onReject;
   final VoidCallback onModify;
+  final VoidCallback onMessage;
 
   const BookingCard({
     super.key,
@@ -19,9 +21,11 @@ class BookingCard extends StatelessWidget {
     required this.status,
     required this.price,
     required this.isDark,
+    required this.showAcceptButton,
     required this.onAccept,
     required this.onReject,
     required this.onModify,
+    required this.onMessage,
   });
 
   @override
@@ -62,7 +66,7 @@ class BookingCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Price: \$$price',
+              'Price: \Rs$price',
               style: TextStyle(
                 fontSize: 16,
                 color: isDark ? Colors.white70 : Colors.black87,
@@ -78,23 +82,31 @@ class BookingCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
+            MessageButton(onPressed: onMessage),
+            const SizedBox(height: 12),
 
-            // ✅ Show buttons only when status is Pending or Modified
             if (status == 'Pending' || status == 'Modified')
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CustomButton(
-                    text: 'Accept',
-                    backgroundColor: Colors.green,
-                    textColor: Colors.white,
-                    onPressed: onAccept,
-                  ),
-                  CustomButton(
-                    text: 'Reject',
-                    backgroundColor: Colors.red,
-                    textColor: Colors.white,
-                    onPressed: onReject,
+                  if (showAcceptButton)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: CustomButton(
+                        text: 'Accept',
+                        backgroundColor: Colors.green,
+                        textColor: Colors.white,
+                        onPressed: onAccept,
+                      ),
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: CustomButton(
+                      text: 'Reject',
+                      backgroundColor: Colors.red,
+                      textColor: Colors.white,
+                      onPressed: onReject,
+                    ),
                   ),
                   CustomButton(
                     text: 'Modify',
