@@ -922,20 +922,21 @@ static DbCollection? get  medicalOrdersCollection =>  _medicalOrdersCollection;
       return [];
     }
   }
-static Future<List<Map<String, dynamic>>> getStoreServiceRequests(String nurseEmail) async {
+  static Future<List<Map<String, dynamic>>> getStoreServiceRequests(String nurseEmail) async {
     try {
       final requests = await _medicalRequestsCollection?.find(
-          where.eq('status', 'open')
+          where
+              .oneFrom('status', ['open', 'pending'])
               .sortBy('createdAt', descending: true)
       ).toList();
 
       return requests ?? [];
-
     } catch (e, stackTrace) {
       logger.e('Error fetching nurse requests', error: e, stackTrace: stackTrace);
       return [];
     }
   }
+
 
 
 

@@ -21,6 +21,7 @@ import 'package:cura_link/src/screens/features/core/screens/Patient/LabBooking/l
 
 import '../../../../../../constants/sizes.dart';
 import '../../../../../../mongodb/mongodb.dart';
+import '../MedicineMyOrders/ordered_medicine_screen.dart';
 import '../OrderMedicine/medicine_booking.dart';
 import '../OrderMedicine/show_Medical_store_services.dart';
 
@@ -39,7 +40,7 @@ class _PatientDashboardState extends State<PatientDashboard> {
   late String _email;
   late String _userDeviceToken;
   NotificationService notificationService = NotificationService();
-  GetServerKey _getServerKey = GetServerKey();
+  final GetServerKey _getServerKey = GetServerKey();
 
   @override
   void initState() {
@@ -131,7 +132,9 @@ class _PatientDashboardState extends State<PatientDashboard> {
                     ServiceCard(
                       icon: Icons.medical_services,
                       title: 'Medicine Delivery',
-                      onTap: () {},
+                      onTap: () {
+                          Get.to(() => MyOrdersScreenMedicine(patientEmail:  _auth.currentUser?.email ?? '',));
+                      },
                     ),
                     ServiceCard(
                       icon: Icons.medical_services_sharp,

@@ -210,54 +210,59 @@ class MedicalStoreController extends GetxController {
 
   Future<void> acceptBid(String bidId, String patientEmail) async {
     try {
-      final bidObjectId = ObjectId.parse(bidId);
 
       // 1. Update bid status
-      await MongoDatabase.medicalBidsCollection?.updateOne(
-        where.id(bidObjectId),
+      final result = await MongoDatabase.medicalBidsCollection?.updateOne(
+        where.eq('requestId', bidId),
         modify.set('status', 'accepted'),
       );
 
+      print('Update result: ${result?.isSuccess}'); // Debugging
+
       // 2. Get bid details
       final bid = await MongoDatabase.medicalBidsCollection?.findOne(
-          where.id(bidObjectId)
+        where.eq('requestId', bidId),
       );
+
+      print(bidId); // Prints String
+      print(bid);   // Should not be null
 
       if (bid == null) throw Exception('Bid not found');
 
       final requestId = bid['requestId'];
       final storeEmail = bid['storeEmail'];
-      final bidAmount = bid['bidAmount'];
+      final bidAmount = bid['price'];
 
-      // 3. Update request status
+      // 3. Update medical request status
       await MongoDatabase.medicalRequestsCollection?.updateOne(
-        where.id(ObjectId.parse(requestId)),
+        where.eq('_id', cleanObjectId(requestId)), // ✅ Same here
         modify
           ..set('status', 'accepted')
           ..set('acceptedBidId', bidId)
           ..set('acceptedAmount', bidAmount),
       );
 
-      // 4. Create order record
+      // 4. Insert order
       final orderData = {
         'requestId': requestId,
         'bidId': bidId,
         'patientEmail': patientEmail,
         'storeEmail': storeEmail,
         'finalAmount': bidAmount,
-        'status': 'preparing', // preparing, dispatched, delivered
+        'status': 'preparing',
         'createdAt': DateTime.now().toUtc(),
       };
 
       await MongoDatabase.medicalOrdersCollection?.insertOne(orderData);
 
-      // 5. Notify store
+      // 5. Notify
       await _notifyStoreAboutAcceptedBid(storeEmail, requestId);
     } catch (e) {
       print('Error accepting bid: $e');
       rethrow;
     }
   }
+
 
   Future<void> _notifyStoreAboutAcceptedBid(String storeEmail, String requestId) async {
     try {
