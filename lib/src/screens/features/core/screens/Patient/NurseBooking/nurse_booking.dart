@@ -37,6 +37,7 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
   void initState() {
     super.initState();
     _checkExistingRequest();
+
   }
 
   Future<void> _checkExistingRequest() async {

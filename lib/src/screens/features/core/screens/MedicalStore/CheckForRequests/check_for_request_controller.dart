@@ -87,6 +87,9 @@ class CheckForRequestsController extends GetxController {
       double price,
       String storeName, {
         String? prescriptionDetails,
+        List<dynamic>? medicines,
+        double? totalPrice,
+        String? prescriptionImage,
       }) async {
     try {
       isLoading(true);
@@ -100,6 +103,12 @@ class CheckForRequestsController extends GetxController {
         'submittedAt': DateTime.now(),
         if (prescriptionDetails != null)
           'prescriptionDetails': prescriptionDetails,
+        if (medicines != null)
+          'medicines': medicines,
+        if (totalPrice != null)
+          'totalPrice': totalPrice,
+        if (prescriptionImage != null)
+          'prescriptionImage': prescriptionImage,
       };
 
       await MongoDatabase.submitStoreBid(

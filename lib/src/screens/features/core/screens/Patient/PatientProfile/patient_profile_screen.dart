@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/PatientProfile/patient_profile_widgets/patient_profile_menu.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/PatientProfile/patient_update_profile_screen.dart';
-import 'package:cura_link/src/screens/features/core/screens/profile/widgets/profile_menu.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -136,24 +136,24 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
               const SizedBox(height: 30),
               const Divider(),
               const SizedBox(height: 10),
-              ProfileMenuWidget(
+              PatientProfileMenuWidget(
                 title: "Settings",
                 icon: LineAwesomeIcons.cog_solid,
                 onPress: () {},
               ),
-              ProfileMenuWidget(
+              PatientProfileMenuWidget(
                 title: "Billing Details",
                 icon: LineAwesomeIcons.wallet_solid,
                 onPress: () {},
               ),
               const Divider(),
               const SizedBox(height: 10),
-              ProfileMenuWidget(
+              PatientProfileMenuWidget(
                 title: "Information",
                 icon: LineAwesomeIcons.info_solid,
                 onPress: () {},
               ),
-              ProfileMenuWidget(
+              PatientProfileMenuWidget(
                 title: "Logout",
                 icon: LineAwesomeIcons.sign_out_alt_solid,
                 textColor: Colors.red,

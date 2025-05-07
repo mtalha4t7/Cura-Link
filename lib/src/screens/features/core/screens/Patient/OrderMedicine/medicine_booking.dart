@@ -260,7 +260,7 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
     try {
       final patientEmail = _auth.currentUser?.email;
       if (patientEmail == null) throw Exception('User not logged in');
-      await _controller.acceptBid(bid.id, patientEmail);
+      await _controller.acceptBid(bid.requestId, patientEmail);
       await _clearRequestFromPrefs();
       _showConfirmationDialog(bid);
     } catch (e) {

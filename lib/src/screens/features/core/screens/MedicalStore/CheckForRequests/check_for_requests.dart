@@ -1,10 +1,10 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
 import 'package:cura_link/src/screens/features/core/screens/MedicalStore/CheckForRequests/check_for_request_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:photo_view/photo_view.dart';
 
 
@@ -18,6 +18,14 @@ class CheckForRequestsScreen extends StatefulWidget {
 
 class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
 
+
+  Uint8List? base64ToImage(String base64String) {
+
+        base64String = base64String;
+
+      return base64Decode(base64String);
+;
+  }
   @override
   Widget build(BuildContext context) {
     final CheckForRequestsController controller = Get.put(CheckForRequestsController());
@@ -68,6 +76,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
     );
   }
 
+
   Widget _buildPrescriptionRequestCard(BuildContext context,
       Map<String, dynamic> request, CheckForRequestsController controller) {
     final theme = Theme.of(context);
@@ -79,7 +88,10 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
         ? bids.firstWhere((bid) =>
     bid['storeEmail'] == controller.medicalStore.value?.userEmail)
         : null;
-    final prescriptionImage = request['prescriptionImage'];
+
+    final imageString= request['prescriptionImage'];
+
+    final prescriptionImage = base64ToImage(imageString) ;
 
     return InkWell(
       borderRadius: BorderRadius.circular(12),
@@ -132,13 +144,14 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: CachedNetworkImage(
-                    imageUrl: prescriptionImage,
+                  child: Image.memory(
+                    prescriptionImage,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) =>
-                    const Center(child: CircularProgressIndicator()),
-                    errorWidget: (context, url, error) =>
-                    const Icon(Icons.error),
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Center(
+                        child: Icon(Icons.error, color: Colors.red),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -190,6 +203,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
       ),
     );
   }
+
 
   Widget _buildNonPrescriptionRequestCard(BuildContext context,
       Map<String, dynamic> request, CheckForRequestsController controller) {
@@ -479,12 +493,19 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                                 final name = await UserRepository.instance
                                     .getMedicalStoreUserName(email.toString());
 
+                                // Get the current request to access prescription image
+                                final request = controller.activeRequests.firstWhere(
+                                      (req) => req['_id'].toString().contains(cleanRequestId),
+                                  orElse: () => {},
+                                );
+
                                 controller.submitBid(
                                   cleanRequestId,
                                   price,
                                   name ?? "Unknown Store",
                                   prescriptionDetails: detailsController.text
                                       .trim(),
+                                  prescriptionImage: request['prescriptionImage'],
                                 );
 
                                 Navigator.pop(context);
@@ -502,35 +523,34 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
           ),
     );
   }
-
-  void _showFullScreenPrescription(BuildContext context, String imageUrl) {
+  void _showFullScreenPrescription(BuildContext context, Uint8List imageBytes) {
     showDialog(
       context: context,
-      builder: (_) =>
-          Dialog(
-            backgroundColor: Colors.transparent,
-            insetPadding: const EdgeInsets.all(0),
-            child: Stack(
-              children: [
-                PhotoView(
-                  imageProvider: NetworkImage(imageUrl),
-                  minScale: PhotoViewComputedScale.contained,
-                  maxScale: PhotoViewComputedScale.covered * 2,
-                ),
-                Positioned(
-                  top: 40,
-                  right: 20,
-                  child: IconButton(
-                    icon: const Icon(
-                        Icons.close, color: Colors.white, size: 30),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
-              ],
+      builder: (_) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(0),
+        child: Stack(
+          children: [
+            PhotoView(
+              imageProvider: MemoryImage(imageBytes),
+              minScale: PhotoViewComputedScale.contained,
+              maxScale: PhotoViewComputedScale.covered * 2,
             ),
-          ),
+            Positioned(
+              top: 40,
+              right: 20,
+              child: IconButton(
+                icon: const Icon(
+                    Icons.close, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
+
 
   Widget _buildPriceAdjustButton({
     required IconData icon,
@@ -834,11 +854,18 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                           final name = await UserRepository.instance
                               .getMedicalStoreUserName(email.toString());
 
+                          // Get the current request to access medicines
+                          final request = controller.activeRequests.firstWhere(
+                                (req) => req['_id'].toString().contains(cleanRequestId),
+                            orElse: () => {},
+                          );
+
                           controller.submitBid(
                             cleanRequestId,
-
                             price,
                             name ?? "Unknown Store",
+                            medicines: request['medicines'],
+                            totalPrice: request['total'],
                           );
 
                           Navigator.pop(context);
@@ -855,7 +882,6 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
       ),
     );
   }
-
   void _showInfoDialog(BuildContext context) {
     showDialog(
       context: context,
