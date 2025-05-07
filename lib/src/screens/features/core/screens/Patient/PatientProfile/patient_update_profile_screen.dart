@@ -1,167 +1,240 @@
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
-import 'package:cura_link/src/screens/features/core/screens/Patient/PatientControllers/patient_profile_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart' as geo;
 import 'package:get/get.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
 import 'package:location/location.dart';
+import '../../../../../../common_widgets/buttons/primary_button.dart';
 import '../../../../../../constants/sizes.dart';
-import '../../../../../../constants/text_strings.dart';
 
 
 class PatientProfileFormScreen extends StatefulWidget {
   const PatientProfileFormScreen({super.key});
 
   @override
-  _PatientProfileFormScreenState createState() =>
-      _PatientProfileFormScreenState();
+  State<PatientProfileFormScreen> createState() => _PatientProfileFormScreenState();
 }
 
 class _PatientProfileFormScreenState extends State<PatientProfileFormScreen> {
-  final TextEditingController phoneNoController = TextEditingController();
-  final TextEditingController fullNameController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController userTypeController = TextEditingController();
-  final TextEditingController locationController = TextEditingController();
-  final Location location = Location();
-  final controller = UserRepository.instance;
-  final email = FirebaseAuth.instance.currentUser?.email;
-  late String userName;
-  late String userPhone;
-  bool isLoading = true;
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _nameController;
+  late TextEditingController _phoneController;
+  late TextEditingController _locationController;
+  final Location _locationService = Location();
+  bool _isLoading = true;
+  String? _email;
 
   @override
   void initState() {
     super.initState();
-    _initializeUserProfile();
+    _email = FirebaseAuth.instance.currentUser?.email;
+    _nameController = TextEditingController();
+    _phoneController = TextEditingController();
+    _locationController = TextEditingController();
+    _loadProfileData();
   }
 
-  Future<void> _initializeUserProfile() async {
-    await _getName();
-    await _getPhone();
-    await _getLocation();
-    setState(() {
-      isLoading = false;
-    });
+  Future<void> _loadProfileData() async {
+    try {
+      if (_email == null) return;
+
+      final userData = await UserRepository.instance.getPatientByEmail(_email!);
+      if (userData != null) {
+        setState(() {
+          _nameController.text = userData['userName'] ?? '';
+          _phoneController.text = userData['userPhone'] ?? '';
+          _locationController.text = userData['userAddress'] ?? '';
+        });
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Failed to load profile data");
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
-  Future<void> _getName() async {
-    userName = (await controller.getPatientUserName(email!))!;
-    setState(() {
-      fullNameController.text = userName;
-    });
-  }
-
-  Future<void> _getPhone() async {
-    userPhone = (await controller.getPatientUserPhone(email!))!;
-    setState(() {
-      phoneNoController.text = userPhone;
-    });
-  }
-
-  Future<void> _getLocation() async {
+  Future<void> _getCurrentLocation() async {
     bool serviceEnabled;
-    PermissionStatus permissionGranted;
-    LocationData locationData;
+    geo.LocationPermission permission;
 
-    // Check if the location service is enabled
-    serviceEnabled = await location.serviceEnabled();
-    if (!serviceEnabled) {
-      serviceEnabled = await location.requestService();
+    try {
+      setState(() => _isLoading = true);
+
+      serviceEnabled = await geo.Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
+        Get.snackbar("Error", "Please enable location services");
         return;
       }
-    }
 
-    // Check if the location permission is granted
-    permissionGranted = await location.hasPermission();
-    if (permissionGranted == PermissionStatus.denied) {
-      permissionGranted = await location.requestPermission();
-      if (permissionGranted != PermissionStatus.granted) {
-        return;
+      permission = await geo.Geolocator.checkPermission();
+      if (permission == geo.LocationPermission.denied) {
+        permission = await geo.Geolocator.requestPermission();
+        if (permission != geo.LocationPermission.whileInUse &&
+            permission != geo.LocationPermission.always) {
+          Get.snackbar("Error", "Location permissions required");
+          return;
+        }
       }
-    }
 
-    // Get the current location
-    locationData = await location.getLocation();
-    setState(() {
-      locationController.text =
-          '${locationData.latitude}, ${locationData.longitude}';
-    });
+      final position = await geo.Geolocator.getCurrentPosition(
+        desiredAccuracy: geo.LocationAccuracy.best,
+      );
+
+      setState(() {
+        _locationController.text =
+        '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
+      });
+
+    } catch (e) {
+      Get.snackbar("Error", "Location fetch failed: ${e.toString()}");
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _updateProfile() async {
+    if (!_formKey.currentState!.validate() || _email == null) return;
+
+    try {
+      setState(() => _isLoading = true);
+
+      // Parse and validate location coordinates
+      final locationParts = _locationController.text.split(', ');
+      if (locationParts.length != 2) {
+        throw FormatException("Invalid location format");
+      }
+
+      final lat = double.tryParse(locationParts[0]);
+      final lng = double.tryParse(locationParts[1]);
+      if (lat == null || lng == null) {
+        throw FormatException("Invalid coordinate values");
+      }
+
+      // Build update data
+      final updates = {
+        'userName': _nameController.text.trim(),
+        'userPhone': _phoneController.text.trim(),
+        'location': {
+          'type': 'Point',
+          'coordinates': [lng, lat], // MongoDB expects [longitude, latitude]
+        },
+      };
+
+      // Update database
+      await UserRepository.instance.updatePatientUserByEmail(_email!, updates);
+
+      Get.back();
+      Get.snackbar("Success", "Profile updated successfully");
+
+    } on FormatException catch (e) {
+      Get.snackbar("Invalid Location", e.message);
+    } catch (e) {
+      Get.snackbar("Update Failed", "Please try again");
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _locationController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(PatientProfileController());
-
     return Scaffold(
       appBar: AppBar(
-        title: Text('Profile'),
+        title: const Text("Edit Profile"),
+        leading: IconButton(
+          icon: const Icon(LineAwesomeIcons.angle_left_solid),
+          onPressed: () => Get.back(),
+        ),
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : Form(
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: fullNameController,
-                    decoration: const InputDecoration(
-                      label: Text(tFullName),
-                      prefixIcon: Icon(LineAwesomeIcons.user),
-                    ),
-                  ),
-                  const SizedBox(height: tFormHeight - 20),
-                  TextFormField(
-                    controller: phoneNoController,
-                    decoration: const InputDecoration(
-                      label: Text(tPhoneNo),
-                      prefixIcon: Icon(LineAwesomeIcons.phone_solid),
-                    ),
-                  ),
-                  const SizedBox(height: tFormHeight - 20),
-                  GestureDetector(
-                    onTap: _getLocation,
-                    child: AbsorbPointer(
-                      child: TextFormField(
-                        controller: locationController,
-                        decoration: const InputDecoration(
-                          label: Text('Location'),
-                          prefixIcon: Icon(LineAwesomeIcons.map_marked_solid),
-                        ),
-                        readOnly: true,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: tFormHeight),
-
-                  /// -- Form Submit Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        Map<String, dynamic> fieldsToUpdate = {
-                          'userName': fullNameController.text.trim(),
-                          'userPhone': phoneNoController.text.trim(),
-                          'userAddress': locationController.text.trim(),
-                        };
-
-                        await controller.updateUserFields(
-                            email!, fieldsToUpdate);
-
-                        // Show snack bar message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Profile updated successfully!'),
-                          ),
-                        );
-                      },
-                      child: const Text("Save Changes"),
-                    ),
-                  ),
-                  const SizedBox(height: tFormHeight),
-                ],
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+        padding: const EdgeInsets.all(tDefaultSpace),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              _buildFormField(
+                controller: _nameController,
+                label: "Full Name",
+                icon: LineAwesomeIcons.user,
+                validator: (value) => value!.isEmpty ? "Required" : null,
               ),
+              const SizedBox(height: tFormHeight - 20),
+              _buildFormField(
+                controller: _phoneController,
+                label: "Phone Number",
+                icon: LineAwesomeIcons.phone_solid,
+                keyboardType: TextInputType.phone,
+                validator: (value) {
+                  if (value!.isEmpty) return "Required";
+                  if (!RegExp(r'^[0-9]{10,15}$').hasMatch(value)) {
+                    return "Invalid phone number";
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: tFormHeight - 20),
+              _buildLocationField(),
+              const SizedBox(height: tFormHeight),
+              TPrimaryButton(
+                text: "Save Changes",
+                onPressed: _updateProfile,
+                isLoading: _isLoading,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFormField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      keyboardType: keyboardType,
+      validator: validator,
+    );
+  }
+
+  Widget _buildLocationField() {
+    return Row(
+      children: [
+        Expanded(
+          child: TextFormField(
+            controller: _locationController,
+            decoration: InputDecoration(
+              labelText: "Location",
+              prefixIcon: const Icon(LineAwesomeIcons.map_marked_solid),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             ),
+            readOnly: true,
+          ),
+        ),
+        IconButton(
+          icon: const Icon(LineAwesomeIcons.map_marker_solid, color: Colors.blue),
+          onPressed: _getCurrentLocation,
+        ),
+      ],
     );
   }
 }

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
-import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabProfile/medicalLab_update_profile_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -14,6 +13,7 @@ import '../../../../../../constants/text_strings.dart';
 import '../../../../../../mongodb/mongodb.dart';
 import '../../../../../../repository/authentication_repository/authentication_repository.dart';
 import 'MedicalStore_Profile_Widgets/medicalptore_profile_menu.dart';
+import 'MedicalStore_Update_Profile_Screen.dart';
 
 class MedicalStoreProfileScreen extends StatefulWidget {
   const MedicalStoreProfileScreen({super.key});
@@ -132,7 +132,7 @@ class _MedicalStoreProfileScreenState extends State<MedicalStoreProfileScreen> {
                 isFullWidth: false,
                 width: 200,
                 text: tEditProfile,
-                onPressed: () => Get.to(() => MedicalLabProfileFormScreen()),
+                onPressed: () => Get.to(() => MedicalStoreProfileFormScreen()),
               ),
               const SizedBox(height: 30),
               const Divider(),

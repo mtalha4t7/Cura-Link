@@ -281,6 +281,133 @@ class UserRepository extends GetxController {
     }
   }
 
+  Future<bool> updatePatientUser(String email, Map<String, dynamic> updates) async {
+    try {
+      final collection = MongoDatabase.userPatientCollection;
+
+      // Create the update document manually
+      final updateDoc = {
+        '\$set': {...updates}  // Spread operator to include all updates
+      };
+
+      // Remove null values from updates
+      updateDoc['\$set']?.removeWhere((key, value) => value == null);
+
+      if (updateDoc['\$set']?.isEmpty ?? true) {
+        throw ArgumentError('No valid fields to update');
+      }
+
+      final result = await collection?.updateOne(
+        where.eq('userEmail', email),
+        updateDoc,
+      );
+
+      if (result == null || !result.isSuccess) {
+        throw Exception('Update operation failed: ${result?.errmsg}');
+      }
+
+      return true;
+    } catch (e) {
+      print('Error updating nurse user: $e');
+      rethrow;
+    }
+  } Future<bool> updateMedicalLabUser(String email, Map<String, dynamic> updates) async {
+    try {
+      final collection = MongoDatabase.userLabCollection;
+
+      // Create the update document manually
+      final updateDoc = {
+        '\$set': {...updates}  // Spread operator to include all updates
+      };
+
+      // Remove null values from updates
+      updateDoc['\$set']?.removeWhere((key, value) => value == null);
+
+      if (updateDoc['\$set']?.isEmpty ?? true) {
+        throw ArgumentError('No valid fields to update');
+      }
+
+      final result = await collection?.updateOne(
+        where.eq('userEmail', email),
+        updateDoc,
+      );
+
+      if (result == null || !result.isSuccess) {
+        throw Exception('Update operation failed: ${result?.errmsg}');
+      }
+
+      return true;
+    } catch (e) {
+      print('Error updating nurse user: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> updatePatientUserByEmail(String email, Map<String, dynamic> updates) async {
+    try {
+      final collection = MongoDatabase.userPatientCollection;
+
+      // Create the update document manually
+      final updateDoc = {
+        '\$set': {...updates}  // Spread operator to include all updates
+      };
+
+      // Remove null values from updates
+      updateDoc['\$set']?.removeWhere((key, value) => value == null);
+
+      if (updateDoc['\$set']?.isEmpty ?? true) {
+        throw ArgumentError('No valid fields to update');
+      }
+
+      final result = await collection?.updateOne(
+        where.eq('userEmail', email),
+        updateDoc,
+      );
+
+      if (result == null || !result.isSuccess) {
+        throw Exception('Update operation failed: ${result?.errmsg}');
+      }
+
+      return true;
+    } catch (e) {
+      print('Error updating nurse user: $e');
+      rethrow;
+    }
+  } Future<bool> updateMedicalStoreUserByEmail(String email, Map<String, dynamic> updates) async {
+    try {
+      final collection = MongoDatabase.userMedicalStoreCollection;
+
+      // Create the update document manually
+      final updateDoc = {
+        '\$set': {...updates}  // Spread operator to include all updates
+      };
+
+      // Remove null values from updates
+      updateDoc['\$set']?.removeWhere((key, value) => value == null);
+
+      if (updateDoc['\$set']?.isEmpty ?? true) {
+        throw ArgumentError('No valid fields to update');
+      }
+
+      final result = await collection?.updateOne(
+        where.eq('userEmail', email),
+        updateDoc,
+      );
+
+      if (result == null || !result.isSuccess) {
+        throw Exception('Update operation failed: ${result?.errmsg}');
+      }
+
+      return true;
+    } catch (e) {
+      print('Error updating nurse user: $e');
+      rethrow;
+    }
+  }
+
+
+
+
   /// Delete a user by email from a specific collection
   Future<void> deleteUser({
     required String email,

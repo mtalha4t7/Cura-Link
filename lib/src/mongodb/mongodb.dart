@@ -140,6 +140,32 @@ static DbCollection? get  medicalOrdersCollection =>  _medicalOrdersCollection;
     }
   }
 
+  static Future<Map<String, dynamic>?> getLocationByEmail(String email) async {
+    try {
+      final List<DbCollection?> collections = [
+        _userPatientCollection,
+        _userLabCollection,
+        _userNurseCollection,
+        _userMedicalStoreCollection,
+      ];
+
+      for (final collection in collections) {
+        if (collection == null) continue;
+
+        final user = await collection.findOne(where.eq('email', email));
+        if (user != null && user.containsKey('location')) {
+          return user['location'] as Map<String, dynamic>;
+        }
+      }
+
+      return null; // Not found
+    } catch (e, stackTrace) {
+      logger.e('Error fetching user location', error: e, stackTrace: stackTrace);
+      return null;
+    }
+  }
+
+
   static Future<void> submitStoreBid({
     required String requestId,
     required Map<String, dynamic> bidData,

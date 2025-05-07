@@ -95,6 +95,9 @@ class CheckForRequestsController extends GetxController {
       isLoading(true);
       print("====================" + storeName);
 
+      final email = await FirebaseAuth.instance.currentUser?.email;
+      final storeLocation= await MongoDatabase.getUserLocationByEmail(email!);
+
       // Prepare bid data
       final bidData = {
         'storeName': storeName,
@@ -109,6 +112,7 @@ class CheckForRequestsController extends GetxController {
           'totalPrice': totalPrice,
         if (prescriptionImage != null)
           'prescriptionImage': prescriptionImage,
+          'storeLocation': storeLocation,
       };
 
       await MongoDatabase.submitStoreBid(

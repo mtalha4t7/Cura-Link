@@ -5,6 +5,7 @@ import 'package:mongo_dart/mongo_dart.dart';
 import 'dart:io';
 import '../../../../../../mongodb/mongodb.dart';
 import '../../../../../../notification_handler/send_notification.dart';
+import '../../../utils/location_utils.dart';
 import 'medical_store_model.dart';
 import 'order_model.dart';
 
@@ -141,72 +142,7 @@ class MedicalStoreController extends GetxController {
     }
   }
 
-  Future<void> submitBid({
-    required String requestId,
-    required String storeEmail,
-    required double bidAmount,
-    required double originalAmount,
-  }) async {
-    try {
-      final bidData = {
-        'requestId': requestId,
-        'storeEmail': storeEmail,
-        'originalAmount': originalAmount,
-        'bidAmount': bidAmount,
-        'status': 'pending',
-        'createdAt': DateTime.now().toUtc(),
-      };
 
-      final result = await MongoDatabase.medicalBidsCollection?.insertOne(bidData);
-
-      if (result?.isSuccess != true) {
-        throw Exception('Failed to submit bid');
-      }
-
-      // Notify patient
-      await _notifyPatientAboutBid(requestId, storeEmail);
-    } catch (e) {
-      print('Error submitting bid: $e');
-      rethrow;
-    }
-  }
-
-  Future<void> _notifyPatientAboutBid(String requestId, String storeEmail) async {
-    try {
-      // Get request to find patient
-      final request = await MongoDatabase.medicalRequestsCollection?.findOne(
-          where.id(ObjectId.parse(requestId))
-      );
-
-      if (request == null) return;
-
-      final patientEmail = request['patientEmail'];
-      final patient = await MongoDatabase.userPatientCollection?.findOne(
-          where.eq('userEmail', patientEmail)
-      );
-
-      final deviceToken = patient?['deviceToken'];
-      final store = await MongoDatabase.userMedicalStoreCollection?.findOne(
-          where.eq('userEmail', storeEmail)
-      );
-
-      final storeName = store?['storeName'] ?? 'A pharmacy';
-
-      if (deviceToken != null && deviceToken.isNotEmpty) {
-        await SendNotificationService.sendNotificationUsingApi(
-          token: deviceToken,
-          title: "New Bid Received",
-          body: "$storeName has submitted a bid for your request",
-          data: {
-            "screen": "MedicalRequestDetails",
-            "requestId": requestId,
-          },
-        );
-      }
-    } catch (e) {
-      print('Error notifying patient: $e');
-    }
-  }
 
   Future<void> acceptBid(String bidId, String patientEmail) async {
     try {
@@ -231,7 +167,10 @@ class MedicalStoreController extends GetxController {
 
       final requestId = bid['requestId'];
       final storeEmail = bid['storeEmail'];
-      final bidAmount = bid['price'];
+      final bidAmount = bid['finalAmount'];
+      final storeName= bid['storedName'];
+      final patientName= bid['patientName'];
+      final storeLocation= bid['storeLocation'];
 
       // 3. Update medical request status
       await MongoDatabase.medicalRequestsCollection?.updateOne(
@@ -242,11 +181,15 @@ class MedicalStoreController extends GetxController {
           ..set('acceptedAmount', bidAmount),
       );
 
+     final patientLocation = await MongoDatabase.getLocationByEmail(patientEmail);
       // 4. Insert order
       final orderData = {
         'requestId': requestId,
         'bidId': bidId,
+        'patientLocation':patientLocation,
+        'storeLocation':storeLocation,
         'patientEmail': patientEmail,
+        'storeName':storeName,
         'storeEmail': storeEmail,
         'finalAmount': bidAmount,
         'status': 'preparing',
@@ -259,6 +202,55 @@ class MedicalStoreController extends GetxController {
       await _notifyStoreAboutAcceptedBid(storeEmail, requestId);
     } catch (e) {
       print('Error accepting bid: $e');
+      rethrow;
+    }
+  }
+
+// Add this method to your CheckForRequestsController
+
+
+
+  Future<Map<String, dynamic>> calculateDeliveryTime(String requestId) async {
+    try {
+      // Get the request details
+      final request = await MongoDatabase.medicalRequestsCollection?.findOne(
+          where.id(ObjectId.parse(requestId))
+      );
+
+      // Get store location
+      final storeLocation = await MongoDatabase.getLocationByEmail(request?['storeEmail']);
+
+      final storeLat = storeLocation?['latitude']?.toDouble();
+      final storeLon = storeLocation?['longitude']?.toDouble();
+
+      if (storeLat == null || storeLon == null) {
+        throw Exception('Store location not available');
+      }
+
+      // Get patient location from request
+      final patientLocation = request?['location'];
+      final patientLat = patientLocation['latitude']?.toDouble();
+      final patientLon = patientLocation['longitude']?.toDouble();
+
+      if (patientLat == null || patientLon == null) {
+        throw Exception('Patient location not available');
+      }
+
+      // Calculate delivery time
+      final deliveryTimeMinutes = LocationUtils.calculateDeliveryTime(
+        storeLat,
+        storeLon,
+        patientLat,
+        patientLon,
+      );
+
+      return {
+        'distance': LocationUtils.calculateDistance(storeLat, storeLon, patientLat, patientLon),
+        'time': deliveryTimeMinutes,
+        'formattedTime': LocationUtils.formatDeliveryTime(deliveryTimeMinutes),
+      };
+    } catch (e) {
+      print('Error calculating delivery time: $e');
       rethrow;
     }
   }
@@ -344,4 +336,5 @@ class MedicalStoreController extends GetxController {
       rethrow;
     }
   }
+
 }
