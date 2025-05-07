@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabWidgets/message_button.dart';
 class BookingCard extends StatelessWidget {
   final String patientName;
   final String testName;
@@ -11,6 +11,7 @@ class BookingCard extends StatelessWidget {
   final VoidCallback onAccept;
   final VoidCallback onReject;
   final VoidCallback onModify;
+  final VoidCallback onMessage;
 
   const BookingCard({
     super.key,
@@ -24,6 +25,7 @@ class BookingCard extends StatelessWidget {
     required this.onAccept,
     required this.onReject,
     required this.onModify,
+    required this.onMessage,
   });
 
   @override
@@ -64,7 +66,7 @@ class BookingCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Price: \$$price',
+              'Price: \Rs$price',
               style: TextStyle(
                 fontSize: 16,
                 color: isDark ? Colors.white70 : Colors.black87,
@@ -79,6 +81,8 @@ class BookingCard extends StatelessWidget {
                 color: statusColor(status, isDark),
               ),
             ),
+            const SizedBox(height: 12),
+            MessageButton(onPressed: onMessage),
             const SizedBox(height: 12),
 
             if (status == 'Pending' || status == 'Modified')

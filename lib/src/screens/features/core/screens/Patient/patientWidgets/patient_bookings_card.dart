@@ -165,7 +165,7 @@ class PatientBookingsCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Price: \$$price',
+              'Price: \Rs$price',
               style: TextStyle(
                 fontSize: 16,
                 color: isDark ? Colors.white70 : Colors.black87,
