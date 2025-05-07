@@ -1,6 +1,100 @@
 import 'package:flutter/material.dart';
 
 import '../MyBookings/MyBooking_widgets/RatingButton.dart';
+
+
+class MessageButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const MessageButton({super.key, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.black26,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              spreadRadius: 1,
+              blurRadius: 3,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.chat,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Chat',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class CustomButton extends StatelessWidget {
+  final String text;
+  final Color backgroundColor;
+  final Color textColor;
+  final VoidCallback onPressed;
+
+  const CustomButton({
+    super.key,
+    required this.text,
+    required this.backgroundColor,
+    required this.textColor,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              spreadRadius: 1,
+              blurRadius: 3,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: textColor,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class PatientBookingsCard extends StatelessWidget {
   final String labUserName;
   final String testName;
@@ -12,7 +106,8 @@ class PatientBookingsCard extends StatelessWidget {
   final VoidCallback onReject;
   final VoidCallback onModify;
   final VoidCallback onMessage;
-  final VoidCallback onRate; // <-- NEW callback for rating!
+  final VoidCallback onRate;
+  final bool showAcceptButton;
 
   const PatientBookingsCard({
     super.key,
@@ -26,10 +121,11 @@ class PatientBookingsCard extends StatelessWidget {
     required this.onReject,
     required this.onModify,
     required this.onMessage,
-    required this.onRate, // <-- Add it to constructor
+    required this.onRate,
+    required this.showAcceptButton,
   });
 
-  bool get isAccepted => status.toLowerCase() == 'accepted'; // Helper for enabling Rate button
+  bool get isAccepted => status.toLowerCase() == 'accepted';
 
   @override
   Widget build(BuildContext context) {
@@ -86,33 +182,37 @@ class PatientBookingsCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // Chat button
             MessageButton(onPressed: onMessage),
             const SizedBox(height: 12),
 
-            // Rating button (always visible)
             RateButton(
               enabled: isAccepted,
               onPressed: onRate,
             ),
             const SizedBox(height: 12),
 
-            // Accept/Reject/Modify buttons (only for Pending/Modified)
             if (status == 'Pending' || status == 'Modified')
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment: MainAxisAlignment.center, // Center the buttons
                 children: [
-                  CustomButton(
-                    text: 'Accept',
-                    backgroundColor: Colors.green,
-                    textColor: Colors.white,
-                    onPressed: onAccept,
-                  ),
-                  CustomButton(
-                    text: 'Reject',
-                    backgroundColor: Colors.red,
-                    textColor: Colors.white,
-                    onPressed: onReject,
+                  if (showAcceptButton) // Show Accept only if Modified
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8), // Add spacing between buttons
+                      child: CustomButton(
+                        text: 'Accept',
+                        backgroundColor: Colors.green,
+                        textColor: Colors.white,
+                        onPressed: onAccept,
+                      ),
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8), // Spacing between Reject & Modify
+                    child: CustomButton(
+                      text: 'Reject',
+                      backgroundColor: Colors.red,
+                      textColor: Colors.white,
+                      onPressed: onReject,
+                    ),
                   ),
                   CustomButton(
                     text: 'Modify',
@@ -141,97 +241,5 @@ class PatientBookingsCard extends StatelessWidget {
       default:
         return isDark ? Colors.white70 : Colors.black54;
     }
-  }
-}
-
-class CustomButton extends StatelessWidget {
-  final String text;
-  final Color backgroundColor;
-  final Color textColor;
-  final VoidCallback onPressed;
-
-  const CustomButton({
-    super.key,
-    required this.text,
-    required this.backgroundColor,
-    required this.textColor,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              spreadRadius: 1,
-              blurRadius: 3,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: textColor,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class MessageButton extends StatelessWidget {
-  final VoidCallback onPressed;
-
-  const MessageButton({super.key, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        decoration: BoxDecoration(
-          color: Colors.black26,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              spreadRadius: 1,
-              blurRadius: 3,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.chat,
-              color: Colors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Chat',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

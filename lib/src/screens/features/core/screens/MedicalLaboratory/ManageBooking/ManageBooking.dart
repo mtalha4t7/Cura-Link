@@ -95,7 +95,7 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
           ),
         );
       },
-    ) ?? false; // Default to false if the dialog is dismissed.
+    ) ?? false;
   }
 
   @override
@@ -126,7 +126,7 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: FutureBuilder<List<Map<String, dynamic>>>(  // Fetch the bookings data
+              child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: _controller.fetchUserBookings(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -161,6 +161,8 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
                           status: booking['status'] ?? 'Pending',
                           price: price,
                           isDark: isDarkTheme,
+                          showAcceptButton: booking['status'] == 'Pending' ||
+                              (booking['status'] == 'Modified' && booking['lastModifiedBy'] == 'patient'),
                           onAccept: () async {
                             final confirm = await _showConfirmationDialog(
                               context,
@@ -170,21 +172,12 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
                             );
                             if (!confirm) return;
 
-                            if (booking['status'] != "Modified") {
-                              await _controller.updateBookingStatus(
-                                booking['_id'].toHexString(),
-                                'Accepted',
-                              );
-                              setState(() {});
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                      'Once modified, patient can accept this booking.'),
-                                  duration: Duration(seconds: 3),
-                                ),
-                              );
-                            }
+                            await _controller.updateBookingStatus(
+                              booking['_id'].toHexString(),
+                              'Accepted',
+                              lastModifiedBy: 'lab',
+                            );
+                            setState(() {});
                           },
                           onReject: () async {
                             final confirm = await _showConfirmationDialog(
@@ -246,7 +239,6 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
     );
   }
 
-  // Modify the booking details
   void _showModifyDialog(
       BuildContext context, Map<String, dynamic> booking) async {
     final TextEditingController modifyDateController =
@@ -268,24 +260,16 @@ class _ManageBookingScreenState extends State<ManageBookingScreen> {
 
       if (newTime != null) {
         final DateTime combinedDateTime = DateTime(
-          newDate.year,
-          newDate.month,
-          newDate.day,
-          newTime.hour,
-          newTime.minute,
+          newDate.year, newDate.month, newDate.day, newTime.hour, newTime.minute,
         );
 
-        String formattedDate =
-        DateFormat('yyyy-MM-dd HH:mm').format(combinedDateTime);
-        modifyDateController.text = formattedDate;
+        String formattedDate = DateFormat('yyyy-MM-dd HH:mm').format(combinedDateTime);
 
-        await _controller.updateBookingDate(
+        await _controller.updateBookingDateAndStatus(
           booking['_id'].toHexString(),
           formattedDate,
-        );
-        await _controller.updateBookingStatus(
-          booking['_id'].toHexString(),
           'Modified',
+          lastModifiedBy: 'lab',
         );
 
         setState(() {});
