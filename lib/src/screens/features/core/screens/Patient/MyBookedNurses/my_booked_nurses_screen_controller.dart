@@ -30,9 +30,11 @@ class MyBookedNursesController extends GetxController {
 
     try {
       final bookings = await MongoDatabase.patientNurseBookingsCollection?.find(
-        where.eq('patientEmail', userEmail.trim().toLowerCase())
-            .sortBy('bookingDate', descending: false),
-      ).toList();
+      where.eq('patientEmail', userEmail.trim().toLowerCase())
+          .ne('status', 'Completed')
+          .ne('status', 'Cancelled')  // Additional status to exclude
+          .sortBy('bookingDate', descending: false),
+    ).toList();
       totalReceivedBookingsCount.value = bookings?.length ?? 0;
       print('Total bookings count fetched: ${totalReceivedBookingsCount.value}');
     } catch (e) {
