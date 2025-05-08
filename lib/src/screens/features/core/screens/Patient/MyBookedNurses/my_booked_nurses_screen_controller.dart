@@ -158,25 +158,23 @@ class MyBookedNursesController extends GetxController {
   }
 
   /// Get past bookings (completed or cancelled)
-  Future<List<Map<String, dynamic>>> getPastBookings(String patientEmail) async {
+  
+  Future<List<Map<String, dynamic>>> getPastBookings(String nurseEmail) async {
     try {
-      debugPrint('Fetching past bookings for: $patientEmail');
       final bookings = await MongoDatabase.patientNurseBookingsCollection?.find(
-        where.eq('patientEmail', patientEmail.trim().toLowerCase())
-            .or([
-          where.eq('status', 'Completed'),
-          where.eq('status', 'Cancelled'),
-        ] as SelectorBuilder)
-            .sortBy('bookingDate', descending: true),
+        where.eq('patientEmail', nurseEmail)
+            .oneFrom('status', ['Completed', 'Cancelled'])
+            .sortBy('createdAt', descending: true),
       ).toList();
 
-      debugPrint('Past bookings count: ${bookings?.length ?? 0}');
       return bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
     } catch (e, stackTrace) {
       _logger.e('Error fetching past bookings', error: e, stackTrace: stackTrace);
       return [];
     }
   }
+
+
 
   /// Parse different ObjectId formats
   ObjectId _parseObjectId(dynamic id) {
