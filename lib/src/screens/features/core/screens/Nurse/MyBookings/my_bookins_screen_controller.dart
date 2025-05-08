@@ -91,29 +91,45 @@ class MyBookingsNurseController {
 
   Future<List<Map<String, dynamic>>> getUpcomingBookings(String nurseEmail) async {
     try {
+      debugPrint('Fetching upcoming bookings for: $nurseEmail');
       final bookings = await MongoDatabase.patientNurseBookingsCollection?.find(
-          where.eq('nurseEmail', nurseEmail)
-              .ne('status', 'Completed')
-              .ne('status', 'Cancelled')
-              .sortBy('createdAt', descending: false)
+        where.eq('nurseEmail', nurseEmail.trim().toLowerCase())
+            .ne('status', 'Completed')
+            .ne('status', 'Cancelled')
+            .sortBy('bookingDate', descending: false),
       ).toList();
 
-      return bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
+      debugPrint('Raw booking data from DB: ${bookings?.toString()}'); // Add this line
+      debugPrint('Upcoming bookings count: ${bookings?.length ?? 0}');
+
+      final sanitized = bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
+      debugPrint('Sanitized booking data: $sanitized'); // Add this line
+      return sanitized;
     } catch (e, stackTrace) {
       _logger.e('Error fetching upcoming bookings', error: e, stackTrace: stackTrace);
       return [];
     }
   }
 
+  /// Get past bookings (completed or cancelled)
+
   Future<List<Map<String, dynamic>>> getPastBookings(String nurseEmail) async {
     try {
+      debugPrint('Fetching past bookings for: $nurseEmail');
+
       final bookings = await MongoDatabase.patientNurseBookingsCollection?.find(
-        where.eq('nurseEmail', nurseEmail)
+        where.eq('patientEmail', nurseEmail.trim().toLowerCase())
             .oneFrom('status', ['Completed', 'Cancelled'])
             .sortBy('createdAt', descending: true),
       ).toList();
 
-      return bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
+      debugPrint('Raw past booking data from DB: ${bookings?.toString()}');
+      debugPrint('Past bookings count: ${bookings?.length ?? 0}');
+
+      final sanitized = bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
+      debugPrint('Sanitized past booking data: $sanitized');
+
+      return sanitized;
     } catch (e, stackTrace) {
       _logger.e('Error fetching past bookings', error: e, stackTrace: stackTrace);
       return [];
@@ -125,19 +141,34 @@ class MyBookingsNurseController {
   Map<String, dynamic> _sanitizeBookingData(Map<String, dynamic> booking) {
     return {
       '_id': booking['_id'],
-      'bookingId': booking['bookingId'] ?? '',
-      'patientId': booking['patientId'] ?? '',
-      'patientName': booking['patientName'] ?? 'Unknown Patient',
-      'patientEmail': booking['patientEmail'] ?? '',
-      'nurseEmail': booking['nurseEmail'] ?? '',
-      'nurseName': booking['nurseName'] ?? 'Unknown Nurse',
-      'serviceType': booking['serviceType'] ?? 'Nursing Service',
-      'status': booking['status'] ?? 'Pending',
-      'price': booking['price'] ?? 0.0,
-      'createdAt': booking['createdAt'],
-      'location': booking['location'] ?? 'No location provided',
-      'duration': booking['duration'] ?? '1 hour',
+      'bookingId': booking['bookingId']?.toString() ?? '', // Ensure string conversion
+      'patientId': booking['patientId']?.toString() ?? '',
+      'patientName': booking['patientName']?.toString() ?? 'Unknown Patient',
+      'patientEmail': booking['patientEmail']?.toString().toLowerCase() ?? '',
+      'nurseEmail': booking['nurseEmail']?.toString().toLowerCase() ?? '',
+      'nurseName': booking['nurseName']?.toString() ?? 'Unknown Nurse',
+      'serviceName': booking['serviceName']?.toString() ?? 'Nursing Service', // Ensure string
+      'status': (booking['status']?.toString() ?? 'Pending').toString(),
+      'price': _parsePrice(booking['price']),
+      'bookingDate': booking['bookingDate']?.toString() ?? '',
+      'duration': booking['duration']?.toString() ?? '1 hour',
+      'address': booking['address']?.toString() ?? 'No address provided',
+      'location': booking['location'] ?? {},
+      'createdAt': booking['createdAt']?.toString() ?? '',
+      'bids': booking['bids'] is List ? booking['bids'] : [],
     };
+  }
+  double _parsePrice(dynamic price) {
+    try {
+      if (price is num) return price.toDouble();
+      if (price is Map && price['\$numberDouble'] != null) {
+        return double.parse(price['\$numberDouble']);
+      }
+      if (price is String) return double.tryParse(price) ?? 0.0;
+      return 0.0;
+    } catch (e) {
+      return 0.0;
+    }
   }
   /// Parse different ObjectId formats
   ObjectId _parseObjectId(dynamic id) {

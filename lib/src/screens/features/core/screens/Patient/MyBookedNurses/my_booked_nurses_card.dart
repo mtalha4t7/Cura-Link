@@ -77,7 +77,7 @@ class MyBookedNursesCard extends StatelessWidget {
 
               // Service Type
               Text(
-                booking['serviceType']??"",
+                booking['serviceName']??"",
                 style: theme.textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.w500,
                   color: colorScheme.onSurface.withOpacity(0.8),

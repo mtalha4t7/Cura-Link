@@ -149,8 +149,12 @@ class MyBookedNursesController extends GetxController {
             .sortBy('bookingDate', descending: false),
       ).toList();
 
+      debugPrint('Raw booking data from DB: ${bookings?.toString()}'); // Add this line
       debugPrint('Upcoming bookings count: ${bookings?.length ?? 0}');
-      return bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
+
+      final sanitized = bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
+      debugPrint('Sanitized booking data: $sanitized'); // Add this line
+      return sanitized;
     } catch (e, stackTrace) {
       _logger.e('Error fetching upcoming bookings', error: e, stackTrace: stackTrace);
       return [];
@@ -159,15 +163,23 @@ class MyBookedNursesController extends GetxController {
 
   /// Get past bookings (completed or cancelled)
 
-  Future<List<Map<String, dynamic>>> getPastBookings(String nurseEmail) async {
+  Future<List<Map<String, dynamic>>> getPastBookings(String patientEmail) async {
     try {
+      debugPrint('Fetching past bookings for: $patientEmail');
+
       final bookings = await MongoDatabase.patientNurseBookingsCollection?.find(
-        where.eq('patientEmail', nurseEmail)
+        where.eq('patientEmail', patientEmail.trim().toLowerCase())
             .oneFrom('status', ['Completed', 'Cancelled'])
             .sortBy('createdAt', descending: true),
       ).toList();
 
-      return bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
+      debugPrint('Raw past booking data from DB: ${bookings?.toString()}');
+      debugPrint('Past bookings count: ${bookings?.length ?? 0}');
+
+      final sanitized = bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
+      debugPrint('Sanitized past booking data: $sanitized');
+
+      return sanitized;
     } catch (e, stackTrace) {
       _logger.e('Error fetching past bookings', error: e, stackTrace: stackTrace);
       return [];
@@ -200,21 +212,21 @@ class MyBookedNursesController extends GetxController {
   Map<String, dynamic> _sanitizeBookingData(Map<String, dynamic> booking) {
     return {
       '_id': booking['_id'],
-      'bookingId': booking['bookingId'] ?? '',
-      'patientId': booking['patientId'] ?? '',
-      'patientName': booking['patientName'] ?? 'Unknown Patient',
+      'bookingId': booking['bookingId']?.toString() ?? '', // Ensure string conversion
+      'patientId': booking['patientId']?.toString() ?? '',
+      'patientName': booking['patientName']?.toString() ?? 'Unknown Patient',
       'patientEmail': booking['patientEmail']?.toString().toLowerCase() ?? '',
       'nurseEmail': booking['nurseEmail']?.toString().toLowerCase() ?? '',
-      'nurseName': booking['nurseName'] ?? 'Unknown Nurse',
-      'serviceType': booking['serviceType'] ?? 'Nursing Service',
-      'status': (booking['status'] ?? 'Pending').toString(),
+      'nurseName': booking['nurseName']?.toString() ?? 'Unknown Nurse',
+      'serviceName': booking['serviceName']?.toString() ?? 'Nursing Service', // Ensure string
+      'status': (booking['status']?.toString() ?? 'Pending').toString(),
       'price': _parsePrice(booking['price']),
       'bookingDate': booking['bookingDate']?.toString() ?? '',
-      'duration': booking['duration'] ?? '1 hour',
-      'address': booking['address'] ?? 'No address provided',
-      'location': booking['location'] ?? '',
+      'duration': booking['duration']?.toString() ?? '1 hour',
+      'address': booking['address']?.toString() ?? 'No address provided',
+      'location': booking['location'] ?? {},
       'createdAt': booking['createdAt']?.toString() ?? '',
-      'bids': booking['bids'] ?? [],
+      'bids': booking['bids'] is List ? booking['bids'] : [],
     };
   }
 
