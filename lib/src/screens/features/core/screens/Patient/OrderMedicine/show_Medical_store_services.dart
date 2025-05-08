@@ -20,10 +20,10 @@ class _MedicalStoreServicesScreenState extends State<MedicalStoreServicesScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final List<Map<String, dynamic>> otcMedicines =[
-    {'name': 'Panadol (500mg) 200 Tablets', 'price': 36.0, 'selected': false, 'category': 'Pain And Fever'},
-    {'name': 'Disprin (300mg) 600 Tablets', 'price': 26.91, 'selected': false, 'category': 'Pain And Fever'},
-    {'name': 'Febrol (500mg) 200 Tablets', 'price': 651.7, 'selected': false, 'category': 'Pain And Fever'},
-    {'name': 'Calpol (500mg) 200 Tablets', 'price': 31.77, 'selected': false, 'category': 'Pain And Fever'},
+    {'name': 'Panadol (500mg)', 'price': 50.0, 'selected': false, 'category': 'Pain And Fever'},
+    {'name': 'Disprin (300mg)', 'price': 26.91, 'selected': false, 'category': 'Pain And Fever'},
+    {'name': 'Febrol (500mg)', 'price': 651.7, 'selected': false, 'category': 'Pain And Fever'},
+    {'name': 'Calpol (500mg) ', 'price': 31.77, 'selected': false, 'category': 'Pain And Fever'},
     {'name': 'Rigix (10mg) 30 Tablets', 'price': 148.5, 'selected': false, 'category': 'All'},
     {'name': 'Laxoberon (5mg) 100 Tablets', 'price': 57.0, 'selected': false, 'category': 'General Aids'},
     {'name': 'Alergo (10mg) 30 Tablets', 'price': 185.25, 'selected': false, 'category': 'All'},
@@ -54,7 +54,7 @@ class _MedicalStoreServicesScreenState extends State<MedicalStoreServicesScreen>
     {'name': 'Cotton (2 inch) 12 Cotton Bandages', 'price': 19.0, 'selected': false, 'category': 'First Aid'},
     {'name': 'Vicks VapoRub 19g Balm', 'price': 228.0, 'selected': false, 'category': 'Topicals'},
     {'name': 'First Aid (F-300) First Aid Box', 'price': 1140.0, 'selected': false, 'category': 'First Aid'},
-    {'name': 'Gypsona (4in x 5yd) Plaster of Paris', 'price': 380.0, 'selected': false, 'category': 'First Aid'},
+    {'name': 'Gypsona (4in x 5yd)', 'price': 380.0, 'selected': false, 'category': 'First Aid'},
   ];
 
   final List<Map<String, dynamic>> prescriptionMedicines = [
