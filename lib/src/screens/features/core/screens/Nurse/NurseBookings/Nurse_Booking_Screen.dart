@@ -369,6 +369,8 @@ class NurseBookingsScreen extends StatelessWidget {
                             cleanRequestId,
                             price,
                             name ?? "Unknown Nurse",
+                            serviceName!
+
                           );
 
                           Navigator.pop(context);

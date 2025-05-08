@@ -466,6 +466,7 @@ static DbCollection? get  medicalOrdersCollection =>  _medicalOrdersCollection;
     required String nurseName,
     required String nurseEmail,
     required double price,
+    required String serviceName,
   }) async {
     try {
       final bid = {
@@ -475,6 +476,7 @@ static DbCollection? get  medicalOrdersCollection =>  _medicalOrdersCollection;
         'userName':nurseName,
         'status': 'pending',
         'createdAt': DateTime.now(),
+        'serviceName':serviceName
       };
 
       final result = await _nurseBidsCollection?.insertOne(bid);

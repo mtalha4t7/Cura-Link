@@ -84,7 +84,7 @@ class BookingControllerNurse extends GetxController {
     }
   }
 
-  Future<void> submitBid(String requestId, double price, String nurseName) async {
+  Future<void> submitBid(String requestId, double price, String nurseName, String serviceType) async {
     try {
 
       isLoading(true);
@@ -94,6 +94,7 @@ class BookingControllerNurse extends GetxController {
         requestId: requestId,
         nurseEmail: nurse.value?.userEmail ?? '',
         price: price,
+          serviceName:serviceType
       );
       Get.snackbar('Success', 'Bid submitted successfully');
       await fetchActiveRequests();
