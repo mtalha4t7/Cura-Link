@@ -110,6 +110,7 @@ dependencies:
   googleapis_auth: ^2.0.0
   app_settings: ^6.1.1
   photo_view: ^0.15.0
+  flutter_stripe: ^11.5.0
 flutter_native_splash:
   color: "#ffffff"  # Background color for light mode
   image: assets/images/appLogoSplashLight.png  # Light mode logo
