@@ -179,11 +179,6 @@ class NurseBookingController extends GetxController {
   }
 
 
-
-
-
-
-
   Future<void> cancelServiceRequest(String requestId) async {
     await mongoDatabase.deleteServiceRequestById(requestId);
   }

@@ -152,7 +152,7 @@ static DbCollection? get  medicalOrdersCollection =>  _medicalOrdersCollection;
       for (final collection in collections) {
         if (collection == null) continue;
 
-        final user = await collection.findOne(where.eq('email', email));
+        final user = await collection.findOne(where.eq('userEmail', email));
         if (user != null && user.containsKey('location')) {
           return user['location'] as Map<String, dynamic>;
         }
@@ -399,13 +399,13 @@ static DbCollection? get  medicalOrdersCollection =>  _medicalOrdersCollection;
     required String patientEmail,
     required String serviceType,
     required LatLng location,
-    required String servicePrice
+    required String servicePrice,
   }) async {
     try {
       final request = {
         'patientEmail': patientEmail,
         'serviceType': serviceType,
-        'servicePrice':servicePrice,
+        'servicePrice': servicePrice,
         'location': {
           'type': 'Point',
           'coordinates': [location.longitude, location.latitude],
@@ -417,13 +417,23 @@ static DbCollection? get  medicalOrdersCollection =>  _medicalOrdersCollection;
 
       final result = await _nurseServiceRequestsCollection?.insertOne(request);
 
+      final String insertedId = result?.id.toHexString() ?? '';
 
-      return result?.id.toHexString() ?? '';
+      // ✅ Immediately update the document to include the `requestId` as a string field
+      if (insertedId.isNotEmpty) {
+        await _nurseServiceRequestsCollection?.updateOne(
+          where.eq('_id', result!.id),
+          modify.set('requestId', insertedId),
+        );
+      }
+
+      return insertedId;
     } catch (e, stackTrace) {
       logger.e('Error creating service request', error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
+
 
 
   Future<void> deleteServiceRequestById(String requestId) async {
@@ -782,7 +792,7 @@ static DbCollection? get  medicalOrdersCollection =>  _medicalOrdersCollection;
       rethrow;
     }
   }
-  static Future<String?> getUserLocationByEmail(String email) async {
+  static Future<Map<String, dynamic>?> getUserLocationByEmail(String email) async {
     try {
       if (_db == null) {
         throw Exception('Database connection is not established');
@@ -801,8 +811,27 @@ static DbCollection? get  medicalOrdersCollection =>  _medicalOrdersCollection;
         if (collection != null) {
           var user = await collection.findOne({'userEmail': email});
           if (user != null) {
-            // Try both possible keys for location
-            return user['location'] ?? user['userAddress'] ?? 'No location found';
+            // Try to get location as Map
+            dynamic location = user['location'] ?? user['userAddress'];
+
+            // If location is a Map, return it
+            if (location is Map<String, dynamic>) {
+              return location;
+            }
+
+            // If location is a String (like an address), try to parse it
+            if (location is String) {
+              try {
+                // Example of parsing string to map - adjust based on your actual format
+                return {
+                  'address': location,
+                  'latitude': 0.0, // Default values if not available
+                  'longitude': 0.0,
+                };
+              } catch (e) {
+                logger.w('Failed to parse location string: $location');
+              }
+            }
           }
         }
       }

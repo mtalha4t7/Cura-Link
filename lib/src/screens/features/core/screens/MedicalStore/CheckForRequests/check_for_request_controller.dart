@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:mongo_dart/mongo_dart.dart';
@@ -90,20 +91,29 @@ class CheckForRequestsController extends GetxController {
         List<dynamic>? medicines,
         double? totalPrice,
         String? prescriptionImage,
+        String? patientEmail,
       }) async {
     try {
       isLoading(true);
       print("====================" + storeName);
 
       final email = await FirebaseAuth.instance.currentUser?.email;
-      final storeLocation= await MongoDatabase.getUserLocationByEmail(email!);
-
+      final storeLocation = await MongoDatabase.getUserLocationByEmail(email!);
+      final patientLocation=await MongoDatabase.getUserLocationByEmail(patientEmail!);
+      print(patientLocation);
+      print("ahhahahahah");
+      print(storeLocation);
+      // Calculate delivery time
+      final deliveryTime = patientLocation != null
+          ? calculateDeliveryTime(patientLocation, storeLocation!)
+          : '30-45 min'; // Default if location not available
       // Prepare bid data
       final bidData = {
         'storeName': storeName,
         'storeEmail': medicalStore.value?.userEmail ?? '',
         'price': price,
         'submittedAt': DateTime.now(),
+        'deliveryTime': deliveryTime,
         if (prescriptionDetails != null)
           'prescriptionDetails': prescriptionDetails,
         if (medicines != null)
@@ -112,7 +122,7 @@ class CheckForRequestsController extends GetxController {
           'totalPrice': totalPrice,
         if (prescriptionImage != null)
           'prescriptionImage': prescriptionImage,
-          'storeLocation': storeLocation,
+        'storeLocation': storeLocation,
       };
 
       await MongoDatabase.submitStoreBid(
@@ -136,6 +146,100 @@ class CheckForRequestsController extends GetxController {
       );
     } finally {
       isLoading(false);
+    }
+  }
+
+  double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    const earthRadius = 6371; // Earth's radius in km
+
+    // Convert degrees to radians
+    final dLat = _degreesToRadians(lat2 - lat1);
+    final dLon = _degreesToRadians(lon2 - lon1);
+
+    final a =
+        sin(dLat/2) * sin(dLat/2) +
+            cos(_degreesToRadians(lat1)) * cos(_degreesToRadians(lat2)) *
+                sin(dLon/2) * sin(dLon/2);
+
+    final c = 2 * atan2(sqrt(a), sqrt(1-a));
+    return earthRadius * c;
+  }
+
+  double _degreesToRadians(double degrees) {
+    return degrees * pi / 180;
+  }
+
+// Function to calculate estimated delivery time in minutes
+  String calculateDeliveryTime(
+      Map<String, dynamic>? patientLocation,
+      Map<String, dynamic>? storeLocation) {
+    print("Patient Location: $patientLocation");
+    print("Store Location: $storeLocation");
+
+    try {
+      // If either location is null, return default
+      if (patientLocation == null || storeLocation == null) {
+        return '30-45 mins';
+      }
+
+      // Extract coordinates from GeoJSON format
+      final patientCoords = _extractCoordinates(patientLocation);
+      final storeCoords = _extractCoordinates(storeLocation);
+
+      print("Patient Coords: $patientCoords");
+      print("Store Coords: $storeCoords");
+
+      // Get coordinates with null checks
+      final patientLat = patientCoords?[1] ?? 0.0; // Latitude is second in GeoJSON
+      final patientLng = patientCoords?[0] ?? 0.0; // Longitude is first in GeoJSON
+      final storeLat = storeCoords?[1] ?? 0.0;
+      final storeLng = storeCoords?[0] ?? 0.0;
+
+      // If coordinates are zero (default), return estimated time
+      if (patientLat == 0.0 && patientLng == 0.0 ||
+          storeLat == 0.0 && storeLng == 0.0) {
+        return '30-45 mins';
+      }
+
+      // Calculate distance in km
+      final distance = _calculateDistance(storeLat, storeLng, patientLat, patientLng);
+      print("Distance: ${distance.toStringAsFixed(2)} km");
+
+      // Average delivery speed (km/h)
+      const averageSpeed = 30.0;
+
+      // Calculate time in hours, then convert to minutes
+      final timeInHours = distance / averageSpeed;
+      final totalMinutes = (timeInHours * 60).round();
+
+      // Add buffer time for preparation (15 minutes)
+      final estimatedMinutes = totalMinutes + 15;
+
+      // Format the output
+      if (estimatedMinutes < 60) {
+        return '$estimatedMinutes mins';
+      } else {
+        final hours = estimatedMinutes ~/ 60;
+        final mins = estimatedMinutes % 60;
+        return '${hours}h ${mins}m';
+      }
+    } catch (e) {
+      print("Error calculating delivery time: $e");
+      return '30-45 mins';
+    }
+  }
+
+  List<double>? _extractCoordinates(Map<String, dynamic> location) {
+    try {
+      if (location['type'] == 'Point' && location['coordinates'] is List) {
+        final coords = location['coordinates'];
+        if (coords.length >= 2) {
+          return [coords[0].toDouble(), coords[1].toDouble()];
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
     }
   }
 

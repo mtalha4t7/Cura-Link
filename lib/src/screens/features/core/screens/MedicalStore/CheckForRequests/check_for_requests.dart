@@ -242,9 +242,9 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
             ),
             const SizedBox(height: 12),
             _buildDetailRow(Icons.person_outline,
-                'Patient: ${request['patientEmail'] ?? 'Unknown'}'),
-            _buildDetailRow(Icons.calendar_today,
-                'Posted: ${_formatDate(request['createdAt'])}'),
+                'Patient: ${request['patientName'] ?? 'Unknown'}'),
+            _buildDetailRow(Icons.location_city,
+                'Address: ${request['deliveryAddress']}'),
             if (location != null)
               _buildDetailRow(Icons.location_on_outlined, location),
 
@@ -506,6 +506,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                                   prescriptionDetails: detailsController.text
                                       .trim(),
                                   prescriptionImage: request['prescriptionImage'],
+                                  patientEmail: request['patientEmail'],
                                 );
 
                                 Navigator.pop(context);
@@ -866,6 +867,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                             name ?? "Unknown Store",
                             medicines: request['medicines'],
                             totalPrice: request['total'],
+                            patientEmail: request['patientEmail'],
                           );
 
                           Navigator.pop(context);

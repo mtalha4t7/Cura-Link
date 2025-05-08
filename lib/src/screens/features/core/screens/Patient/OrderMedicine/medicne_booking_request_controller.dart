@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cura_link/src/repository/user_repository/user_repository.dart';
 import 'package:get/get.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import 'dart:io';
@@ -40,15 +41,18 @@ class MedicalStoreController extends GetxController {
           'category': m['category'],
         }).toList();
       }
-
+      final patientLocation = await MongoDatabase.getLocationByEmail(patientEmail);
+      final patientName= await UserRepository.instance.getFullNameByEmail(email: patientEmail, collection: MongoDatabase.userPatientCollection);
       final requestData = {
         'patientEmail': patientEmail,
+        'patientName':patientName,
         'medicines': medicineList,
         'prescriptionImage': encodedImage,
         'deliveryAddress': deliveryAddress,
         'subtotal': total - 50, // Assuming 50 is delivery fee
         'deliveryFee': 50.0,
         'total': total,
+        'patientLocation':patientLocation,
         'status': 'pending', // pending, bid_submitted, accepted, completed
         'requestType': requestType, // <-- new field
         'createdAt': DateTime.now().toUtc(),
