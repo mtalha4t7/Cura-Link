@@ -55,8 +55,23 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
     }
   }
 
-  Future<void> _launchMaps(String coordinates) async {
+  Future<void> _launchMaps(dynamic location) async {
     try {
+      String coordinates;
+
+      // Handle different location formats
+      if (location is String) {
+        coordinates = location;
+      } else if (location is Map<String, dynamic>) {
+        if (location['coordinates'] is List) {
+          coordinates = '${location['coordinates'][1]},${location['coordinates'][0]}';
+        } else {
+          throw Exception('Invalid location format');
+        }
+      } else {
+        throw Exception('Unknown location type');
+      }
+
       final parts = coordinates.split(',');
       if (parts.length == 2) {
         final lat = parts[0].trim();
@@ -65,19 +80,25 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
           'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
         );
         if (!await launchUrl(uri)) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not open maps')),
-          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Could not open maps')),
+            );
+          }
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid location coordinates')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Invalid location coordinates')),
+          );
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error opening maps')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error opening maps')),
+        );
+      }
     }
   }
 
@@ -221,21 +242,20 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
                       const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final booking = bookings[index];
+                        final patientEmail = booking['patientEmail'] as String? ?? '';
+                        final location = booking['location'];
+                        final bookingDate = booking['bookingDate'] ?? booking['createdAt'];
+                        final bookingId = booking['_id']?.toString() ?? '';
+
                         return NurseBookingCard(
                           booking: booking,
                           isDark: isDarkTheme,
-                          onChat: () =>
-                              _startChat(booking['patientEmail']),
-                          onLocation: () => _launchMaps(
-                              booking['location'] ?? ''),
-                          formattedDate: _formatDate(
-                            booking['bookingDate'] ?? booking['createdAt'],
-                          ),
+                          onChat: () => _startChat(patientEmail),
+                          onLocation: () => _launchMaps(location),
+                          formattedDate: _formatDate(bookingDate),
                           showActions: _currentFilter == 'upcoming',
-                          onCancel: () =>
-                              _cancelBooking(booking['_id'].toString()),
-                          onComplete: () =>
-                              _completeBooking(booking['_id'].toString()),
+                          onCancel: () => _cancelBooking(bookingId),
+                          onComplete: () => _completeBooking(bookingId),
                         );
                       },
                     );

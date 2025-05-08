@@ -35,7 +35,8 @@ class MyBookingsNurseController {
 
   Future<bool> updateBookingStatus(String bookingId, String newStatus) async {
     try {
-      final id = ObjectId.parse(bookingId);
+      final id = _parseObjectId(bookingId);
+
       final result = await MongoDatabase.patientNurseBookingsCollection?.updateOne(
         where.id(id),
         modify
@@ -43,12 +44,14 @@ class MyBookingsNurseController {
             .set('updatedAt', DateTime.now()),
       );
 
+      debugPrint('Update result: ${result?.isSuccess}, matched: ${result?.nMatched}, modified: ${result?.nModified}');
       return result?.isSuccess ?? false;
     } catch (e, stackTrace) {
       _logger.e('Error updating booking status', error: e, stackTrace: stackTrace);
       return false;
     }
   }
+
 
   Future<bool> deleteBooking(dynamic bookingId) async {
     try {
@@ -105,12 +108,9 @@ class MyBookingsNurseController {
   Future<List<Map<String, dynamic>>> getPastBookings(String nurseEmail) async {
     try {
       final bookings = await MongoDatabase.patientNurseBookingsCollection?.find(
-          where.eq('nurseEmail', nurseEmail)
-              .or([
-            where.eq('status', 'Completed'),
-            where.eq('status', 'Cancelled'),
-          ] as SelectorBuilder)
-              .sortBy('createdAt', descending: true)
+        where.eq('nurseEmail', nurseEmail)
+            .oneFrom('status', ['Completed', 'Cancelled'])
+            .sortBy('createdAt', descending: true),
       ).toList();
 
       return bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
@@ -119,6 +119,8 @@ class MyBookingsNurseController {
       return [];
     }
   }
+
+
 
   Map<String, dynamic> _sanitizeBookingData(Map<String, dynamic> booking) {
     return {
@@ -156,4 +158,24 @@ class MyBookingsNurseController {
       rethrow;
     }
   }
+  ObjectId _parseObjectIdd(dynamic bookingId) {
+    if (bookingId is ObjectId) {
+      return bookingId;
+    }
+
+    final idString = bookingId.toString();
+    final regex = RegExp(r'ObjectId\("([a-fA-F0-9]{24})"\)');
+    final match = regex.firstMatch(idString);
+
+    if (match != null) {
+      return ObjectId.parse(match.group(1)!);
+    }
+
+    if (idString.length == 24 && RegExp(r'^[a-fA-F0-9]+$').hasMatch(idString)) {
+      return ObjectId.parse(idString);
+    }
+
+    throw ArgumentError('Invalid bookingId format: $bookingId');
+  }
+
 }

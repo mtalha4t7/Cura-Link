@@ -27,6 +27,10 @@ class NurseBookingCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    // Safely extract location - handles both String and Map formats
+    final location = booking['location'];
+    final locationString = _parseLocation(location);
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       shape: RoundedRectangleBorder(
@@ -96,7 +100,7 @@ class NurseBookingCard extends StatelessWidget {
               _buildDetailRow(
                 icon: Icons.location_on_outlined,
                 title: 'Location',
-                value: _formatLocation(booking['location'] ?? 'No location provided'),
+                value: _formatLocation(locationString),
               ),
               const SizedBox(height: 16),
               Column(
@@ -160,6 +164,23 @@ class NurseBookingCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // New method to safely parse location from either String or Map
+  String _parseLocation(dynamic location) {
+    if (location == null) return 'No location provided';
+    if (location is String) return location;
+    if (location is Map) {
+      // Handle GeoJSON format
+      if (location['coordinates'] is List) {
+        return '${location['coordinates'][1]},${location['coordinates'][0]}';
+      }
+      // Handle simple map format
+      if (location['latitude'] != null && location['longitude'] != null) {
+        return '${location['latitude']},${location['longitude']}';
+      }
+    }
+    return 'No location provided';
   }
 
   String _formatLocation(String coordinates) {
