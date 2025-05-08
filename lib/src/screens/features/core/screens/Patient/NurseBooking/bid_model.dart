@@ -7,6 +7,7 @@ class Bid {
   final String status;
   final String requestId;
   final DateTime createdAt;
+  final String? serviceName; // 👈 Added serviceName
   String? nurseName;
   double? rating;
 
@@ -17,6 +18,7 @@ class Bid {
     required this.status,
     required this.requestId,
     required this.createdAt,
+    this.serviceName, // 👈 Include in constructor
     this.nurseName,
     this.rating,
   });
@@ -24,13 +26,11 @@ class Bid {
   factory Bid.fromJson(Map<String, dynamic> json) => Bid.fromMap(json);
 
   factory Bid.fromMap(Map<String, dynamic> map) {
-    // Universal _id handling
     dynamic rawId = map['_id'];
     final String id = (rawId is ObjectId)
         ? rawId.toHexString()
         : rawId?.toString() ?? '';
 
-    // Universal requestId handling
     dynamic rawRequestId = map['requestId'];
     final String requestId = (rawRequestId is ObjectId)
         ? rawRequestId.toHexString()
@@ -42,9 +42,9 @@ class Bid {
       nurseEmail: map['nurseEmail']?.toString() ?? '',
       price: (map['price'] as num?)?.toDouble() ?? 0.0,
       status: map['status']?.toString() ?? '',
-      createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ??
-          DateTime.now(),
-      nurseName: map['userName']?.toString(), // 👈 added support for userName
+      createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ?? DateTime.now(),
+      serviceName: map['serviceName']?.toString(), // 👈 Parse serviceName
+      nurseName: map['userName']?.toString(),
       rating: (map['rating'] as num?)?.toDouble(),
     );
   }
@@ -56,6 +56,7 @@ class Bid {
     'status': status,
     'requestId': requestId,
     'createdAt': createdAt.toIso8601String(),
+    'serviceName': serviceName, // 👈 Include in JSON
     'nurseName': nurseName,
     'rating': rating,
   };

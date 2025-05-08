@@ -176,6 +176,7 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: _bookingsFuture,
                 builder: (context, snapshot) {
+
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
@@ -200,6 +201,7 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
                       const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final booking = bookings[index];
+                        print('Booking data: $booking');
                         return MyBookedNursesCard(
                           booking: booking,
                           isDark: isDarkTheme,

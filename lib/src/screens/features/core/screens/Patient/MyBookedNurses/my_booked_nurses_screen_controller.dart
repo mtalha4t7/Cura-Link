@@ -158,7 +158,7 @@ class MyBookedNursesController extends GetxController {
   }
 
   /// Get past bookings (completed or cancelled)
-  
+
   Future<List<Map<String, dynamic>>> getPastBookings(String nurseEmail) async {
     try {
       final bookings = await MongoDatabase.patientNurseBookingsCollection?.find(

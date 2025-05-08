@@ -84,7 +84,9 @@ class NurseBookingController extends GetxController {
 
       final requestId = bid?['requestId'];
       final nurseEmail = bid?['nurseEmail'];
+      final serviceName = bid?['serviceName'];
       final PatientEmail = patientEmail;
+
       final price = (bid?['price'] as num?)?.toDouble();
 
       // Validate required fields
@@ -120,6 +122,7 @@ class NurseBookingController extends GetxController {
         'bookingId': bidId,
         'location': location,
         'patientEmail':PatientEmail,
+        'serviceName':serviceName,
         'nurseEmail': nurseEmail,
         'nurseName': nurseName,
         'patientName': patientName,

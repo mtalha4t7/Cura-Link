@@ -555,6 +555,7 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Price: \$${bid.price.toStringAsFixed(2)}'),
+                      Text('Service Name: ${bid.serviceName}'),
                       const SizedBox(height: 4),
                       Row(
                         children: [
