@@ -1,6 +1,7 @@
 import 'package:cura_link/src/notification_handler/fcmServerKey.dart';
 import 'package:cura_link/src/notification_handler/notification_server.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookedNurses/my_booked_nurses_screen_controller.dart';
+import 'package:cura_link/src/stripe/stripe_services.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
@@ -150,9 +151,7 @@ class _PatientDashboardState extends State<PatientDashboard> {
                       icon: Icons.biotech,
                       title: 'Lab Tests',
                       onTap: () async {
-                        final key = await _getServerKey.getServerTokenKey();
-                        print(key);
-                        print("device token= $_userDeviceToken");
+                        StripeService.instance.makePayment();
                       },
                     ),
                     ServiceCard(
