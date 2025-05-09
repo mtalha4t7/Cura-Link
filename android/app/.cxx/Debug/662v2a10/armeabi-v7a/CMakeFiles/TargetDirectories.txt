@@ -1,0 +1,2 @@
+C:/Users/OCS/Downloads/Cura-Link/android/app/.cxx/Debug/662v2a10/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/OCS/Downloads/Cura-Link/android/app/.cxx/Debug/662v2a10/armeabi-v7a/CMakeFiles/rebuild_cache.dir

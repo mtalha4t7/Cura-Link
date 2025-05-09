@@ -94,6 +94,41 @@ class MyBookedNursesController extends GetxController {
       return false;
     }
   }
+
+  Future<bool> submitRating({
+    required String bookingId,
+    required String nurseEmail,
+    required String userEmail,
+    required double rating,
+    required String review,
+  }) async {
+    try {
+      final ratingDoc = {
+        'nurseEmail': nurseEmail.trim().toLowerCase(),
+        'userEmail': userEmail.trim().toLowerCase(),
+        'rating': rating,
+        'review': review,
+        'createdAt': DateTime.now().millisecondsSinceEpoch,
+        'bookingId': bookingId,
+      };
+
+      final result = await MongoDatabase.nurseRatingCollection?.insertOne(ratingDoc);
+
+      if (result?.isSuccess == true) {
+        debugPrint('Rating submitted successfully');
+        return true;
+      } else {
+        debugPrint('Failed to submit rating');
+        return false;
+      }
+    } catch (e, stackTrace) {
+      _logger.e('Error submitting rating', error: e, stackTrace: stackTrace);
+      return false;
+    }
+  }
+
+
+
   Future<bool> deleteBooking(dynamic bookingId) async {
     try {
       debugPrint('Deleting booking [$bookingId]');

@@ -28,6 +28,7 @@ class MongoDatabase {
   static DbCollection? _nurseBidsCollection;
   static DbCollection? _patientNurseBookingsCollection;
   static DbCollection? _nurseReceivedBookingsCollection;
+  static DbCollection? _nurseRatingCollection;
   static DbCollection? _medicalBidsCollection;
  static DbCollection? _medicalRequestsCollection;
 static DbCollection? _medicalOrdersCollection;
@@ -61,6 +62,7 @@ static DbCollection? _medicalOrdersCollection;
       _medicalBidsCollection = _db!.collection('storeBids');
       _medicalRequestsCollection = _db!.collection('storeServiceRequests');
       _medicalOrdersCollection = _db!.collection('medicalOrderCollection');
+      _nurseRatingCollection = _db!.collection('nurseRating');
 
 
 
@@ -107,6 +109,7 @@ static DbCollection? _medicalOrdersCollection;
   static DbCollection? get nurseReceivedBookingsCollection => _nurseReceivedBookingsCollection;
   static DbCollection? get nurseServiceRequestsCollection => _nurseServiceRequestsCollection;
   static DbCollection? get nurseBidsCollection => _nurseBidsCollection;
+  static DbCollection? get nurseRatingCollection => _nurseRatingCollection;
 
   static DbCollection? get labRatingCollection => _labRating;
   static Db? get db => _db;

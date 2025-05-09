@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+ // Make sure this import path is correct
 
 class MyBookedNursesCard extends StatelessWidget {
   final Map<String, dynamic> booking;
@@ -7,8 +8,10 @@ class MyBookedNursesCard extends StatelessWidget {
   final VoidCallback onLocation;
   final String formattedDate;
   final bool showActions;
+
   final VoidCallback onCancel;
   final VoidCallback onComplete;
+  final VoidCallback onRate;
 
   const MyBookedNursesCard({
     super.key,
@@ -20,12 +23,14 @@ class MyBookedNursesCard extends StatelessWidget {
     required this.showActions,
     required this.onCancel,
     required this.onComplete,
+    required this.onRate,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isCompleted = booking['status'].toString().toLowerCase() == 'completed';
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -35,13 +40,13 @@ class MyBookedNursesCard extends StatelessWidget {
       elevation: 1,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {}, // Add onTap functionality if needed
+        onTap: () {},
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with patient name and status
+              // Header with nurse name and status
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -77,7 +82,7 @@ class MyBookedNursesCard extends StatelessWidget {
 
               // Service Type
               Text(
-                booking['serviceName']??"",
+                booking['serviceName'] ?? "",
                 style: theme.textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.w500,
                   color: colorScheme.onSurface.withOpacity(0.8),
@@ -94,14 +99,13 @@ class MyBookedNursesCard extends StatelessWidget {
               const SizedBox(height: 8),
               _buildDetailRow(
                 icon: Icons.access_time_outlined,
-                title: 'price',
-                value: booking['price'].toString() ?? '',
+                title: 'Price',
+                value: booking['price'].toString(),
               ),
-
 
               const SizedBox(height: 16),
 
-              // Action Buttons - Now in a column for better spacing
+              // Action Buttons
               Column(
                 children: [
                   // Primary Actions (Chat and Location)
@@ -132,7 +136,7 @@ class MyBookedNursesCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
 
-                  // Conditional Action Buttons (Cancel/Complete)
+                  // Conditional Action Buttons
                   if (showActions)
                     Row(
                       children: [
@@ -159,6 +163,15 @@ class MyBookedNursesCard extends StatelessWidget {
                         ),
                       ],
                     ),
+                  if (!showActions && isCompleted)
+                    _buildActionButton(
+                      context: context,
+                      icon: Icons.star_outline,
+                      label: 'Rate Service',
+                      onPressed: onRate,
+                      backgroundColor: Colors.deepPurple.withValues(),
+                      textColor: Colors.white,
+                    ),
                 ],
               ),
             ],
@@ -168,6 +181,7 @@ class MyBookedNursesCard extends StatelessWidget {
     );
   }
 
+  // Existing helper methods remain unchanged
   Widget _buildDetailRow({
     required IconData icon,
     required String title,

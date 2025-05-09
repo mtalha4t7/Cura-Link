@@ -27,8 +27,6 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
     super.initState();
     email = widget.patientEmail;
     _loadBookings();
-
-
   }
 
   void _loadBookings() {
@@ -36,7 +34,6 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
       _bookingsFuture = _currentFilter == 'upcoming'
           ? _controller.getUpcomingBookings(widget.patientEmail)
           : _controller.getPastBookings(widget.patientEmail);
-
     });
   }
 
@@ -113,6 +110,88 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
     }
   }
 
+  Future<void> _showRatingDialog(Map<String, dynamic> booking) async {
+    double rating = 0;
+    TextEditingController reviewController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Rate Your Experience'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('How would you rate this service?'),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            rating = index + 1.0;
+                          });
+                        },
+                        child: Icon(
+                          index < rating ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                          size: 40,
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: reviewController,
+                    decoration: const InputDecoration(
+                      labelText: 'Your review (optional)',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 3,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    if (rating > 0) {
+                      final success = await _controller.submitRating(
+                        bookingId: booking['_id'].toString(),
+                        nurseEmail: booking['nurseEmail'],
+                        userEmail: widget.patientEmail,
+                        rating: rating,
+                        review: reviewController.text,
+                      );
+
+                      if (success && mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Thank you for your rating!')),
+                        );
+                        Navigator.pop(context);
+                      }
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please select a rating')),
+                      );
+                    }
+                  },
+                  child: const Text('Submit'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -176,7 +255,6 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: _bookingsFuture,
                 builder: (context, snapshot) {
-
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
@@ -201,21 +279,16 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
                       const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final booking = bookings[index];
-                        print('Booking data: $booking');
                         return MyBookedNursesCard(
                           booking: booking,
                           isDark: isDarkTheme,
-                          onChat: () =>
-                              _startChat(booking['nurseEmail']), // FIXED HERE
-                          onLocation: () =>
-                              _launchMaps(booking['location']),
-                          formattedDate:
-                          _formatDate(booking['createdAt']),
+                          onChat: () => _startChat(booking['nurseEmail']),
+                          onLocation: () => _launchMaps(booking['location']),
+                          formattedDate: _formatDate(booking['createdAt']),
                           showActions: _currentFilter == 'upcoming',
-                          onCancel: () => _cancelBooking(
-                              booking['_id'].toString()),
-                          onComplete: () => _completeBooking(
-                              booking['_id'].toString()),
+                          onCancel: () => _cancelBooking(booking['_id'].toString()),
+                          onComplete: () => _completeBooking(booking['_id'].toString()),
+                          onRate: () => _showRatingDialog(booking),
                         );
                       },
                     );
