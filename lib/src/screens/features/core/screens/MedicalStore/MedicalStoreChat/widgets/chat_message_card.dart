@@ -1,156 +1,128 @@
 import 'dart:convert';
-import 'dart:typed_data';
-
-import 'package:cura_link/src/constants/colors.dart';
 import 'package:cura_link/src/screens/features/authentication/models/message_model.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:cura_link/src/constants/colors.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
+import '../../../../../authentication/models/message_type.dart';
 
 class ChatMessageCard extends StatelessWidget {
   final Message message;
   final bool isFromCurrentUser;
+  final VoidCallback? onImageTap;
+
   const ChatMessageCard({
-    super.key,
+    Key? key,
     required this.message,
     required this.isFromCurrentUser,
-  });
+    this.onImageTap,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
+    final isDark = theme.brightness == Brightness.dark;
 
-    return Column(
-      crossAxisAlignment:
-      isFromCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-      children: [
-        isFromCurrentUser
-            ? _greenMessage(isDarkMode)
-            : _blueMessage(isDarkMode),
-      ],
+    return Align(
+      alignment: isFromCurrentUser
+          ? Alignment.centerRight
+          : Alignment.centerLeft,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
+        ),
+        child: Card(
+          elevation: 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          color: isFromCurrentUser
+              ? isDark
+              ? tPrimaryColor
+              : tPrimaryColor.withOpacity(0.8)
+              : isDark
+              ? tDarkColor
+              : Colors.grey[200],
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: _buildMessageContent(theme, isDark),
+          ),
+        ),
+      ),
     );
   }
 
-  String _formatMessageSent(String sent) {
-    try {
-      DateTime dateTime;
-      if (sent.contains(RegExp(r'^\d+$'))) {
-        dateTime = DateTime.fromMillisecondsSinceEpoch(int.parse(sent));
-      } else {
-        dateTime = DateTime.parse(sent);
-      }
-
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final messageDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
-
-      if (messageDate.isBefore(today)) {
-        return DateFormat('MMM d, yyyy h:mm a').format(dateTime);
-      } else {
-        return DateFormat('h:mm a').format(dateTime);
-      }
-    } catch (e) {
-      return sent;
+  Widget _buildMessageContent(ThemeData theme, bool isDark) {
+    switch (message.type) {
+      case MessageType.image:
+        return _buildImageMessage(theme);
+      case MessageType.emoji:
+        return _buildEmojiMessage();
+      default:
+        return _buildTextMessage(theme, isDark);
     }
   }
 
-  Widget _blueMessage(bool isDarkMode) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-      Flexible(
-      child: Container(
-      padding: const EdgeInsets.all(12),
-      margin: const EdgeInsets.only(left: 12, right: 6),
-      decoration: BoxDecoration(
-        color: isDarkMode ? tDarkColor : tPrimaryColor.withOpacity(0.2),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-          bottomRight: Radius.circular(20),
-        ),
-      ),
-      child: _buildMessageContent(isDarkMode),
-    ),
-    ),
-    Padding(
-    padding: const EdgeInsets.only(right: 12, bottom: 5),
-    child: Text(
-    _formatMessageSent(message.sent),
-    style: TextStyle(fontSize: 10, color: isDarkMode ? Colors.blue : Colors.black54),
-    ),
-    ),
-          ],
+  Widget _buildTextMessage(ThemeData theme, bool isDark) {
+    return Text(
+      message.msg,
+      style: theme.textTheme.bodyMedium?.copyWith(
+        color: isFromCurrentUser ? Colors.white : Colors.black87,
       ),
     );
   }
 
-  Widget _greenMessage(bool isDarkMode) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 12, bottom: 5),
-            child: Text(
-              _formatMessageSent(message.sent),
-              style: TextStyle(fontSize: 10, color: isDarkMode ? Colors.blue : Colors.black54),
-            ),
-          ),
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              margin: const EdgeInsets.only(left: 6, right: 12),
-              decoration: BoxDecoration(
-                color: isDarkMode ? tAccentColor : Colors.green[300],
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                  bottomLeft: Radius.circular(20),
-                ),
-              ),
-              child: _buildMessageContent(isDarkMode),
-            ),
-          ),
-        ],
-      ),
+  Widget _buildEmojiMessage() {
+    return Text(
+      message.msg,
+      style: const TextStyle(fontSize: 32),
     );
   }
 
-  Widget _buildMessageContent(bool isDarkMode) {
-    if (message.type == MessageType.image) {
-      try {
-        Uint8List imageBytes = base64Decode(message.msg);
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Image.memory(
-            imageBytes,
+  Widget _buildImageMessage(ThemeData theme) {
+    final isNetworkImage = message.msg.startsWith('http');
+
+    return GestureDetector(
+      onTap: onImageTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: isNetworkImage
+            ? CachedNetworkImage(
+          imageUrl: message.msg,
+          placeholder: (context, url) => Container(
             width: 200,
-            fit: BoxFit.cover,
+            height: 200,
+            color: Colors.grey[300],
+            child: const Center(
+              child: CircularProgressIndicator(),
+            ),
           ),
-        );
-      } catch (e) {
-        return Text(
-          "Invalid image data",
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.red,
+          errorWidget: (context, url, error) => Container(
+            width: 200,
+            height: 200,
+            color: Colors.grey[300],
+            child: const Icon(Icons.error),
           ),
-        );
-      }
-    } else {
-      return Text(
-        message.msg,
-        style: TextStyle(
-          fontSize: 14,
-          color: isDarkMode ? tWhiteColor : tDarkColor,
+          fit: BoxFit.cover,
+          width: 200,
+          height: 200,
+        )
+            : Image.memory(
+          base64Decode(message.msg),
+          fit: BoxFit.cover,
+          width: 200,
+          height: 200,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              width: 200,
+              height: 200,
+              color: Colors.grey[300],
+              child: const Icon(Icons.error),
+            );
+          },
         ),
-      );
-    }
+      ),
+    );
   }
 }

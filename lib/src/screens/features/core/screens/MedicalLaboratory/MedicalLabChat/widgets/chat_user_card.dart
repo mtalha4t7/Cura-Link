@@ -5,6 +5,8 @@ import 'package:cura_link/src/screens/features/authentication/models/chat_user_m
 import 'package:intl/intl.dart';
 import 'package:cura_link/src/repository/user_repository/user_repository.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/PatientChat/chat_screen.dart';
+import '../../../../../authentication/models/message_type.dart';
+
 
 class ChatUserCard extends StatelessWidget {
   final ChatUserModelMongoDB user;
@@ -17,7 +19,7 @@ class ChatUserCard extends StatelessWidget {
   }) : super(key: key);
 
   String _formatMessageTime(String? time) {
-    if (time == null) return '';
+    if (time == null || time.isEmpty) return '';
 
     try {
       DateTime dateTime;
@@ -109,7 +111,10 @@ class ChatUserCard extends StatelessWidget {
             children: [
               _buildUserAvatar(theme, surfaceColor),
               const SizedBox(width: 16),
-              Expanded(child: _buildUserInfo(theme, textColor, textSecondaryColor, primaryColor)),
+              Expanded(
+                child: _buildUserInfo(
+                    theme, textColor, textSecondaryColor, primaryColor),
+              ),
             ],
           ),
         ),
@@ -171,7 +176,12 @@ class ChatUserCard extends StatelessWidget {
     );
   }
 
-  Widget _buildUserInfo(ThemeData theme, Color textColor, Color textSecondaryColor, Color primaryColor) {
+  Widget _buildUserInfo(ThemeData theme, Color textColor,
+      Color textSecondaryColor, Color primaryColor) {
+    final isFromCurrentUser = user.lastMessageFromId == user.userEmail;
+    final lastMessagePreview = _getLastMessagePreview(
+        user.lastMessage, user.lastMessageType, isFromCurrentUser);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -201,7 +211,7 @@ class ChatUserCard extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                user.lastMessage ?? '',
+                lastMessagePreview,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodyMedium?.copyWith(
@@ -231,5 +241,24 @@ class ChatUserCard extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  String _getLastMessagePreview(
+      String? message, MessageType? type, bool isFromCurrentUser) {
+    if (message == null) return '';
+
+    switch (type) {
+      case MessageType.image:
+        return isFromCurrentUser ? '📷 You sent a photo' : '📷 Photo';
+      case MessageType.emoji:
+        return isFromCurrentUser ? 'You: $message' : message;
+      case MessageType.video:
+        return isFromCurrentUser ? '🎥 You sent a video' : '🎥 Video';
+      case MessageType.file:
+        return isFromCurrentUser ? '📄 You sent a file' : '📄 File';
+      case MessageType.text:
+      default:
+        return isFromCurrentUser ? 'You: $message' : message;
+    }
   }
 }

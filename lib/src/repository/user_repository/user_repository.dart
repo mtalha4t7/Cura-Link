@@ -10,6 +10,7 @@ import 'package:get/get.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../screens/features/authentication/models/message_model.dart';
+import '../../screens/features/authentication/models/message_type.dart';
 
 
 class UserRepository extends GetxController {

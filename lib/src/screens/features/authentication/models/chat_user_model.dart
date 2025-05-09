@@ -1,6 +1,7 @@
 import 'dart:convert';
-import 'dart:ffi';
-import 'package:mongo_dart/mongo_dart.dart';
+
+import 'package:flutter/material.dart';
+import 'message_type.dart';
 
 class ChatUserModelMongoDB {
   final String? userId;
@@ -16,7 +17,9 @@ class ChatUserModelMongoDB {
   final String? userPushToken;
   final String? lastMessage;
   final String? lastMessageTime;
+  final String? lastMessageFromId; // Added this field
   final int unreadCount;
+  final MessageType? lastMessageType;
 
   ChatUserModelMongoDB({
     this.userId,
@@ -32,7 +35,9 @@ class ChatUserModelMongoDB {
     this.userPushToken,
     this.lastMessage,
     this.lastMessageTime,
+    this.lastMessageFromId, // Added this parameter
     this.unreadCount = 0,
+    this.lastMessageType,
   });
 
   Map<String, dynamic> toJson() {
@@ -50,7 +55,9 @@ class ChatUserModelMongoDB {
       'userPushToken': userPushToken,
       'lastMessage': lastMessage,
       'lastMessageTime': lastMessageTime,
+      'lastMessageFromId': lastMessageFromId, // Added this field
       'unreadCount': unreadCount,
+      'lastMessageType': lastMessageType?.name,
     };
   }
 
@@ -65,13 +72,17 @@ class ChatUserModelMongoDB {
       userAbout: map['userAbout']?.toString() ?? 'No bio available',
       userCreatedAt: map['userCreatedAt']?.toString(),
       userIsOnline: map['userIsOnline'] as bool?,
-      userLastActive: map['userLastActive'] is Int64
-          ? map['userLastActive'].toString()
-          : map['userLastActive']?.toString(),
+      userLastActive: map['userLastActive']?.toString(),
       userPushToken: map['userPushToken']?.toString(),
       lastMessage: map['lastMessage']?.toString(),
       lastMessageTime: map['lastMessageTime']?.toString(),
+      lastMessageFromId: map['lastMessageFromId']?.toString(), // Added this field
       unreadCount: map['unreadCount'] as int? ?? 0,
+      lastMessageType: map['lastMessageType'] != null
+          ? MessageType.values.firstWhere(
+              (e) => e.name == map['lastMessageType'],
+          orElse: () => MessageType.text)
+          : null,
     );
   }
 

@@ -2,7 +2,7 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'dev.flutter.flutter-gradle-plugin'
-    id 'com.google.gms.google-services'  // Ensure this line is here
+    id 'com.google.gms.google-services'
 }
 
 android {
@@ -13,37 +13,44 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
-        coreLibraryDesugaringEnabled true   // <-- ✅ added for desugaring
+        coreLibraryDesugaringEnabled true
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"  // <-- ✅ correct value as String
+        jvmTarget = "1.8"
     }
 
     defaultConfig {
         applicationId = "com.example.cura_link"
-        minSdkVersion 23  // <-- ✅ must be at least 21, you're good
-        targetSdk = flutter.targetSdkVersion
-        ndkVersion = "25.1.8937393"
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        minSdkVersion  23
+        targetSdkVersion flutter.targetSdkVersion
+        versionCode flutter.versionCode.toInteger()
+        versionName flutter.versionName
+        multiDexEnabled true
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug
+            signingConfig signingConfigs.debug
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+
+    packagingOptions {
+        exclude 'META-INF/*.kotlin_module'
+        exclude 'META-INF/AL2.0'
+        exclude 'META-INF/LGPL2.1'
     }
 }
 
 flutter {
-    source = "../.."
+    source = '../..'
 }
 
 dependencies {
     implementation platform('com.google.firebase:firebase-bom:33.4.0')
     implementation 'com.google.firebase:firebase-analytics'
-
-    // 👇 added desugaring dependency
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.20"  // Explicit Kotlin dependency
 }

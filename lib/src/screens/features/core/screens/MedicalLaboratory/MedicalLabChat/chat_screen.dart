@@ -9,6 +9,10 @@ import 'package:flutter/material.dart';
 import 'package:cura_link/src/constants/colors.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:photo_view/photo_view.dart';
+
+import '../../../../authentication/models/message_type.dart';
+
 
 class ChatScreen extends StatefulWidget {
   final ChatUserModelMongoDB user;
@@ -22,6 +26,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   String? loggedInUserEmail;
   bool _isLoading = true;
+  final List<Message> _messages = [];
 
   @override
   void initState() {
@@ -42,8 +47,10 @@ class _ChatScreenState extends State<ChatScreen> {
       fromId: loggedInUserEmail!,
       msg: messageText.trim(),
       read: "false",
-      type: MessageType.text,
-      sent: DateTime.now().toIso8601String(), // Use ISO format for consistency
+      type: _isEmojiOnly(messageText.trim())
+          ? MessageType.emoji
+          : MessageType.text,
+      sent: DateTime.now().toIso8601String(),
     );
 
     await UserRepository.instance.sendMessageToDatabase(message);
@@ -73,6 +80,14 @@ class _ChatScreenState extends State<ChatScreen> {
         }
       });
     });
+  }
+
+  bool _isEmojiOnly(String text) {
+    final emojiRegex = RegExp(
+      r'^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)+$',
+      unicode: true,
+    );
+    return emojiRegex.hasMatch(text);
   }
 
   ImageProvider? _getProfileImage() {
@@ -132,12 +147,37 @@ class _ChatScreenState extends State<ChatScreen> {
     return messages;
   }
 
+  void _showFullScreenImage(String imageUrl) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          body: Center(
+            child: PhotoView(
+              imageProvider: imageUrl.startsWith('http')
+                  ? NetworkImage(imageUrl)
+                  : MemoryImage(base64Decode(imageUrl)) as ImageProvider,
+              minScale: PhotoViewComputedScale.contained,
+              maxScale: PhotoViewComputedScale.covered * 2,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-
-    // Fetch profile image once
     final profileImage = _getProfileImage();
 
     return SafeArea(
@@ -198,24 +238,34 @@ class _ChatScreenState extends State<ChatScreen> {
                   return _sortMessages(snapshot.map(Message.fromJson).toList());
                 }),
                 builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return const Center(child: Text("No messages yet"));
                   }
 
                   final messages = snapshot.data!;
+                  _messages.clear();
+                  _messages.addAll(messages);
 
-                  // Scroll when messages length changes
                   WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
 
                   return ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(8),
-                    itemCount: messages.length,
+                    itemCount: _messages.length,
                     itemBuilder: (context, index) {
-                      final message = messages[index];
+                      final message = _messages[index];
                       return ChatMessageCard(
                         message: message,
                         isFromCurrentUser: message.fromId == loggedInUserEmail,
+                        onImageTap: () {
+                          if (message.type == MessageType.image) {
+                            _showFullScreenImage(message.msg);
+                          }
+                        },
                       );
                     },
                   );

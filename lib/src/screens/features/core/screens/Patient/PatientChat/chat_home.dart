@@ -16,7 +16,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
   List<ChatUserModelMongoDB> _allUsers = [];
   List<ChatUserModelMongoDB> _filteredUsers = [];
   bool _isSearching = false;
-  bool _isLoading = true; // Add this flag for loading state
+  bool _isLoading = true;
   StreamSubscription? _userStreamSubscription;
 
   @override
@@ -40,7 +40,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
         await UserRepository.instance.updateUserLastActive(currentUserEmail);
       }
     } catch (e) {
-      print("Error updating last active: $e");
+      debugPrint("Error updating last active: $e");
     }
   }
 
@@ -48,7 +48,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
     _userStreamSubscription?.cancel();
 
     setState(() {
-      _isLoading = true; // Start loading
+      _isLoading = true;
     });
 
     _userStreamSubscription = UserRepository.instance
@@ -59,14 +59,47 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
           _allUsers = userData
               .map((userMap) => ChatUserModelMongoDB.fromMap(userMap))
               .toList();
+
+          // Sort users by last message time (newest first)
+          _allUsers.sort((a, b) {
+            try {
+              final aTime = a.lastMessageTime ?? '';
+              final bTime = b.lastMessageTime ?? '';
+
+              if (aTime.isEmpty || bTime.isEmpty) {
+                return bTime.isEmpty ? -1 : 1;
+              }
+
+              DateTime aDateTime;
+              DateTime bDateTime;
+
+              if (RegExp(r'^\d+$').hasMatch(aTime)) {
+                aDateTime = DateTime.fromMillisecondsSinceEpoch(int.parse(aTime));
+              } else {
+                aDateTime = DateTime.parse(aTime);
+              }
+
+              if (RegExp(r'^\d+$').hasMatch(bTime)) {
+                bDateTime = DateTime.fromMillisecondsSinceEpoch(int.parse(bTime));
+              } else {
+                bDateTime = DateTime.parse(bTime);
+              }
+
+              return bDateTime.compareTo(aDateTime);
+            } catch (e) {
+              debugPrint("Error sorting users: $e");
+              return 0;
+            }
+          });
+
           _filteredUsers = _allUsers;
-          _isLoading = false; // Stop loading after data is loaded
+          _isLoading = false;
         });
       }
     }, onError: (error) {
-      print("Error fetching users: $error");
+      debugPrint("Error fetching users: $error");
       setState(() {
-        _isLoading = false; // Stop loading if there's an error
+        _isLoading = false;
       });
     });
   }
@@ -162,7 +195,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
       )
           : RefreshIndicator(
         onRefresh: () async {
-          await UserRepository.instance.fetchChatUsers;
+          await UserRepository.instance.fetchChatUsers();
         },
         child: ListView.builder(
           padding: const EdgeInsets.symmetric(vertical: 8),

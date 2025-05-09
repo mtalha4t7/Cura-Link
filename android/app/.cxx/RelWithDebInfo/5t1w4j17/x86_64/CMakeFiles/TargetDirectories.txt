@@ -1,0 +1,2 @@
+E:/Cura-Link/android/app/.cxx/RelWithDebInfo/5t1w4j17/x86_64/CMakeFiles/edit_cache.dir
+E:/Cura-Link/android/app/.cxx/RelWithDebInfo/5t1w4j17/x86_64/CMakeFiles/rebuild_cache.dir
