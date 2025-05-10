@@ -10,6 +10,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../../mongodb/mongodb.dart';
 import '../../../../../../notification_handler/send_notification.dart';
+import '../../../../../../stripe/stripe_services.dart';
 import 'bid_model.dart';
 
 class NurseBookingScreen extends StatefulWidget {
@@ -323,6 +324,7 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
   Future<void> _acceptBid(Bid bid) async {
     try {
       final patientEmail= FirebaseAuth.instance.currentUser?.email.toString();
+      await StripeService.instance.makePayment(bid.price.toInt());
       await NurseBookingController.acceptBid(bid.id,patientEmail!);
       await _clearRequestFromPrefs();
       _showConfirmationDialog(bid);

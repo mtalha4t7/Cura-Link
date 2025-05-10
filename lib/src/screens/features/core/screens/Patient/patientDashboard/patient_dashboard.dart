@@ -151,7 +151,7 @@ class _PatientDashboardState extends State<PatientDashboard> {
                       icon: Icons.biotech,
                       title: 'Lab Tests',
                       onTap: () async {
-                        StripeService.instance.makePayment();
+
                       },
                     ),
                     ServiceCard(

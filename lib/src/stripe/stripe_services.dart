@@ -14,9 +14,9 @@ class StripeService {
     await Stripe.instance.applySettings();
   }
 
-  Future<void> makePayment() async {
+  Future<void> makePayment(int amount) async {
     try {
-      String? paymentIntentClientSecret = await _createPaymentIntent(10, "usd");
+      String? paymentIntentClientSecret = await _createPaymentIntent(amount, "usd");
       if (paymentIntentClientSecret == null) return;
 
       await Stripe.instance.initPaymentSheet(

@@ -1,6 +1,5 @@
-import 'package:cura_link/src/constants/text_strings.dart';
+
 import 'package:cura_link/src/network_manager.dart';
-import 'package:cura_link/src/notification_handler/notification_server.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -20,12 +19,13 @@ Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
 }
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await dotenv.load();
   Stripe.publishableKey=  dotenv.env['STRIPE_PUBLISHABLE_KEY']!;;
   FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundHandler);
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   await GetStorage.init();
-  await dotenv.load(fileName: ".env");
+
 
   // Initialize MongoDB
   await MongoDatabase.connect();
