@@ -17,7 +17,11 @@ class NurseBookingScreen extends StatefulWidget {
   final String selectedServiceName;
   final String selectedServicePrice;
 
-  const NurseBookingScreen({super.key, required this.selectedServiceName, required this.selectedServicePrice});
+  const NurseBookingScreen({
+    super.key,
+    required this.selectedServiceName,
+    required this.selectedServicePrice
+  });
 
   @override
   _NurseBookingScreenState createState() => _NurseBookingScreenState();
@@ -33,12 +37,18 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
   bool _isSearching = true;
   Timer? _bidTimer;
   bool _isResuming = false;
+  String? _selectedPaymentMethod;
 
   @override
   void initState() {
     super.initState();
     _checkExistingRequest();
+  }
 
+  @override
+  void dispose() {
+    _bidTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _checkExistingRequest() async {
@@ -54,27 +64,21 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
         _isLoading = false;
         _isResuming = true;
       });
-      final availableNurses = await MongoDatabase.getAvailableNurses();
 
+      final availableNurses = await MongoDatabase.getAvailableNurses();
       if (availableNurses != null) {
         for (var nurse in availableNurses) {
           final deviceToken = nurse['userDeviceToken'];
           final userName = nurse['userName'];
           if (deviceToken != null && deviceToken.isNotEmpty) {
-            print("device Token ================== $deviceToken");
             await SendNotificationService.sendNotificationUsingApi(
               token: deviceToken,
               title: "$userName check New Booking Request",
               body: "Someone has requested a service. Tap to bid!",
-              data: {
-                "screen": "NurseBookingsScreen",
-              },
+              data: {"screen": "NurseBookingsScreen"},
             );
           }
         }
-        print("Notification send");
-      } else {
-        print("No available nurses found.");
       }
       _startBidPolling();
     } else {
@@ -93,40 +97,14 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
     }
   }
 
-  Future<void> _saveRequestToPrefs() async {
-    if (_requestId == null || _currentLocation == null) {
-      debugPrint('Error: Attempted to save null request data');
-      return;
-    }
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('nurseRequestId', _requestId!);
-    await prefs.setString('nurseService', widget.selectedServiceName);
-    await prefs.setString('nurseServicePrice', widget.selectedServicePrice);
-    await prefs.setDouble('requestLat', _currentLocation!.latitude);
-    await prefs.setDouble('requestLng', _currentLocation!.longitude);
-  }
-
-  Future<void> _clearRequestFromPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('nurseRequestId');
-    await prefs.remove('nurseService');
-    await prefs.remove('nurseServicePrice');
-    await prefs.remove('requestLat');
-    await prefs.remove('requestLng');
-  }
-
   Future<void> _determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       setState(() => _locationError = 'Location services are disabled');
       return;
     }
 
-    permission = await Geolocator.checkPermission();
+    LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
@@ -167,38 +145,29 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
       final patientEmail = FirebaseAuth.instance.currentUser?.email;
       if (patientEmail == null) throw Exception('User not logged in');
 
-      // Call controller to create request (MongoDB auto-generates _id)
       final requestId = await _controller.createServiceRequest(
         serviceType: widget.selectedServiceName,
         location: _currentLocation!,
-        patientEmail: patientEmail, price: widget.selectedServicePrice,
+        patientEmail: patientEmail,
+        price: widget.selectedServicePrice,
       );
-      final availableNurses = await MongoDatabase.getAvailableNurses();
 
+      final availableNurses = await MongoDatabase.getAvailableNurses();
       if (availableNurses != null) {
         for (var nurse in availableNurses) {
           final deviceToken = nurse['userDeviceToken'];
           final userName = nurse['userName'];
           if (deviceToken != null && deviceToken.isNotEmpty) {
-            print("device Token ================== $deviceToken");
             await SendNotificationService.sendNotificationUsingApi(
               token: deviceToken,
               title: "$userName check New Booking Request",
               body: "Someone has requested a service. Tap to bid!",
-              data: {
-                "screen": "NurseBookingsScreen",
-              },
+              data: {"screen": "NurseBookingsScreen"},
             );
           }
         }
-        print("Notification send");
-      } else {
-        print("No available nurses found.");
       }
 
-
-
-      // Save the Mongo ObjectId (hex string)
       setState(() => _requestId = requestId);
       await _saveRequestToPrefs();
     } catch (e) {
@@ -209,6 +178,171 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
     }
   }
 
+  Future<void> _saveRequestToPrefs() async {
+    if (_requestId == null || _currentLocation == null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('nurseRequestId', _requestId!);
+    await prefs.setString('nurseService', widget.selectedServiceName);
+    await prefs.setString('nurseServicePrice', widget.selectedServicePrice);
+    await prefs.setDouble('requestLat', _currentLocation!.latitude);
+    await prefs.setDouble('requestLng', _currentLocation!.longitude);
+  }
+
+  Future<void> _clearRequestFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('nurseRequestId');
+    await prefs.remove('nurseService');
+    await prefs.remove('nurseServicePrice');
+    await prefs.remove('requestLat');
+    await prefs.remove('requestLng');
+  }
+
+  void _startBidPolling() {
+    _bidTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
+      if (_requestId == null) return;
+
+      try {
+        final bids = await _controller.fetchBids(_requestId!);
+        setState(() {
+          _bids = bids;
+          _isSearching = false;
+        });
+      } catch (e) {
+        print('Error fetching bids: $e');
+      }
+    });
+  }
+
+  Future<String?> _showPaymentMethodDialog() async {
+    return await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Payment Method'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.credit_card, color: Colors.blue),
+              title: const Text('Online Payment'),
+              onTap: () => Navigator.pop(context, 'online'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.money, color: Colors.green),
+              title: const Text('Cash Payment'),
+              onTap: () => Navigator.pop(context, 'cash'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPaymentProcessing() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Processing payment...'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _acceptBid(Bid bid) async {
+    try {
+      // Show payment method selection
+      final paymentMethod = await _showPaymentMethodDialog();
+      if (paymentMethod == null) return;
+
+      setState(() => _selectedPaymentMethod = paymentMethod);
+
+      bool paymentSuccess = true;
+
+      if (paymentMethod == 'online') {
+        _showPaymentProcessing();
+        try {
+          paymentSuccess = await StripeService.instance.makePayment(bid.price.toInt());
+          if (mounted) Navigator.pop(context);
+
+          if (!paymentSuccess) {
+            throw Exception('Payment failed');
+          }
+        } catch (e) {
+          if (mounted) Navigator.pop(context);
+          rethrow;
+        }
+      }
+
+      if (paymentSuccess) {
+        final patientEmail = FirebaseAuth.instance.currentUser?.email.toString();
+        if (patientEmail == null) throw Exception('User not logged in');
+
+        await NurseBookingController.acceptBid(bid.id, patientEmail, paymentMethod: paymentMethod);
+        await _clearRequestFromPrefs();
+
+
+        _showConfirmationDialog(bid);
+      }
+    } catch (e) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Error'),
+          content: Text('Failed to complete booking: ${e.toString()}'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  void _showConfirmationDialog(Bid bid) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Booking Confirmed'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Nurse: ${bid.nurseName ?? 'Unknown'}'),
+            Text('Service: ${bid.serviceName}'),
+            Text('Amount: \$${bid.price.toStringAsFixed(2)}'),
+            Text('Payment Method: ${_selectedPaymentMethod == 'online' ? 'Online' : 'Cash'}'),
+            const SizedBox(height: 16),
+            const Text('The nurse will contact you shortly.'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.popUntil(context, (route) => route.isFirst);
+              Get.offAll(() => PatientDashboard());
+            },
+            child: const Text('Back to Home'),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _cancelRequest() async {
     final confirm = await showDialog<bool>(
@@ -217,35 +351,13 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
         title: const Text('Confirm Cancel'),
         content: const Text('Are you sure you want to cancel the nurse request?'),
         actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-            child: TextButton(
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                backgroundColor: Colors.grey.withOpacity(0.1),
-                foregroundColor: Colors.black,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('No', style: TextStyle(fontSize: 16)),
-            ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('No'),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-            child: TextButton(
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                backgroundColor: Colors.red.withOpacity(0.1),
-                foregroundColor: Colors.red,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Yes, Cancel', style: TextStyle(fontSize: 16)),
-            ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Yes, Cancel'),
           ),
         ],
       ),
@@ -269,72 +381,6 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
           title: const Text('Error'),
           content: Text('Failed to cancel request: ${e.toString()}'),
           actions: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  backgroundColor: Colors.red.withOpacity(0.1),
-                  foregroundColor: Colors.red,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'OK',
-                  style: TextStyle(fontSize: 16),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-  }
-
-
-  void _startBidPolling() {
-    _bidTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
-      if (_requestId == null) return;
-
-      try {
-        final bids = await _controller.fetchBids(_requestId!);
-
-        // Extract nurse names directly from bids
-        final nurseEmails = bids.map((b) => b.nurseEmail).toList();
-        final nurseNames = bids.map((b) => b.nurseName ?? 'Unknown').toList(); // In case some are missing
-
-        print('Nurse Emails: $nurseEmails');
-        print('Nurse Names: $nurseNames');
-
-
-
-
-        setState(() {
-          _bids = bids; 
-          _isSearching = false;
-        });
-      } catch (e) {
-        print('Error fetching bids: $e');
-      }
-    });
-  }
-
-  Future<void> _acceptBid(Bid bid) async {
-    try {
-      final patientEmail= FirebaseAuth.instance.currentUser?.email.toString();
-      await StripeService.instance.makePayment(bid.price.toInt());
-      await NurseBookingController.acceptBid(bid.id,patientEmail!);
-      await _clearRequestFromPrefs();
-      _showConfirmationDialog(bid);
-    } catch (e) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Error'),
-          content: Text('Failed to accept bid: ${e.toString()}'),
-          actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('OK'),
@@ -343,38 +389,6 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
         ),
       );
     }
-  }
-
-  void _showConfirmationDialog(Bid bid) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Booking Confirmed'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Nurse: ${bid.nurseName}'),
-            Text('Price: \$${bid.price.toStringAsFixed(2)}'),
-            if (bid.rating != null)
-              Text('Rating: ${bid.rating!.toStringAsFixed(1)}/5'),
-            const SizedBox(height: 10),
-            const Text('The nurse will contact you shortly.'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _bidTimer?.cancel();
-    super.dispose();
   }
 
   @override
@@ -400,9 +414,8 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
             actions: [
               TextButton(
                 onPressed: () {
-                  Navigator.pop(context, false); // Minimize
+                  Navigator.pop(context, false);
                   Get.to(() => PatientDashboard());
-
                 },
                 child: const Text('Minimize'),
               ),
@@ -419,58 +432,51 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
         }
         return shouldCancel ?? false;
       },
-      child: _buildMainContent(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: _isSearching
+              ? const Text('Request Nurse Service')
+              : const Text('Available Bids'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        body: _buildMainContent(),
+      ),
     );
   }
 
   Widget _buildMainContent() {
     if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Request Nurse Service')),
-        body: const Center(child: CircularProgressIndicator()),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_locationError.isNotEmpty) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Request Nurse Service')),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  _locationError,
-                  style: const TextStyle(color: Colors.red, fontSize: 16),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _initializeData,
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                _locationError,
+                style: const TextStyle(color: Colors.red, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _initializeData,
+                child: const Text('Retry'),
+              ),
+            ],
           ),
         ),
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Available Bids'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: _isSearching
-          ? _buildSearchingUI()
-          : _bids.isEmpty
-          ? _buildNoBidsUI()
-          : _buildBidsList(),
-    );
+    return _isSearching ? _buildSearchingUI() :
+    _bids.isEmpty ? _buildNoBidsUI() : _buildBidsList();
   }
 
   Widget _buildSearchingUI() {
@@ -557,7 +563,7 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Price: \$${bid.price.toStringAsFixed(2)}'),
-                      Text('Service Name: ${bid.serviceName}'),
+                      Text('Service: ${bid.serviceName}'),
                       const SizedBox(height: 4),
                       Row(
                         children: [

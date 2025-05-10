@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -14,21 +16,23 @@ class StripeService {
     await Stripe.instance.applySettings();
   }
 
-  Future<void> makePayment(int amount) async {
+  Future<bool> makePayment(int amount) async {
     try {
       String? paymentIntentClientSecret = await _createPaymentIntent(amount, "usd");
-      if (paymentIntentClientSecret == null) return;
+      if (paymentIntentClientSecret == null) return false;
 
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
           paymentIntentClientSecret: paymentIntentClientSecret,
-          merchantDisplayName: "Talha",
+          merchantDisplayName: "Cura Link",
         ),
       );
+
       await _processPayment();
+      return true;
     } catch (e) {
       print(e);
-      rethrow; // Consider proper error handling
+      return false;
     }
   }
 
