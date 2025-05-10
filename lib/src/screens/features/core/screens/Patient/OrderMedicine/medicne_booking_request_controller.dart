@@ -49,8 +49,8 @@ class MedicalStoreController extends GetxController {
         'medicines': medicineList,
         'prescriptionImage': encodedImage,
         'deliveryAddress': deliveryAddress,
-        'subtotal': total - 50, // Assuming 50 is delivery fee
-        'deliveryFee': 50.0,
+        'subtotal': total - 0, // Assuming 50 is delivery fee
+        'deliveryFee': 00.0,
         'total': total,
         'patientLocation':patientLocation,
         'status': 'pending', // pending, bid_submitted, accepted, completed

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../../../common/geo_point.dart';
 
 class MedicalStoreModelMongoDB {
   String? userId;
@@ -10,9 +11,10 @@ class MedicalStoreModelMongoDB {
   String? userAddress;
   bool? isAvailable;
   String? userVerified;
-  String? licenseNumber;  // Additional field specific to medical stores
-  String? storeTimings;   // Additional field for operating hours
-  double? rating;         // Additional field for store rating
+  String? licenseNumber;
+  String? storeTimings;
+  double? rating;
+  GeoPoint? location; // ✅ Updated to GeoPoint
 
   MedicalStoreModelMongoDB({
     this.userId,
@@ -27,9 +29,9 @@ class MedicalStoreModelMongoDB {
     this.licenseNumber,
     this.storeTimings,
     this.rating,
+    this.location,
   });
 
-  /// Converts the object into a Map
   Map<String, dynamic> toJson() {
     return {
       'userId': userId,
@@ -44,10 +46,10 @@ class MedicalStoreModelMongoDB {
       'licenseNumber': licenseNumber,
       'storeTimings': storeTimings,
       'rating': rating,
+      'location': location?.toMap(), // ✅ serialize location
     };
   }
 
-  /// Factory constructor to create an object from a Map
   factory MedicalStoreModelMongoDB.fromDataMap(Map<String, dynamic> dataMap) {
     return MedicalStoreModelMongoDB(
       userId: dataMap['_id']?.toString(),
@@ -64,10 +66,12 @@ class MedicalStoreModelMongoDB {
       rating: dataMap['rating'] != null
           ? double.tryParse(dataMap['rating'].toString())
           : null,
+      location: dataMap['location'] != null
+          ? GeoPoint.fromMap(dataMap['location'])
+          : null, // ✅ deserialize location
     );
   }
 
-  /// Factory constructor to create an object from JSON
   factory MedicalStoreModelMongoDB.fromJson(String datasource) {
     return MedicalStoreModelMongoDB.fromDataMap(
       json.decode(datasource) as Map<String, dynamic>,
@@ -89,6 +93,7 @@ extension MedicalStoreModelExtensions on MedicalStoreModelMongoDB {
     String? licenseNumber,
     String? storeTimings,
     double? rating,
+    GeoPoint? location, // ✅ updated
   }) {
     return MedicalStoreModelMongoDB(
       userId: userId ?? this.userId,
@@ -103,6 +108,7 @@ extension MedicalStoreModelExtensions on MedicalStoreModelMongoDB {
       licenseNumber: licenseNumber ?? this.licenseNumber,
       storeTimings: storeTimings ?? this.storeTimings,
       rating: rating ?? this.rating,
+      location: location ?? this.location,
     );
   }
 }

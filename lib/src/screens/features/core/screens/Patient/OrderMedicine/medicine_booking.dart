@@ -33,7 +33,7 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
   bool _isResuming = false;
   final _deliveryAddressController = TextEditingController();
   final _notesController = TextEditingController();
-  final double _deliveryFee = 50.0;
+  final double _deliveryFee = 0;
   File? _prescriptionImage;
 
   @override

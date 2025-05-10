@@ -16,6 +16,12 @@ class CheckForRequestsController extends GetxController {
   var isVerified = false.obs;
   var activeRequests = <Map<String, dynamic>>[].obs;
   Timer? pollingTimer;
+   var _storeLocation;
+
+  static const double BASE_DELIVERY_FEE = 100.0; // Base delivery fee in PKR
+  static const double PER_KM_RATE = 20.0; // Additional fee per km
+  static const double MIN_DELIVERY_FEE = 100.0; // Minimum delivery fee
+  static const double MAX_DELIVERY_FEE = 500.0; // Maximum delivery fee
 
   @override
   void onInit() {
@@ -45,7 +51,8 @@ class CheckForRequestsController extends GetxController {
       if (currentUser?.email == null) {
         throw Exception('No authenticated user');
       }
-
+     final email=currentUser?.email;
+       _storeLocation = await MongoDatabase.getUserLocationByEmail(email!);
       final data = await _userRepository.getMedicalStoreUserByEmail(currentUser!.email!);
       medicalStore.value = MedicalStoreModelMongoDB.fromDataMap(data ?? {});
       isVerified(medicalStore.value?.userVerified == "1");
@@ -99,19 +106,24 @@ class CheckForRequestsController extends GetxController {
 
       final email = await FirebaseAuth.instance.currentUser?.email;
       final storeLocation = await MongoDatabase.getUserLocationByEmail(email!);
-      final patientLocation=await MongoDatabase.getUserLocationByEmail(patientEmail!);
-      print(patientLocation);
-      print("ahhahahahah");
-      print(storeLocation);
+      final patientLocation = await MongoDatabase.getUserLocationByEmail(patientEmail!);
+
+      // Calculate delivery fee based on distance
+      final deliveryFee = patientLocation != null && storeLocation != null
+          ? _calculateDeliveryFee(patientLocation, storeLocation)
+          : MIN_DELIVERY_FEE;
+
       // Calculate delivery time
       final deliveryTime = patientLocation != null
           ? calculateDeliveryTime(patientLocation, storeLocation!)
-          : '30-45 min'; // Default if location not available
+          : '30-45 min';
+
       // Prepare bid data
       final bidData = {
         'storeName': storeName,
         'storeEmail': medicalStore.value?.userEmail ?? '',
         'price': price,
+        'deliveryFee': deliveryFee,
         'submittedAt': DateTime.now(),
         'deliveryTime': deliveryTime,
         if (prescriptionDetails != null)
@@ -119,7 +131,7 @@ class CheckForRequestsController extends GetxController {
         if (medicines != null)
           'medicines': medicines,
         if (totalPrice != null)
-          'totalPrice': totalPrice,
+          'totalPrice': totalPrice + deliveryFee, // Update total with delivery fee
         if (prescriptionImage != null)
           'prescriptionImage': prescriptionImage,
         'storeLocation': storeLocation,
@@ -149,60 +161,144 @@ class CheckForRequestsController extends GetxController {
     }
   }
 
-  double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-    const earthRadius = 6371; // Earth's radius in km
 
-    // Convert degrees to radians
-    final dLat = _degreesToRadians(lat2 - lat1);
-    final dLon = _degreesToRadians(lon2 - lon1);
+  Future<double> calculateDistanceBetweenLocations(Map<String, dynamic> patientLocation) async {
+    try {
+      if (_storeLocation == null || patientLocation.isEmpty) return 0.0;
 
-    final a =
-        sin(dLat/2) * sin(dLat/2) +
-            cos(_degreesToRadians(lat1)) * cos(_degreesToRadians(lat2)) *
-                sin(dLon/2) * sin(dLon/2);
+      final patientCoords = extractCoordinates(patientLocation);
+      final storeCoords = extractCoordinates(_storeLocation!);
 
-    final c = 2 * atan2(sqrt(a), sqrt(1-a));
-    return earthRadius * c;
+      if (patientCoords == null || storeCoords == null) return 0.0;
+
+      return calculateDistance(
+        storeCoords[1],
+        storeCoords[0],
+        patientCoords[1],
+        patientCoords[0],
+      );
+    } catch (e) {
+      print('Distance calculation error: $e');
+      return 0.0;
+    }
   }
 
-  double _degreesToRadians(double degrees) {
-    return degrees * pi / 180;
+  Future<Map<String, double>> getDeliveryDetails(Map<String, dynamic> patientLocation) async {
+    final distance = await calculateDistanceBetweenLocations(patientLocation);
+    final fee = await calculateDeliveryFee(patientLocation);
+    return {
+      'distance': distance,
+      'fee': fee,
+    };
   }
 
-// Function to calculate estimated delivery time in minutes
+  Future<double> calculateDeliveryFee(Map<String, dynamic> patientLocation) async {
+    try {
+      final distance = await calculateDistanceBetweenLocations(patientLocation);
+      double fee = BASE_DELIVERY_FEE + (distance * PER_KM_RATE);
+      return fee.clamp(MIN_DELIVERY_FEE, MAX_DELIVERY_FEE);
+    } catch (e) {
+      print("Error calculating delivery fee: $e");
+      return MIN_DELIVERY_FEE;
+    }
+  }
+
+  /// Extracts [longitude, latitude] coordinates from GeoJSON-style location
+  List<double>? extractCoordinates(Map<String, dynamic> location) {
+    try {
+      if (location['type'] == 'Point' && location['coordinates'] is List) {
+        final coords = location['coordinates'];
+        if (coords.length >= 2) {
+          return [coords[0].toDouble(), coords[1].toDouble()];
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Haversine formula to calculate distance in kilometers
+  double calculateDistance(
+      double lat1, double lon1, double lat2, double lon2) {
+    const double R = 6371.0; // Radius of Earth in km
+    double dLat = _degToRad(lat2 - lat1);
+    double dLon = _degToRad(lon2 - lon1);
+    double a =
+        (sin(dLat / 2) * sin(dLat / 2)) +
+            cos(_degToRad(lat1)) * cos(_degToRad(lat2)) *
+                sin(dLon / 2) * sin(dLon / 2);
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    return R * c;
+  }
+  double _degToRad(double deg) => deg * (pi / 180);
+
+
+
+// New function to calculate delivery fee
+  double _calculateDeliveryFee(
+      Map<String, dynamic> patientLocation,
+      Map<String, dynamic> storeLocation,
+      ) {
+    try {
+      final patientCoords = _extractCoordinates(patientLocation);
+      final storeCoords = _extractCoordinates(storeLocation);
+
+      if (patientCoords == null || storeCoords == null) {
+        return MIN_DELIVERY_FEE;
+      }
+
+      final distance = _calculateDistance(
+        storeCoords[1], // lat
+        storeCoords[0], // lng
+        patientCoords[1], // lat
+        patientCoords[0], // lng
+      );
+
+      // Calculate fee: base + (distance * per km rate)
+      double fee = BASE_DELIVERY_FEE + (distance * PER_KM_RATE);
+
+      // Apply min/max bounds
+      fee = fee.clamp(MIN_DELIVERY_FEE, MAX_DELIVERY_FEE);
+
+      // Round to nearest 10
+      return (fee / 10).roundToDouble() * 10;
+    } catch (e) {
+      print("Error calculating delivery fee: $e");
+      return MIN_DELIVERY_FEE;
+    }
+  }
+
+// Update the calculateDeliveryTime function to use the same distance calculation
   String calculateDeliveryTime(
       Map<String, dynamic>? patientLocation,
-      Map<String, dynamic>? storeLocation) {
+      Map<String, dynamic>? storeLocation,
+      ) {
     print("Patient Location: $patientLocation");
     print("Store Location: $storeLocation");
 
     try {
-      // If either location is null, return default
       if (patientLocation == null || storeLocation == null) {
         return '30-45 mins';
       }
 
-      // Extract coordinates from GeoJSON format
       final patientCoords = _extractCoordinates(patientLocation);
       final storeCoords = _extractCoordinates(storeLocation);
 
       print("Patient Coords: $patientCoords");
       print("Store Coords: $storeCoords");
 
-      // Get coordinates with null checks
-      final patientLat = patientCoords?[1] ?? 0.0; // Latitude is second in GeoJSON
-      final patientLng = patientCoords?[0] ?? 0.0; // Longitude is first in GeoJSON
-      final storeLat = storeCoords?[1] ?? 0.0;
-      final storeLng = storeCoords?[0] ?? 0.0;
-
-      // If coordinates are zero (default), return estimated time
-      if (patientLat == 0.0 && patientLng == 0.0 ||
-          storeLat == 0.0 && storeLng == 0.0) {
+      if (patientCoords == null || storeCoords == null) {
         return '30-45 mins';
       }
 
-      // Calculate distance in km
-      final distance = _calculateDistance(storeLat, storeLng, patientLat, patientLng);
+      final distance = _calculateDistance(
+        storeCoords[1], // lat
+        storeCoords[0], // lng
+        patientCoords[1], // lat
+        patientCoords[0], // lng
+      );
+
       print("Distance: ${distance.toStringAsFixed(2)} km");
 
       // Average delivery speed (km/h)
@@ -227,6 +323,25 @@ class CheckForRequestsController extends GetxController {
       print("Error calculating delivery time: $e");
       return '30-45 mins';
     }
+  }
+  double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    const earthRadius = 6371; // Earth's radius in km
+
+    // Convert degrees to radians
+    final dLat = _degreesToRadians(lat2 - lat1);
+    final dLon = _degreesToRadians(lon2 - lon1);
+
+    final a =
+        sin(dLat/2) * sin(dLat/2) +
+            cos(_degreesToRadians(lat1)) * cos(_degreesToRadians(lat2)) *
+                sin(dLon/2) * sin(dLon/2);
+
+    final c = 2 * atan2(sqrt(a), sqrt(1-a));
+    return earthRadius * c;
+  }
+
+  double _degreesToRadians(double degrees) {
+    return degrees * pi / 180;
   }
 
   List<double>? _extractCoordinates(Map<String, dynamic> location) {

@@ -18,7 +18,6 @@ class CheckForRequestsScreen extends StatefulWidget {
 
 class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
 
-
   Uint8List? base64ToImage(String base64String) {
 
         base64String = base64String;
@@ -31,6 +30,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
     final CheckForRequestsController controller = Get.put(CheckForRequestsController());
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final String? email = FirebaseAuth.instance.currentUser?.email;
 
 
     return Scaffold(
@@ -67,148 +67,252 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
               ),
               child: isPrescription
                   ? _buildPrescriptionRequestCard(context, request, controller)
-                  : _buildNonPrescriptionRequestCard(
-                  context, request, controller),
+                  : _buildNonPrescriptionRequestCard(context, request, controller),
             );
           },
         );
       }),
     );
   }
+  Future<Map<String, double>> _getPrescriptionDeliveryDetails(
+      CheckForRequestsController controller,
+      Map<String, dynamic>? patientLocation,
+      ) async {
+    try {
+      final distance = await controller.calculateDistanceBetweenLocations(patientLocation ?? {});
+      final fee = await controller.calculateDeliveryFee(patientLocation ?? {});
+      return {'distance': distance, 'fee': fee};
+    } catch (e) {
+      return {
+        'distance': 0.0,
+        'fee': CheckForRequestsController.MIN_DELIVERY_FEE
+      };
+    }
+  }
 
-
-  Widget _buildPrescriptionRequestCard(BuildContext context,
-      Map<String, dynamic> request, CheckForRequestsController controller) {
+  Widget _buildPrescriptionRequestCard(
+      BuildContext context,
+      Map<String, dynamic> request,
+      CheckForRequestsController controller,
+      ) {
     final theme = Theme.of(context);
-    final location = _parseLocation(request['location']);
-    final bids = request['bids'] as List<dynamic>? ?? [];
-    final hasBid = bids.any((bid) =>
-    bid['storeEmail'] == controller.medicalStore.value?.userEmail);
-    final currentBid = hasBid
-        ? bids.firstWhere((bid) =>
-    bid['storeEmail'] == controller.medicalStore.value?.userEmail)
-        : null;
+    final patientLocation = request['location'] as Map<String, dynamic>?;
+    final prescriptionImage = base64ToImage(request['prescriptionImage']!.toString());
 
-    final imageString= request['prescriptionImage'];
-
-    final prescriptionImage = base64ToImage(imageString) ;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: () {
-        if (prescriptionImage != null) {
-          _showFullScreenPrescription(context, prescriptionImage);
+    return FutureBuilder<Map<String, double>>(
+      future: _getPrescriptionDeliveryDetails(controller, patientLocation),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Center(child: CircularProgressIndicator()),
+          );
         }
-      },
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+        final distance = snapshot.data?['distance'] ?? 0.0;
+        final deliveryFee = snapshot.data?['fee'] ?? CheckForRequestsController.MIN_DELIVERY_FEE;
+         final total=0.00;
+        return InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: prescriptionImage != null
+              ? () => _showFullScreenPrescription(context, prescriptionImage!)
+              : null,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Expanded(
-                  child: Text(
-                    'Prescription Request',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Prescription Request',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ),
+                    _buildStatusBadge(request['status']?.toString()),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildDetailRow(
+                  Icons.person_outline,
+                  'Patient: ${request['patientEmail'] ?? 'Unknown'}',
+                ),
+                _buildDetailRow(
+                  Icons.calendar_today,
+                  'Posted: ${_formatDate(request['createdAt'])}',
+                ),
+                if (patientLocation != null)
+                  _buildDetailRow(
+                    Icons.location_on_outlined,
+                    _parseLocation(patientLocation) ?? 'Location not available',
+                  ),
+                _buildDetailRow(
+                  Icons.directions_car,
+                  'Distance: ${distance.toStringAsFixed(2)} km',
+                ),
+                if (prescriptionImage != null) ...[
+                  const SizedBox(height: 16),
+                  const Text('Prescription:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Container(
+                    height: 150,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.memory(
+                        prescriptionImage,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Center(child: Icon(Icons.error, color: Colors.red));
+                        },
+                      ),
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Tap to view full prescription',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                _buildBidButton(
+                  context,
+                  request,
+                  controller,
+                  deliveryFee,
+                  total,
+                  isPrescription: true,
                 ),
-                _buildStatusBadge(request['status']),
               ],
             ),
-            const SizedBox(height: 12),
-            _buildDetailRow(Icons.person_outline,
-                'Patient: ${request['patientEmail'] ?? 'Unknown'}'),
-            _buildDetailRow(Icons.calendar_today,
-                'Posted: ${_formatDate(request['createdAt'])}'),
-            if (location != null)
-              _buildDetailRow(Icons.location_on_outlined, location),
-
-            // Prescription Image Preview
-            if (prescriptionImage != null) ...[
-              const SizedBox(height: 16),
-              const Text(
-                'Prescription:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                height: 150,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.memory(
-                    prescriptionImage,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Center(
-                        child: Icon(Icons.error, color: Colors.red),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Tap to view full prescription',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ],
-            const SizedBox(height: 16),
-            if (hasBid && currentBid != null)
-              _buildCurrentBidCard(currentBid['price']),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  backgroundColor: hasBid ? Colors.orange : theme.primaryColor,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () =>
-                    _showPrescriptionBidDialog(
-                      context,
-                      request['_id'].toString(),
-                      controller,
-                      hasBid,
-                      currentBid?['price'] ?? 0,
-                      currentBid?['prescriptionDetails'] ?? '',
-                    ),
-                child: Text(
-                  hasBid ? 'UPDATE BID' : 'PLACE BID',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
 
-  Widget _buildNonPrescriptionRequestCard(BuildContext context,
-      Map<String, dynamic> request, CheckForRequestsController controller) {
+  Widget _buildNonPrescriptionRequestCard(
+      BuildContext context,
+      Map<String, dynamic> request,
+      CheckForRequestsController controller,
+      ) {
     final theme = Theme.of(context);
-    final location = _parseLocation(request['location']);
+    final patientLocation = request['patientLocation'] as Map<String, dynamic>?;
+    final subtotal = (request['subtotal'] as num?)?.toDouble() ?? 0.0;
+    final patientEmail=request['patientEmail'];
+
+    return FutureBuilder<Map<String, double>>(
+      future: _getDeliveryDetails(controller, patientLocation, subtotal),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final distance = snapshot.data?['distance'] ?? 0.0;
+        final deliveryFee = snapshot.data?['fee'] ?? CheckForRequestsController.MIN_DELIVERY_FEE;
+        final total = snapshot.data?['total'] ?? subtotal;
+
+        return InkWell(
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Medicine Order',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    _buildStatusBadge(request['status']?.toString()),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildDetailRow(
+                  Icons.person_outline,
+                  'Patient: ${request['patientName'] ?? 'Unknown'}',
+                ),
+                _buildDetailRow(
+                  Icons.location_city,
+                  'Address: ${request['deliveryAddress'] ?? 'Address not provided'}',
+                ),
+
+                _buildDetailRow(
+                  Icons.directions_car,
+                  'Distance: ${distance.toStringAsFixed(2)} km',
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Order Summary:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                ..._buildMedicineList(request['medicines'] as List<dynamic>?),
+                const SizedBox(height: 12),
+                _buildPriceDetailRow('Subtotal', subtotal),
+                _buildPriceDetailRow('Delivery Fee', deliveryFee),
+                _buildPriceDetailRow('Total', total, isTotal: true),
+                const SizedBox(height: 16),
+                _buildBidButton(context, request, controller, deliveryFee,total),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
+// Helper function for prescription delivery details
+  Future<Map<String, double>> _getDeliveryDetails(
+      CheckForRequestsController controller,
+      Map<String, dynamic>? patientLocation,
+      double subtotal,
+      ) async {
+    try {
+      final distance = await controller.calculateDistanceBetweenLocations(patientLocation ?? {});
+      final fee = await controller.calculateDeliveryFee(patientLocation ?? {});
+      return {
+        'distance': distance,
+        'fee': fee,
+        'total': subtotal + fee,
+      };
+    } catch (e) {
+      return {
+        'distance': 0.0,
+        'fee': CheckForRequestsController.MIN_DELIVERY_FEE,
+        'total': subtotal,
+      };
+    }
+  }
+
+  Widget _buildBidButton(
+      BuildContext context,
+      Map<String, dynamic> request,
+      CheckForRequestsController controller,
+      double deliveryFee,
+      double totalPrice, {
+        bool isPrescription = false,
+      }) {
     final bids = request['bids'] as List<dynamic>? ?? [];
     final hasBid = bids.any((bid) =>
     bid['storeEmail'] == controller.medicalStore.value?.userEmail);
@@ -216,68 +320,40 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
         ? bids.firstWhere((bid) =>
     bid['storeEmail'] == controller.medicalStore.value?.userEmail)
         : null;
-    final totalPrice = request['total'] ?? 0.0;
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: () {},
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    'Medicine Order',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                _buildStatusBadge(request['status']),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildDetailRow(Icons.person_outline,
-                'Patient: ${request['patientName'] ?? 'Unknown'}'),
-            _buildDetailRow(Icons.location_city,
-                'Address: ${request['deliveryAddress']}'),
-            if (location != null)
-              _buildDetailRow(Icons.location_on_outlined, location),
-
-            // Order Summary
-            const SizedBox(height: 16),
-            const Text(
-              'Order Summary:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            ..._buildMedicineList(request['medicines']),
-            const SizedBox(height: 12),
-            _buildPriceDetailRow('Subtotal', request['subtotal']),
-            _buildPriceDetailRow('Delivery Fee', request['deliveryFee']),
-            _buildPriceDetailRow('Total', request['total'], isTotal: true),
-            const SizedBox(height: 16),
-            if (hasBid && currentBid != null)
-              _buildCurrentBidCard(currentBid['price']),
-            const SizedBox(height: 12),
-            _buildActionButton(
-              context: context,
-              requestId: request['_id'].toString(),
-              controller: controller,
-              hasBid: hasBid,
-              currentPrice: currentBid?['price'] ?? totalPrice,
-              medicineName: 'Medicine Order',
-              medicinePrice: totalPrice,
-            ),
-          ],
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          backgroundColor: hasBid ? Colors.orange : Theme.of(context).primaryColor,
+          foregroundColor: Colors.white,
+        ),
+        onPressed: () => _showBidDialog(
+          context,
+          request['_id'].toString(),
+          controller,
+          hasBid,
+          currentBid?['price']?.toDouble() ?? totalPrice,
+          isPrescription,
+          request['location'],
+        ),
+        child: Text(
+          hasBid ? 'UPDATE BID' : 'PLACE BID',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
         ),
       ),
     );
   }
+
+
+
 
   List<Widget> _buildMedicineList(List<dynamic>? medicines) {
     if (medicines == null || medicines.isEmpty) {
@@ -338,7 +414,9 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
       CheckForRequestsController controller,
       bool hasBid,
       double currentPrice,
-      String currentDetails,) {
+      String currentDetails,
+
+      ) {
     final priceController = TextEditingController(
       text: currentPrice.toStringAsFixed(0),
     );
@@ -636,89 +714,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
     );
   }
 
-  Widget _buildCurrentBidCard(double price) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.green[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.green[100]!),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.check_circle, color: Colors.green[700]),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'YOUR CURRENT BID',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green[700],
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'PKR ${price.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildActionButton({
-    required BuildContext context,
-    required String requestId,
-    required CheckForRequestsController controller,
-    required bool hasBid,
-    required double currentPrice,
-    required String? medicineName,
-    required double medicinePrice,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          backgroundColor: hasBid ? Colors.orange : Theme
-              .of(context)
-              .primaryColor,
-          foregroundColor: Colors.white,
-        ),
-        onPressed: () =>
-            _showBidDialog(
-              context,
-              requestId,
-              controller,
-              hasBid,
-              currentPrice,
-              medicineName,
-              medicinePrice,
-            ),
-        child: Text(
-          hasBid ? 'UPDATE BID' : 'PLACE BID',
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ),
-    );
-  }
 
   void _showBidDialog(
       BuildContext context,
@@ -726,8 +722,8 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
       CheckForRequestsController controller,
       bool hasBid,
       double currentPrice,
-      String? medicineName,
-      double medicinePrice,
+      bool isPrescription,
+      dynamic location,
       ) {
     final priceController = TextEditingController(
       text: currentPrice.toStringAsFixed(0),
@@ -750,17 +746,29 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${hasBid ? 'Update' : 'Place'} Bid',
+                    '${hasBid ? 'Update' : 'Place'} ${isPrescription ? 'Prescription ' : ''}Bid',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    medicineName ?? 'Medicine Request',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
                   const SizedBox(height: 20),
+                  if (isPrescription) ...[
+                    const Text(
+                      'Enter prescription details:',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: 'Enter medicine details, dosage instructions etc.',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
                   const Text(
                     'Enter your bid amount (PKR)',
                     style: TextStyle(fontSize: 14),
@@ -773,7 +781,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                         icon: Icons.remove,
                         onPressed: () {
                           setState(() {
-                            currentBid = (currentBid - 50).clamp(medicinePrice, double.infinity);
+                            currentBid = (currentBid - 50).clamp(0, double.infinity);
                             priceController.text = currentBid.toStringAsFixed(0);
                           });
                         },
@@ -800,7 +808,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                             prefix: Text('PKR '),
                           ),
                           onChanged: (value) {
-                            currentBid = double.tryParse(value) ?? medicinePrice;
+                            currentBid = double.tryParse(value) ?? currentPrice;
                           },
                         ),
                       ),
@@ -815,14 +823,6 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                         },
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Medicine base price: PKR ${medicinePrice.toStringAsFixed(0)}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
                   ),
                   const SizedBox(height: 24),
                   Row(
@@ -840,10 +840,10 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                         ),
                         onPressed: () async {
                           final price = double.tryParse(priceController.text.trim());
-                          if (price == null || price < medicinePrice) {
+                          if (price == null || price <= 0) {
                             Get.snackbar(
                               'Invalid Amount',
-                              'Bid must be at least PKR ${medicinePrice.toStringAsFixed(0)}',
+                              'Please enter a valid bid amount',
                               snackPosition: SnackPosition.BOTTOM,
                               backgroundColor: Colors.red[400],
                               colorText: Colors.white,
@@ -855,19 +855,10 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                           final name = await UserRepository.instance
                               .getMedicalStoreUserName(email.toString());
 
-                          // Get the current request to access medicines
-                          final request = controller.activeRequests.firstWhere(
-                                (req) => req['_id'].toString().contains(cleanRequestId),
-                            orElse: () => {},
-                          );
-
                           controller.submitBid(
                             cleanRequestId,
                             price,
                             name ?? "Unknown Store",
-                            medicines: request['medicines'],
-                            totalPrice: request['total'],
-                            patientEmail: request['patientEmail'],
                           );
 
                           Navigator.pop(context);
