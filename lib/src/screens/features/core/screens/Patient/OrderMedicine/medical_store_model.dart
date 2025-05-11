@@ -1,3 +1,47 @@
+class MedicalStoreBid {
+  final String id;
+  final String requestId;
+  final String storeName;
+  final String storeEmail;
+  final double price;
+  final double deliveryFee;
+  final double totalPrice;
+  final String deliveryTime;
+  final String distance;
+  final DateTime submittedAt;
+  final Map<String, dynamic>? storeLocation;
+
+  MedicalStoreBid({
+    required this.id,
+    required this.requestId,
+    required this.storeName,
+    required this.storeEmail,
+    required this.price,
+    required this.deliveryFee,
+    required this.totalPrice,
+    required this.deliveryTime,
+    required this.distance,
+    required this.submittedAt,
+    this.storeLocation,
+  });
+
+  factory MedicalStoreBid.fromMap(Map<String, dynamic> map) {
+    return MedicalStoreBid(
+      id: map['_id'].toString(),
+      requestId: map['requestId'] ?? '',
+      storeName: map['storeName'] ?? 'Unknown Store',
+      storeEmail: map['storeEmail'] ?? '',
+      price: (map['price'] ?? 0).toDouble(),
+      deliveryFee: (map['deliveryFee'] ?? 0).toDouble(),
+      totalPrice: (map['totalPrice'] ?? (map['price'] ?? 0)).toDouble(),
+      deliveryTime: map['deliveryTime'] ?? 'N/A',
+      distance: map['Distance'] ?? 'N/A',
+      submittedAt: DateTime.tryParse(map['submittedAt'].toString()) ?? DateTime.now(),
+      storeLocation: map['storeLocation'],
+    );
+  }
+}
+
 class MedicalStoreRequest {
   final String id;
   final String patientEmail;
@@ -61,43 +105,3 @@ class MedicineItem {
     );
   }
 }
-
-class MedicalStoreBid {
-  final String id;
-  final String requestId;
-  final String storeName;
-  final String storeEmail;
-  final double originalAmount;
-  final double bidAmount;
-  final String status;
-  final double storeRating; // <-- New field
-  final DateTime createdAt;
-
-  MedicalStoreBid({
-    required this.id,
-    required this.requestId,
-    required this.storeEmail,
-    required this.storeName,
-    required this.originalAmount,
-    required this.bidAmount,
-    required this.status,
-    required this.storeRating, // <-- Include in constructor
-    required this.createdAt,
-  });
-
-  factory MedicalStoreBid.fromMap(Map<String, dynamic> map) {
-    return MedicalStoreBid(
-      id: map['_id'].toString(),
-      requestId: map['requestId'] ?? '',
-      storeName: map['storeName'] ?? 'Unknown Store',
-      storeEmail: map['storeEmail'] ?? '',
-      originalAmount: (map['originalAmount'] ?? map['price'] ?? 0).toDouble(),
-      bidAmount: (map['bidAmount'] ?? map['price'] ?? 0).toDouble(),
-      status: map['status'] ?? 'pending',
-      storeRating: (map['storeRating'] ?? 0).toDouble(),
-      createdAt: DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now(),
-    );
-  }
-
-}
-

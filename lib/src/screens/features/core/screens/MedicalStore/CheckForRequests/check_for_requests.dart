@@ -99,6 +99,12 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
     final patientLocation = request['location'] as Map<String, dynamic>?;
     final prescriptionImage = base64ToImage(request['prescriptionImage']!.toString());
 
+    final requestType = request['requestType'];
+    bool isPrescription=true;
+    if(requestType=="notPrescription"){
+      isPrescription=false;
+    }
+
     return FutureBuilder<Map<String, double>>(
       future: _getPrescriptionDeliveryDetails(controller, patientLocation),
       builder: (context, snapshot) {
@@ -190,7 +196,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                   controller,
                   deliveryFee,
                   total,
-                  isPrescription: true,
+                  isPrescription,
                 ),
               ],
             ),
@@ -209,7 +215,13 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
     final theme = Theme.of(context);
     final patientLocation = request['patientLocation'] as Map<String, dynamic>?;
     final subtotal = (request['subtotal'] as num?)?.toDouble() ?? 0.0;
-    final patientEmail=request['patientEmail'];
+    final requestType = request['requestType'];
+    bool isPrescription=true;
+    if(requestType=="notPrescription"){
+      isPrescription=false;
+    }
+
+
 
     return FutureBuilder<Map<String, double>>(
       future: _getDeliveryDetails(controller, patientLocation, subtotal),
@@ -272,7 +284,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                 _buildPriceDetailRow('Delivery Fee', deliveryFee),
                 _buildPriceDetailRow('Total', total, isTotal: true),
                 const SizedBox(height: 16),
-                _buildBidButton(context, request, controller, deliveryFee,total),
+                _buildBidButton(context, request, controller, deliveryFee,total,isPrescription),
               ],
             ),
           ),
@@ -305,14 +317,15 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
     }
   }
 
+
   Widget _buildBidButton(
       BuildContext context,
       Map<String, dynamic> request,
       CheckForRequestsController controller,
       double deliveryFee,
-      double totalPrice, {
-        bool isPrescription = false,
-      }) {
+      double totalPrice,
+      bool isPrescription,
+      ) {
     final bids = request['bids'] as List<dynamic>? ?? [];
     final hasBid = bids.any((bid) =>
     bid['storeEmail'] == controller.medicalStore.value?.userEmail);
@@ -332,12 +345,25 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
           backgroundColor: hasBid ? Colors.orange : Theme.of(context).primaryColor,
           foregroundColor: Colors.white,
         ),
-        onPressed: () => _showBidDialog(
+        onPressed: () => isPrescription
+            ? _showPrescriptionBidDialog(
           context,
+          request['patientEmail'].toString(),
           request['_id'].toString(),
           controller,
           hasBid,
-          currentBid?['price']?.toDouble() ?? totalPrice,
+          totalPrice,
+          deliveryFee,
+          request['location'],
+        )
+            : _showBidDialog(
+          context,
+          request['patientEmail'].toString(),
+          request['_id'].toString(),
+          controller,
+          hasBid,
+          totalPrice,
+          deliveryFee,
           isPrescription,
           request['location'],
         ),
@@ -410,10 +436,12 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
   }
 
   void _showPrescriptionBidDialog(BuildContext context,
+      String patientEmail,
       String requestId,
       CheckForRequestsController controller,
       bool hasBid,
       double currentPrice,
+      double deliverPrice,
       String currentDetails,
 
       ) {
@@ -475,17 +503,6 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            _buildPriceAdjustButton(
-                              icon: Icons.remove,
-                              onPressed: () {
-                                setState(() {
-                                  currentBid = (currentBid - 50).clamp(
-                                      0, double.infinity);
-                                  priceController.text =
-                                      currentBid.toStringAsFixed(0);
-                                });
-                              },
-                            ),
                             const SizedBox(width: 12),
                             Container(
                               width: 120,
@@ -513,16 +530,6 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            _buildPriceAdjustButton(
-                              icon: Icons.add,
-                              onPressed: () {
-                                setState(() {
-                                  currentBid += 50;
-                                  priceController.text =
-                                      currentBid.toStringAsFixed(0);
-                                });
-                              },
-                            ),
                           ],
                         ),
                         const SizedBox(height: 24),
@@ -576,15 +583,17 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                                       (req) => req['_id'].toString().contains(cleanRequestId),
                                   orElse: () => {},
                                 );
-
+                                final basePrice=price;
                                 controller.submitBid(
                                   cleanRequestId,
+                                  patientEmail,
                                   price,
+                                  deliverPrice,
+                                  basePrice,
                                   name ?? "Unknown Store",
                                   prescriptionDetails: detailsController.text
                                       .trim(),
                                   prescriptionImage: request['prescriptionImage'],
-                                  patientEmail: request['patientEmail'],
                                 );
 
                                 Navigator.pop(context);
@@ -631,20 +640,6 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
   }
 
 
-  Widget _buildPriceAdjustButton({
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    return Material(
-      shape: const CircleBorder(),
-      color: Colors.grey[100],
-      child: IconButton(
-        icon: Icon(icon, color: Colors.grey[800]),
-        onPressed: onPressed,
-        splashRadius: 24,
-      ),
-    );
-  }
 
   Widget _buildEmptyState(ThemeData theme) {
     return Center(
@@ -718,23 +713,27 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
 
   void _showBidDialog(
       BuildContext context,
+      String patientEmail,
       String requestId,
       CheckForRequestsController controller,
       bool hasBid,
-      double currentPrice,
+      double totalPrice,
+      double deliveryPrice,
       bool isPrescription,
       dynamic location,
       ) {
-    final priceController = TextEditingController(
-      text: currentPrice.toStringAsFixed(0),
-    );
     final email = FirebaseAuth.instance.currentUser?.email;
-    double currentBid = currentPrice;
+    double basePrice = totalPrice-deliveryPrice;
+    bool includeDelivery = true; // default selection
+    double finalBid = basePrice + deliveryPrice;
 
     showDialog(
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setState) {
+          finalBid = includeDelivery ? totalPrice : basePrice;
+          deliveryPrice= includeDelivery ? deliveryPrice : 0.00;
+
           return Dialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
@@ -752,6 +751,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
+
                   if (isPrescription) ...[
                     const Text(
                       'Enter prescription details:',
@@ -769,61 +769,53 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                     ),
                     const SizedBox(height: 20),
                   ],
+
                   const Text(
-                    'Enter your bid amount (PKR)',
+                    'Delivery Fee:',
                     style: TextStyle(fontSize: 14),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildPriceAdjustButton(
-                        icon: Icons.remove,
-                        onPressed: () {
+                      Radio<bool>(
+                        value: true,
+                        groupValue: includeDelivery,
+                        onChanged: (value) {
                           setState(() {
-                            currentBid = (currentBid - 50).clamp(0, double.infinity);
-                            priceController.text = currentBid.toStringAsFixed(0);
+                            includeDelivery = value!;
                           });
                         },
                       ),
-                      const SizedBox(width: 12),
-                      Container(
-                        width: 120,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey[300]!),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: TextField(
-                          controller: priceController,
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.zero,
-                            prefix: Text('PKR '),
-                          ),
-                          onChanged: (value) {
-                            currentBid = double.tryParse(value) ?? currentPrice;
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      _buildPriceAdjustButton(
-                        icon: Icons.add,
-                        onPressed: () {
-                          setState(() {
-                            currentBid += 50;
-                            priceController.text = currentBid.toStringAsFixed(0);
-                          });
-                        },
-                      ),
+                      const Text("Include delivery fee"),
                     ],
                   ),
+                  Row(
+                    children: [
+                      Radio<bool>(
+                        value: false,
+                        groupValue: includeDelivery,
+                        onChanged: (value) {
+                          setState(() {
+                            includeDelivery = value!;
+                          });
+                        },
+                      ),
+                      const Text("Exclude delivery fee"),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+                  Center(
+                    child: Text(
+                      'Your Bid: PKR ${finalBid.toStringAsFixed(0)}',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ),
+
                   const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -839,25 +831,16 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                               horizontal: 24, vertical: 12),
                         ),
                         onPressed: () async {
-                          final price = double.tryParse(priceController.text.trim());
-                          if (price == null || price <= 0) {
-                            Get.snackbar(
-                              'Invalid Amount',
-                              'Please enter a valid bid amount',
-                              snackPosition: SnackPosition.BOTTOM,
-                              backgroundColor: Colors.red[400],
-                              colorText: Colors.white,
-                            );
-                            return;
-                          }
-
                           final cleanRequestId = _extractObjectId(requestId);
                           final name = await UserRepository.instance
                               .getMedicalStoreUserName(email.toString());
 
                           controller.submitBid(
                             cleanRequestId,
-                            price,
+                            patientEmail,
+                            deliveryPrice,
+                            finalBid,
+                            basePrice,
                             name ?? "Unknown Store",
                           );
 
@@ -875,6 +858,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
       ),
     );
   }
+
   void _showInfoDialog(BuildContext context) {
     showDialog(
       context: context,

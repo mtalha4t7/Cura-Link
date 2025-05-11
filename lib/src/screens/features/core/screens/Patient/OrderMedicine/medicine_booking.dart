@@ -289,7 +289,10 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('Store: ${bid.storeName ?? 'Unknown Store'}'),
-            Text('Bid Amount: PKR ${bid.bidAmount.toStringAsFixed(2)}'),
+            Text('Bid Total: PKR ${bid.totalPrice.toStringAsFixed(2)}'),
+            Text('Store Distance:  ${bid.distance}'),
+            Text('Delivery Fee:  ${bid.deliveryFee}'),
+
             const SizedBox(height: 10),
             const Text('The store will prepare your order and contact you shortly.'),
           ],
@@ -616,15 +619,11 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Bid Amount: PKR ${bid.bidAmount.toStringAsFixed(2)}'),
-                      Text('Original: PKR ${bid.originalAmount.toStringAsFixed(2)}'),
+                      Text('Store: ${bid.storeName ?? 'Unknown Store'}'),
+                      Text('Bid Total: PKR ${bid.totalPrice.toStringAsFixed(2)}'),
+                      Text('Store Distance:  ${bid.distance}'),
+                      Text('Delivery Fee:  ${bid.deliveryFee}'),
                       const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.star, color: Colors.amber, size: 16),
-                          Text(' ${bid.storeRating?.toStringAsFixed(1) ?? 'N/A'}'),
-                        ],
-                      ),
                     ],
                   ),
                   trailing: ElevatedButton(

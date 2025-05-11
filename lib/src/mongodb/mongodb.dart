@@ -199,9 +199,21 @@ static DbCollection? get  medicalOrdersCollection =>  _medicalOrdersCollection;
         'createdAt': DateTime.now(),
         'updatedAt': DateTime.now(),
       };
+      final request1 = await _medicalBidsCollection?.findOne(
+          where.eq('requestId', requestId),
+      );
+      if(request1==null){
+        await _medicalBidsCollection?.insertOne(bidData);
+      }else{
+        await _medicalBidsCollection?.updateOne(
+          where.eq('requestId', requestId),
+          modify.push('bids', bidData),
+        );
+      }
 
       // Add bid to bids collection
-      await _medicalBidsCollection?.insertOne(bidDocument);
+
+
 
       // Update request with bid reference
       await _medicalRequestsCollection?.updateOne(

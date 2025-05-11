@@ -18,9 +18,9 @@ class CheckForRequestsController extends GetxController {
   Timer? pollingTimer;
    var _storeLocation;
 
-  static const double BASE_DELIVERY_FEE = 100.0; // Base delivery fee in PKR
+  static const double BASE_DELIVERY_FEE = 50.0; // Base delivery fee in PKR
   static const double PER_KM_RATE = 20.0; // Additional fee per km
-  static const double MIN_DELIVERY_FEE = 100.0; // Minimum delivery fee
+  static const double MIN_DELIVERY_FEE = 40.0; // Minimum delivery fee
   static const double MAX_DELIVERY_FEE = 500.0; // Maximum delivery fee
 
   @override
@@ -92,50 +92,58 @@ class CheckForRequestsController extends GetxController {
 
   Future<void> submitBid(
       String requestId,
-      double price,
+      String patientEmail,
+      double deliveryFee,
+      double totalPrice,
+      double basePrice,
       String storeName, {
         String? prescriptionDetails,
         List<dynamic>? medicines,
-        double? totalPrice,
         String? prescriptionImage,
-        String? patientEmail,
       }) async {
     try {
       isLoading(true);
-      print("====================" + storeName);
+      print("==================== $storeName");
 
-      final email = await FirebaseAuth.instance.currentUser?.email;
-      final storeLocation = await MongoDatabase.getUserLocationByEmail(email!);
-      final patientLocation = await MongoDatabase.getUserLocationByEmail(patientEmail!);
+      final email = FirebaseAuth.instance.currentUser?.email;
+      if (email == null) {
+        throw Exception("Store email is null. User might not be logged in.");
+      }
+         print(patientEmail);
+      if (patientEmail == null) {
+        throw Exception("Patient email is null. Cannot submit bid.");
+      }
 
-      // Calculate delivery fee based on distance
-      final deliveryFee = patientLocation != null && storeLocation != null
-          ? _calculateDeliveryFee(patientLocation, storeLocation)
-          : MIN_DELIVERY_FEE;
+      final storeLocation = await MongoDatabase.getUserLocationByEmail(email);
+      final patientLocation = await MongoDatabase.getUserLocationByEmail(patientEmail);
 
-      // Calculate delivery time
-      final deliveryTime = patientLocation != null
-          ? calculateDeliveryTime(patientLocation, storeLocation!)
+      final distanceInKm = await calculateDistanceBetweenLocations(patientLocation!);
+      String distanceString = distanceInKm < 1.0
+          ? '${(distanceInKm * 1000).round()}m'
+          : '${distanceInKm.toStringAsFixed(1)} km';
+      final deliveryTime = (storeLocation != null && patientLocation != null)
+          ? calculateDeliveryTime(patientLocation, storeLocation)
           : '30-45 min';
 
-      // Prepare bid data
       final bidData = {
         'storeName': storeName,
         'storeEmail': medicalStore.value?.userEmail ?? '',
-        'price': price,
+        'Base-price': basePrice,
         'deliveryFee': deliveryFee,
+        'Distance' :distanceString,
         'submittedAt': DateTime.now(),
         'deliveryTime': deliveryTime,
+        'requestId':requestId,
         if (prescriptionDetails != null)
           'prescriptionDetails': prescriptionDetails,
         if (medicines != null)
           'medicines': medicines,
-        if (totalPrice != null)
-          'totalPrice': totalPrice + deliveryFee, // Update total with delivery fee
+          'totalPrice': totalPrice,
         if (prescriptionImage != null)
           'prescriptionImage': prescriptionImage,
         'storeLocation': storeLocation,
       };
+
 
       await MongoDatabase.submitStoreBid(
         requestId: requestId,
@@ -162,21 +170,27 @@ class CheckForRequestsController extends GetxController {
   }
 
 
+
   Future<double> calculateDistanceBetweenLocations(Map<String, dynamic> patientLocation) async {
     try {
       if (_storeLocation == null || patientLocation.isEmpty) return 0.0;
 
       final patientCoords = extractCoordinates(patientLocation);
+      print('storeee $_storeLocation');
+      print('patient $patientLocation');
       final storeCoords = extractCoordinates(_storeLocation!);
 
       if (patientCoords == null || storeCoords == null) return 0.0;
+       final distance=calculateDistance(
+         storeCoords[1],
+         storeCoords[0],
+         patientCoords[1],
+         patientCoords[0],
+       );
+       print(distance);
 
-      return calculateDistance(
-        storeCoords[1],
-        storeCoords[0],
-        patientCoords[1],
-        patientCoords[0],
-      );
+      return distance;
+
     } catch (e) {
       print('Distance calculation error: $e');
       return 0.0;
