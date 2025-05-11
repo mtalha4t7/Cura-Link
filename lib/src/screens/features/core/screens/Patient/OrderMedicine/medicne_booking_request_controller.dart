@@ -171,7 +171,7 @@ class MedicalStoreController extends GetxController {
 
       final requestId = bid['requestId'];
       final storeEmail = bid['storeEmail'];
-      final bidAmount = bid['finalAmount'];
+      final bidAmount = bid['totalPrice'];
       final storeName= bid['storedName'];
       final patientName= bid['patientName'];
       final storeLocation= bid['storeLocation'];
