@@ -30,8 +30,9 @@ class PendingAndCompletedOrdersController extends GetxController {
     try {
       final orders = await MongoDatabase.medicalOrdersCollection?.find(
         where.eq('storeEmail', storeEmail.trim().toLowerCase())
-            .eq('status', 'Pending'),
+            .eq('status', 'pending'),
       ).toList();
+
       totalPendingOrdersCount.value = orders?.length ?? 0;
     } catch (e) {
       print('Error fetching pending orders count: $e');
@@ -39,11 +40,25 @@ class PendingAndCompletedOrdersController extends GetxController {
     }
   }
 
+
+
+  Future<List<Map<String, dynamic>>> getCompletedOrders(String storeEmail) async {
+    try {
+      final orders = await MongoDatabase.medicalOrdersCollection?.find(
+        where.eq('storeEmail', storeEmail.trim().toLowerCase())
+            .eq('status', 'Completed'),
+      ).toList();
+      return orders?.map((order) => _sanitizeOrderData(order)).toList() ?? [];
+    } catch (e, stackTrace) {
+      _logger.e('Error fetching completed orders', error: e, stackTrace: stackTrace);
+      return [];
+    }
+  }
   Future<List<Map<String, dynamic>>> getPendingOrders(String storeEmail) async {
     try {
       final orders = await MongoDatabase.medicalOrdersCollection?.find(
         where.eq('storeEmail', storeEmail.trim().toLowerCase())
-            .eq('status', 'preparing'),
+            .eq('status', 'pending'),
       ).toList();
       return orders?.map((order) => _sanitizeOrderData(order)).toList() ?? [];
     } catch (e, stackTrace) {
@@ -52,15 +67,15 @@ class PendingAndCompletedOrdersController extends GetxController {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getPreparingOrders(String storeEmail) async {
+  Future<List<Map<String, dynamic>>> getDeliveredOrders(String storeEmail) async {
     try {
       final orders = await MongoDatabase.medicalOrdersCollection?.find(
         where.eq('storeEmail', storeEmail.trim().toLowerCase())
-            .eq('status', 'preparing'),
+            .eq('status', 'delivered'),
       ).toList();
       return orders?.map((order) => _sanitizeOrderData(order)).toList() ?? [];
     } catch (e, stackTrace) {
-      _logger.e('Error fetching preparing orders', error: e, stackTrace: stackTrace);
+      _logger.e('Error fetching delivered orders', error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -70,7 +85,8 @@ class PendingAndCompletedOrdersController extends GetxController {
       final id = _parseObjectId(orderId);
       final result = await MongoDatabase.medicalOrdersCollection?.updateOne(
         where.id(id),
-        modify.set('status', newStatus),
+        modify.set('status', newStatus)
+            .set('updatedAt', DateTime.now()),
       );
       return result?.isSuccess ?? false;
     } catch (e, stackTrace) {

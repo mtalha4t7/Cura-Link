@@ -64,7 +64,7 @@ class NurseBookingController extends GetxController {
   }
 
 
-   static Future<void> acceptBid(String bidId, String patientEmail, {String paymentMethod = 'cash'}) async {
+   static Future<void> acceptBid(String bidId, String patientEmail) async {
      try {
        final bidObjectId = ObjectId.parse(bidId);
        logger.i('🏁 Starting acceptBid process for bid: $bidId');
@@ -110,7 +110,7 @@ class NurseBookingController extends GetxController {
          modify
            ..set('status', 'accepted')
            ..set('acceptedBidId', bidId)
-           ..set('paymentMethod', paymentMethod),
+          ,
        );
        logger.i('📌 Service request update result: ${serviceUpdateResult?.isSuccess}');
 
@@ -128,7 +128,6 @@ class NurseBookingController extends GetxController {
          'nurseName': nurseName,
          'patientName': patientName,
          'price': price,
-         'paymentMethod': paymentMethod,
          'status': 'accepted',
          'createdAt': DateTime.now().toUtc(),
        };

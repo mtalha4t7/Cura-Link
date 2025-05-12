@@ -60,13 +60,14 @@ class MyOrdersScreenMedicineController extends GetxController {
     }
   }
 
-  Future<bool> updateOrderStatus(dynamic bookingId, String newStatus) async {
+  Future<bool> updateOrderStatus(dynamic bookingId, String newStatus, String paymentMethod) async {
     try {
       final id = _parseObjectId(bookingId);
       final result = await MongoDatabase.medicalOrdersCollection?.updateOne(
         where.id(id),
         modify
             .set('status', newStatus)
+            .set('paymentMethod', paymentMethod)
             .set('updatedAt', DateTime.now()),
       );
       return result?.isSuccess ?? false;
@@ -75,6 +76,7 @@ class MyOrdersScreenMedicineController extends GetxController {
       return false;
     }
   }
+
 
   Future<bool> deleteOrder(dynamic bookingId) async {
     try {
@@ -93,8 +95,8 @@ class MyOrdersScreenMedicineController extends GetxController {
     return await deleteOrder(bookingId);
   }
 
-  Future<bool> completeOrder(dynamic bookingId) async {
-    return await updateOrderStatus(bookingId, 'Completed');
+  Future<bool> completeOrder(dynamic bookingId,String paymentMethod) async {
+    return await updateOrderStatus(bookingId, 'Completed',paymentMethod);
   }
 
   Future<Map<String, dynamic>?> getOrderDetails(dynamic bookingId) async {

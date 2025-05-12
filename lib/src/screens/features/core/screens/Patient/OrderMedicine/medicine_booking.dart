@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../../../stripe/stripe_services.dart';
 import 'medical_store_model.dart';
 import 'medicne_booking_request_controller.dart';
 
@@ -35,6 +36,7 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
   final _notesController = TextEditingController();
   final double _deliveryFee = 0;
   File? _prescriptionImage;
+
 
   @override
   void initState() {
@@ -258,27 +260,31 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
 
   Future<void> _acceptBid(MedicalStoreBid bid) async {
     try {
+
       final patientEmail = _auth.currentUser?.email;
-      if (patientEmail == null) throw Exception('User not logged in');
-      await _controller.acceptBid(bid.requestId, patientEmail);
-      await _clearRequestFromPrefs();
-      _showConfirmationDialog(bid);
-    } catch (e) {
+
+        if (patientEmail == null) throw Exception('User not logged in');
+        await _controller.acceptBid(bid.requestId, patientEmail!);
+        await _clearRequestFromPrefs();
+        _showConfirmationDialog(bid);
+      } catch (e) {
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Error'),
-          content: Text('Failed to accept bid: ${e.toString()}'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
+        builder: (context) =>
+            AlertDialog(
+              title: const Text('Error'),
+              content: Text('Failed to accept bid: ${e.toString()}'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'),
+                ),
+              ],
             ),
-          ],
-        ),
       );
     }
   }
+
 
   void _showConfirmationDialog(MedicalStoreBid bid) {
     showDialog(

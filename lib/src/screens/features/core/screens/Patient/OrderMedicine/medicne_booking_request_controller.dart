@@ -209,7 +209,7 @@ class MedicalStoreController extends GetxController {
         'storeName': storeName,
         'storeEmail': storeEmail,
         'finalAmount': bidAmount,
-        'status': 'preparing',
+        'status': 'pending',
         'createdAt': createdAt,
         'expectedDeliveryTime': expectedDeliveryTime,
         'deliveryTime': deliveryTimeString, // Keep the original string format
