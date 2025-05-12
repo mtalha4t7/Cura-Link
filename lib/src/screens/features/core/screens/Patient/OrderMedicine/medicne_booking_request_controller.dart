@@ -188,14 +188,8 @@ class MedicalStoreController extends GetxController {
       final expectedDeliveryTime = createdAt.add(Duration(minutes: minutes));
 
       // 3. Update medical request status
-      await MongoDatabase.medicalRequestsCollection?.updateOne(
-        where.eq('_id', cleanObjectId(requestId)),
-        modify
-          ..set('status', 'accepted')
-          ..set('acceptedBidId', bidId)
-          ..set('acceptedAmount', bidAmount),
-      );
 
+      await MongoDatabase.medicalRequestsCollection?.deleteOne(where.eq('_id',cleanObjectId(requestId)));
       final patientLocation = await MongoDatabase.getLocationByEmail(patientEmail);
 
       // 4. Insert order

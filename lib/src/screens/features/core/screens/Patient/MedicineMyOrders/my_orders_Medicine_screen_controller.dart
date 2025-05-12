@@ -63,14 +63,50 @@ class MyOrdersScreenMedicineController extends GetxController {
   Future<bool> updateOrderStatus(dynamic bookingId, String newStatus, String paymentMethod) async {
     try {
       final id = _parseObjectId(bookingId);
-      final result = await MongoDatabase.medicalOrdersCollection?.updateOne(
+
+      // First get the current order data
+      final order = await MongoDatabase.medicalOrdersCollection?.findOne(where.id(id));
+      if (order == null) {
+        _logger.e('Order not found with ID: $bookingId');
+        return false;
+      }
+
+      // Update the order with new status and payment method
+      final updateResult = await MongoDatabase.medicalOrdersCollection?.updateOne(
         where.id(id),
         modify
             .set('status', newStatus)
             .set('paymentMethod', paymentMethod)
             .set('updatedAt', DateTime.now()),
       );
-      return result?.isSuccess ?? false;
+
+      if (!(updateResult?.isSuccess ?? false)) {
+        return false;
+      }
+
+      // If status is 'completed' or 'delivered', move to completed collection
+      if (newStatus.toLowerCase() == 'completed' || newStatus.toLowerCase() == 'delivered') {
+        // Add additional completion data
+        final completedOrder = {
+          ...order,
+          'completionDate': DateTime.now(),
+          'status': newStatus,
+          'paymentMethod': paymentMethod,
+          'updatedAt': DateTime.now(),
+        };
+
+        // Insert into completed orders collection
+        final insertResult = await MongoDatabase.completedOrdersCollection?.insertOne(completedOrder);
+
+        if (insertResult?.isSuccess ?? false) {
+          // Only delete from original collection if insert was successful
+          final deleteResult = await MongoDatabase.medicalOrdersCollection?.deleteOne(where.id(id));
+          return deleteResult?.isSuccess ?? false;
+        }
+        return false;
+      }
+
+      return true;
     } catch (e, stackTrace) {
       _logger.e('Error updating order status', error: e, stackTrace: stackTrace);
       return false;
