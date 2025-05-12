@@ -147,13 +147,7 @@ class _PatientDashboardState extends State<PatientDashboard> {
                         ),
                       ),
                     ),
-                    ServiceCard(
-                      icon: Icons.biotech,
-                      title: 'Lab Tests',
-                      onTap: () async {
 
-                      },
-                    ),
                     ServiceCard(
                       icon: Icons.add_to_queue,
                       title: 'My Bookings',
@@ -196,7 +190,6 @@ class _PatientDashboardState extends State<PatientDashboard> {
           type: BottomNavigationBarType.fixed,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-            BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: "Orders"),
             BottomNavigationBarItem(icon: Icon(Icons.message), label: "Messages"),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
           ],
@@ -206,12 +199,9 @@ class _PatientDashboardState extends State<PatientDashboard> {
                 Get.offAll(() => const PatientDashboard());
                 break;
               case 1:
-              // Handle orders navigation
-                break;
-              case 2:
                 Get.to(() => ChatHomeScreen());
                 break;
-              case 3:
+              case 2:
                 Get.to(() => PatientProfileScreen());
                 break;
             }

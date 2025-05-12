@@ -32,24 +32,7 @@ class MedicalLabDashboardSidebar extends StatelessWidget {
               Get.toNamed('/lab-dashboard');
             },
           ),
-          ListTile(
-            leading: Icon(Icons.biotech,
-                color: isDark ? Colors.white : Colors.black),
-            title: Text('Lab Tests',
-                style: TextStyle(color: isDark ? Colors.white : Colors.black)),
-            onTap: () {
-              Get.toNamed('/lab-tests');
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.report,
-                color: isDark ? Colors.white : Colors.black),
-            title: Text('Reports',
-                style: TextStyle(color: isDark ? Colors.white : Colors.black)),
-            onTap: () {
-              Get.toNamed('/lab-reports');
-            },
-          ),
+
           ListTile(
             leading: Icon(Icons.account_circle,
                 color: isDark ? Colors.white : Colors.black),

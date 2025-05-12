@@ -8,13 +8,16 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:cura_link/src/screens/features/core/screens/Nurse/NurseProfile/Nurse_Profile_Screen.dart';
 import '../../../../../../notification_handler/notification_server.dart';
+
 import '../../Nurse/NurseWidgets/nic_input_formatter.dart';
 import '../../Nurse/NurseChat/chat_home.dart';
 import '../../Nurse/NurseWidgets/quick_access_button.dart';
-import '../../Nurse/NurseWidgets/service_card.dart';
+
 import '../NurseBookings/Nurse_Booking_Controller.dart';
 import 'Nurse_Dashboard_controller.dart';
 
+
+// ... [IMPORTS UNCHANGED]
 
 class NurseDashboard extends StatefulWidget {
   NurseDashboard({super.key}) {
@@ -53,7 +56,6 @@ class _NurseDashboardState extends State<NurseDashboard> {
     notificationService.setupInteractMessage(context);
   }
 
-  // Dynamically check user verification status
   void _checkUserVerification() async {
     controller.checkUserVerification((status) {
       setState(() {
@@ -62,7 +64,6 @@ class _NurseDashboardState extends State<NurseDashboard> {
     });
   }
 
-  /// Verify the user and update status
   void _verifyUser(String nic, String license) {
     controller.verifyUser(nic, license, context, (verificationSuccess) {
       if (verificationSuccess) {
@@ -260,7 +261,6 @@ class _NurseDashboardState extends State<NurseDashboard> {
                             style: txtTheme.bodyMedium),
                         const SizedBox(height: 16.0),
 
-                        // Availability Toggle Button
                         Center(
                           child: GestureDetector(
                             onTap: () => controller.toggleAvailability(),
@@ -271,18 +271,12 @@ class _NurseDashboardState extends State<NurseDashboard> {
                               decoration: BoxDecoration(
                                 gradient: controller.isAvailable.value
                                     ? LinearGradient(
-                                  colors: [
-                                    Colors.green.shade400,
-                                    Colors.green.shade700
-                                  ],
+                                  colors: [Colors.green.shade400, Colors.green.shade700],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 )
                                     : LinearGradient(
-                                  colors: [
-                                    Colors.red.shade400,
-                                    Colors.red.shade700
-                                  ],
+                                  colors: [Colors.red.shade400, Colors.red.shade700],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
@@ -302,12 +296,9 @@ class _NurseDashboardState extends State<NurseDashboard> {
                                 children: [
                                   Center(
                                     child: controller.isLoading.value
-                                        ? const CircularProgressIndicator(
-                                      color: Colors.white,
-                                    )
+                                        ? const CircularProgressIndicator(color: Colors.white)
                                         : Row(
-                                      mainAxisAlignment:
-                                      MainAxisAlignment.center,
+                                      mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         Icon(
                                           controller.isAvailable.value
@@ -359,37 +350,23 @@ class _NurseDashboardState extends State<NurseDashboard> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Quick Access Buttons
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
                             QuickAccessButton(
                               icon: Icons.book_online,
-                              label: 'Check Bookings',
-                              onTap: () {
-                                Get.to(() => NurseBookingsScreen());
-                              },
+                              label: 'Check Booking Request',
+                              onTap: () => Get.to(() => NurseBookingsScreen()),
                             ),
                             QuickAccessButton(
                               icon: Icons.medical_services,
-                              label: 'Manage Bookings',
-                              onTap: () {
-                                Get.to(() => MyBookingsNurseScreen());
-                              },
-                            ),
-                            QuickAccessButton(
-                              icon: Icons.settings,
-                              label: 'Settings',
-                              onTap: () async {
-                                final key = await _getServerKey.getServerTokenKey();
-                                print(key);
-                              },
+                              label: 'View Bookings',
+                              onTap: () => Get.to(() => MyBookingsNurseScreen()),
                             ),
                           ],
                         ),
                         const SizedBox(height: 16.0),
 
-                        // Bookings Section
                         const Text(
                           "Current Booking",
                           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -428,32 +405,23 @@ class _NurseDashboardState extends State<NurseDashboard> {
                             },
                           ),
                         ),
-                        const SizedBox(height: 16.0),
-
-                        // Services Section
                         const Text(
-                          "Services You Provide",
+                          "Nurse Guidelines",
                           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
-                        GridView.count(
-                          crossAxisCount: 2,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                          children: [
-                            ServiceCard(
-                              icon: Icons.local_hospital,
-                              title: 'Nursing Care',
-                              onTap: () {},
-                            ),
-                            ServiceCard(
-                              icon: Icons.healing,
-                              title: 'Wound Care',
-                              onTap: () {},
-                            ),
-                          ],
+                        SizedBox(
+                          height: 120,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: [
+                              _buildGuidelineBox("Verify\nPatient Identity"),
+                              _buildGuidelineBox("Maintain Hygiene"),
+                              _buildGuidelineBox("Administer Meds Safely"),
+                              _buildGuidelineBox("Failing in providing good service can get you blacklisted by admin "),
+                            ],
+                          ),
                         ),
+                        const SizedBox(height: 16.0),
                       ],
                     ),
                   ),
@@ -465,7 +433,6 @@ class _NurseDashboardState extends State<NurseDashboard> {
         bottomNavigationBar: BottomNavigationBar(
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-            BottomNavigationBarItem(icon: Icon(Icons.book), label: "Bookings"),
             BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Chat"),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
           ],
@@ -475,11 +442,9 @@ class _NurseDashboardState extends State<NurseDashboard> {
                 Get.to(() => NurseDashboard());
                 break;
               case 1:
-                break;
-              case 2:
                 Get.to(() => ChatHomeScreen());
                 break;
-              case 3:
+              case 2:
                 Get.to(() => NurseProfileScreen());
                 break;
             }
@@ -487,6 +452,37 @@ class _NurseDashboardState extends State<NurseDashboard> {
           backgroundColor: isDark ? Colors.grey[850] : Colors.white,
           selectedItemColor: isDark ? Colors.blueAccent : Colors.blue,
           unselectedItemColor: isDark ? Colors.white70 : Colors.black54,
+        ),
+      ),
+    );
+  }
+
+  // 🧩 ADDED: Guideline Box Widget
+  Widget _buildGuidelineBox(String text) {
+    return Container(
+      width: 160,
+      margin: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.lightBlue.shade300,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 4,
+            offset: Offset(2, 2),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            color: Colors.black87,
+          ),
         ),
       ),
     );

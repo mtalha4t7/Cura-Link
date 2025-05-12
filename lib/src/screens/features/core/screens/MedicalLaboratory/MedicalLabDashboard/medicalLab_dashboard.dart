@@ -259,7 +259,7 @@ MongoDatabase mongoDatabase= MongoDatabase();
                         children: [
                           ServiceCard(
                             icon: Icons.biotech,
-                            title: 'Manage Tests',
+                            title: 'View Test List',
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -271,7 +271,7 @@ MongoDatabase mongoDatabase= MongoDatabase();
                           ),
                           ServiceCard(
                             icon: Icons.schedule,
-                            title: 'Manage Booking',
+                            title: 'View Bookings',
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -281,16 +281,10 @@ MongoDatabase mongoDatabase= MongoDatabase();
                               );
                             },
                           ),
-                          ServiceCard(
-                            icon: Icons.chat,
-                            title: 'Chat with Patient',
-                            onTap: () async {
-                            Get.to(ChatHomeScreen());
-                            },
-                          ),
+
                           ServiceCard(
                             icon: Icons.delivery_dining,
-                            title: 'Sample Collection',
+                            title: 'Sample Collection (Coming Soon) ',
                             onTap: () {},
                           ),
                         ],
@@ -308,7 +302,6 @@ MongoDatabase mongoDatabase= MongoDatabase();
           unselectedItemColor: isDark ? Colors.white70 : Colors.black54,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: "Dashboard"),
-            BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: "Appointments"),
             BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Chat"),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
 
@@ -319,11 +312,9 @@ MongoDatabase mongoDatabase= MongoDatabase();
                 Get.to(() => MedicalLabDashboard());
                 break;
               case 1:
-                break;
-              case 2:
                 Get.to(() => ChatHomeScreen());
                 break;
-              case 3:
+              case 2:
                 Get.to(() => MedicalLabProfileScreen());
                 break;
             }

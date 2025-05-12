@@ -219,16 +219,23 @@ class _NurseProfileScreenState extends State<NurseProfileScreen> {
     Get.defaultDialog(
       title: "LOGOUT",
       content: const Text("Are you sure you want to logout?"),
-      confirm: TPrimaryButton(
-        onPressed: () => AuthenticationRepository.instance.logout(),
-        text: "Yes",
-      ),
-      cancel: OutlinedButton(
-        onPressed: () => Get.back(),
-        child: const Text("No"),
-      ),
+      actions: [
+        OutlinedButton(
+          onPressed: () => Get.back(),
+          child: const Text("No"),
+        ),
+        SizedBox(
+          width: 90, // Match this size with your "No" button's typical width
+          child: TPrimaryButton(
+            onPressed: () => AuthenticationRepository.instance.logout(),
+            text: "Yes",
+          ),
+        ),
+      ],
     );
   }
+
+
 }
 
 class ProfilePictureWidget extends StatelessWidget {

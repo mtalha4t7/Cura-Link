@@ -19,6 +19,7 @@ class MedicalStoreServicesScreen extends StatefulWidget {
 class _MedicalStoreServicesScreenState extends State<MedicalStoreServicesScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  String _searchQuery = '';
   final List<Map<String, dynamic>> otcMedicines =[
     {'name': 'Panadol (500mg)', 'price': 50.0, 'selected': false, 'category': 'Pain And Fever'},
     {'name': 'Disprin (300mg)', 'price': 26.91, 'selected': false, 'category': 'Pain And Fever'},
@@ -64,6 +65,11 @@ class _MedicalStoreServicesScreenState extends State<MedicalStoreServicesScreen>
     {'name': 'Ciprofloxacin', 'price': 400, 'selected': false},
     {'name': 'Diazepam', 'price': 250, 'selected': false},
   ];
+  List<Map<String, dynamic>> get _filteredOtcMedicines {
+    if (_searchQuery.isEmpty) return otcMedicines;
+    return otcMedicines.where((medicine) =>
+        medicine['name'].toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+  }
 
   List<Map<String, dynamic>> selectedMedicines = [];
   File? _prescriptionImage;
@@ -265,31 +271,56 @@ class _MedicalStoreServicesScreenState extends State<MedicalStoreServicesScreen>
     final textColor = isDarkMode ? Colors.white : Colors.black87;
     final accentColor = theme.colorScheme.secondary;
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(8),
-      itemCount: medicines.length,
-      itemBuilder: (context, index) {
-        final medicine = medicines[index];
-        return Card(
-          color: isDarkMode ? Colors.grey[800] : Colors.white,
-          child: CheckboxListTile(
-            title: Text(medicine['name'], style: TextStyle(color: textColor)),
-            subtitle: Text('PKR ${medicine['price']}',
-                style: TextStyle(color: textColor.withOpacity(0.7))),
-            value: medicine['selected'],
+    final List<Map<String, dynamic>> displayList =
+    isOTC ? _filteredOtcMedicines : medicines;
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'Search for medicine...',
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             onChanged: (value) {
               setState(() {
-                medicine['selected'] = value;
-                _updateSelectedMedicines();
+                _searchQuery = value;
               });
             },
-            secondary: Icon(Icons.medical_services, color: accentColor),
-            controlAffinity: ListTileControlAffinity.leading,
           ),
-        );
-      },
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(8),
+            itemCount: displayList.length,
+            itemBuilder: (context, index) {
+              final medicine = displayList[index];
+              return Card(
+                color: isDarkMode ? Colors.grey[800] : Colors.white,
+                child: CheckboxListTile(
+                  title: Text(medicine['name'], style: TextStyle(color: textColor)),
+                  subtitle: Text('PKR ${medicine['price']}',
+                      style: TextStyle(color: textColor.withOpacity(0.7))),
+                  value: medicine['selected'],
+                  onChanged: (value) {
+                    setState(() {
+                      medicine['selected'] = value;
+                      _updateSelectedMedicines();
+                    });
+                  },
+                  secondary: Icon(Icons.medical_services, color: accentColor),
+                  controlAffinity: ListTileControlAffinity.leading,
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
+
 
   Widget _buildPrescriptionMedicinesList() {
     final theme = Theme.of(context);
