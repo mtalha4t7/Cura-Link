@@ -219,6 +219,7 @@ class MedicalStoreController extends GetxController {
 
       // 5. Notify
       await _notifyStoreAboutAcceptedBid(storeEmail, requestId);
+      await MongoDatabase.medicalRequestsCollection?.deleteOne(where.eq('requestId', requestId),);
     } catch (e) {
       print('Error accepting bid: $e');
       rethrow;

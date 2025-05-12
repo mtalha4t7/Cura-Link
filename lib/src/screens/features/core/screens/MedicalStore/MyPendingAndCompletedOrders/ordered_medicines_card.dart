@@ -1,8 +1,7 @@
-import 'package:cura_link/src/mongodb/mongodb.dart';
-import 'package:cura_link/src/repository/user_repository/user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:get/get.dart';
 
 class OrderedMedicinesCard extends StatelessWidget {
   final Map<String, dynamic> order;
@@ -30,7 +29,6 @@ class OrderedMedicinesCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final patientName= UserRepository.instance.getFullNameByEmail(email: order['patineEmail'], collection: MongoDatabase.medicalOrdersCollection);
 
     Future<void> _launchMaps() async {
       try {
@@ -38,21 +36,23 @@ class OrderedMedicinesCard extends StatelessWidget {
         if (location != null && location['coordinates'] != null) {
           final lat = location['coordinates'][0]['\$numberDouble'];
           final lng = location['coordinates'][1]['\$numberDouble'];
-          final url = 'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
-          if (await canLaunch(url)) {
-            await launch(url);
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Could not launch maps')),
-            );
+          final coordinates = '$lat,$lng';
+
+          final Uri uri = Uri.parse(
+            'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(coordinates)}',
+          );
+
+          if (!await launchUrl(uri)) {
+            throw Exception('Could not launch maps');
           }
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error opening maps: $e')),
+        ScaffoldMessenger.of(Get.context!).showSnackBar(
+          SnackBar(content: Text('Error opening maps: ${e.toString()}')),
         );
       }
     }
+
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
