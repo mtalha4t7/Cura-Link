@@ -244,7 +244,7 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
                         final booking = bookings[index];
                         final patientEmail = booking['patientEmail'] as String? ?? '';
                         final location = booking['location'];
-                        final bookingDate = booking['bookingDate'] ?? booking['createdAt'];
+                        final bookingDate = booking['updatedAt'] ?? booking['createdAt'];
                         final bookingId = booking['_id']?.toString() ?? '';
 
                         return NurseBookingCard(

@@ -118,9 +118,10 @@ class MyBookingsNurseController {
       debugPrint('Fetching past bookings for: $nurseEmail');
 
       final bookings = await MongoDatabase.patientNurseBookingsCollection?.find(
-        where.eq('patientEmail', nurseEmail.trim().toLowerCase())
-            .oneFrom('status', ['Completed', 'Cancelled'])
-            .sortBy('createdAt', descending: true),
+          where.eq('nurseEmail', nurseEmail.trim().toLowerCase())
+              .ne('status', 'accepted')
+              .ne('status', 'pending')
+
       ).toList();
 
       debugPrint('Raw past booking data from DB: ${bookings?.toString()}');

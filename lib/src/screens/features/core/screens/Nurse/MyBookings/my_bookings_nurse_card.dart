@@ -78,7 +78,7 @@ class NurseBookingCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                booking['serviceType'] ?? 'Nursing Service',
+                booking['serviceName'] ?? 'Nursing Service',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.w500,
                   color: colorScheme.onSurface.withOpacity(0.8),
