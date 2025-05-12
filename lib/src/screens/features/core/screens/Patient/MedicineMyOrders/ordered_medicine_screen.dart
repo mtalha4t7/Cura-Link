@@ -18,25 +18,20 @@ class MyOrdersScreenMedicine extends StatefulWidget {
 
 class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
   final MyOrdersScreenMedicineController _controller = MyOrdersScreenMedicineController();
-  late Future<List<Map<String, dynamic>>> _bookingsFuture;
+  late Future<List<Map<String, dynamic>>> _ordersFuture;
   String _currentFilter = 'upcoming';
-  late final String email;
 
   @override
   void initState() {
     super.initState();
-    email = widget.patientEmail;
     _loadOrders();
-
-
   }
 
   void _loadOrders() {
     setState(() {
-      _bookingsFuture = _currentFilter == 'upcoming'
+      _ordersFuture = _currentFilter == 'upcoming'
           ? _controller.getUpcomingOrders(widget.patientEmail)
           : _controller.getPastOrders(widget.patientEmail);
-
     });
   }
 
@@ -49,36 +44,25 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
     }
   }
 
-  Future<void> _launchMaps(String address) async {
-    final Uri uri = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}',
-    );
-    if (!await launchUrl(uri)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open maps')),
-      );
-    }
-  }
-
-  Future<void> _startChat(String nurseEmail) async {
-    final user = await _controller.fetchUserData(nurseEmail);
+  Future<void> _startChat(String storeEmail) async {
+    final user = await _controller.fetchUserData(storeEmail);
     if (user != null && mounted) {
       Get.to(() => ChatScreen(user: user));
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not fetch user data for chat')),
+          const SnackBar(content: Text('Could not fetch store data for chat')),
         );
       }
     }
   }
 
-  Future<void> _cancelOrder(String bookingId) async {
+  Future<void> _cancelOrder(String orderId) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirm Cancellation'),
-        content: const Text('Are you sure you want to cancel this booking?'),
+        content: const Text('Are you sure you want to cancel this order?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -93,18 +77,18 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
     );
 
     if (confirmed == true && mounted) {
-      final success = await _controller.cancelOrder(bookingId);
+      final success = await _controller.cancelOrder(orderId);
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Booking cancelled successfully')),
+          const SnackBar(content: Text('Order cancelled successfully')),
         );
         _loadOrders();
       }
     }
   }
 
-  Future<void> _completeOrder(String bookingId) async {
-    final success = await _controller.completeOrder(bookingId);
+  Future<void> _completeOrder(String orderId) async {
+    final success = await _controller.completeOrder(orderId);
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Order marked as completed')),
@@ -120,7 +104,7 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Orders'),
+        title: const Text('My Medicine Orders'),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -165,8 +149,8 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
           children: [
             Text(
               _currentFilter == 'upcoming'
-                  ? "Upcoming Appointments"
-                  : "Past Appointments",
+                  ? "Upcoming Orders"
+                  : "Past Orders",
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -174,7 +158,7 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
             const SizedBox(height: 16),
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: _bookingsFuture,
+                future: _ordersFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -183,11 +167,11 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
                       child: Text('Error: ${snapshot.error}'),
                     );
                   } else if (snapshot.hasData) {
-                    final bookings = snapshot.data!;
-                    if (bookings.isEmpty) {
+                    final orders = snapshot.data!;
+                    if (orders.isEmpty) {
                       return Center(
                         child: Text(
-                          'No ${_currentFilter} appointments found.',
+                          'No ${_currentFilter} orders found.',
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: isDarkTheme ? Colors.white70 : Colors.black54,
                           ),
@@ -195,30 +179,24 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
                       );
                     }
                     return ListView.separated(
-                      itemCount: bookings.length,
+                      itemCount: orders.length,
                       separatorBuilder: (context, index) =>
                       const SizedBox(height: 12),
                       itemBuilder: (context, index) {
-                        final booking = bookings[index];
+                        final order = orders[index];
                         return OrderedMedicinesCard(
-                          booking: booking,
+                          booking: order,
                           isDark: isDarkTheme,
-                          onChat: () =>
-                              _startChat(booking['storeEmail']), // FIXED HERE
-                          onLocation: () =>
-                              _launchMaps(booking['location']),
-                          formattedDate:
-                          _formatDate(booking['createdAt']),
+                          onChat: () => _startChat(order['storeEmail']),
+                          formattedDate: _formatDate(order['expectedDeliveryTime']),
                           showActions: _currentFilter == 'upcoming',
-                          onCancel: () => _cancelOrder(
-                              booking['_id'].toString()),
-                          onComplete: () => _completeOrder(
-                              booking['_id'].toString()),
+                          onCancel: () => _cancelOrder(order['_id'].toString()),
+                          onComplete: () => _completeOrder(order['_id'].toString()),
                         );
                       },
                     );
                   }
-                  return const Center(child: Text('No data found.'));
+                  return const Center(child: Text('No orders found.'));
                 },
               ),
             ),

@@ -1,30 +1,58 @@
+import 'package:cura_link/src/mongodb/mongodb.dart';
+import 'package:cura_link/src/repository/user_repository/user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class OrderedMedicinesCard extends StatelessWidget {
-  final Map<String, dynamic> booking;
+  final Map<String, dynamic> order;
   final bool isDark;
   final VoidCallback onChat;
   final String formattedDate;
   final bool showActions;
-  final VoidCallback onCancel;
+  final VoidCallback onAccept;
   final VoidCallback onComplete;
+  final VoidCallback onCancel;
 
   const OrderedMedicinesCard({
     super.key,
-    required this.booking,
+    required this.order,
     required this.isDark,
     required this.onChat,
     required this.formattedDate,
     required this.showActions,
-    required this.onCancel,
+    required this.onAccept,
     required this.onComplete,
+    required this.onCancel,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final patientName= UserRepository.instance.getFullNameByEmail(email: order['patineEmail'], collection: MongoDatabase.medicalOrdersCollection);
+
+    Future<void> _launchMaps() async {
+      try {
+        final location = order['patientLocation'];
+        if (location != null && location['coordinates'] != null) {
+          final lat = location['coordinates'][0]['\$numberDouble'];
+          final lng = location['coordinates'][1]['\$numberDouble'];
+          final url = 'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
+          if (await canLaunch(url)) {
+            await launch(url);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Could not launch maps')),
+            );
+          }
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error opening maps: $e')),
+        );
+      }
+    }
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -45,7 +73,7 @@ class OrderedMedicinesCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      booking['storeName'] ?? 'Unknown Store',
+                      order['patientName'] ?? 'Unknown Patient',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -57,11 +85,11 @@ class OrderedMedicinesCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(booking['status'] ?? 'Pending'),
+                      color: _getStatusColor(order['status'] ?? 'Pending'),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      (booking['status'] ?? 'Pending').toUpperCase(),
+                      (order['status'] ?? 'Pending').toUpperCase(),
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
@@ -73,24 +101,27 @@ class OrderedMedicinesCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
 
-              // Distance information
-              if (booking['distance'] != null)
-                Padding(
+              // Location button
+              InkWell(
+                onTap: _launchMaps,
+                child: Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
                     children: [
-                      Icon(Icons.location_on_outlined, size: 16, color: Colors.grey[600]),
+                      Icon(Icons.location_on_outlined, size: 16, color: Colors.blue),
                       const SizedBox(width: 4),
                       Text(
-                        booking['distance'],
+                        'View Patient Location',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.grey[600],
+                          color: Colors.blue,
+                          decoration: TextDecoration.underline,
                         ),
                       ),
                     ],
                   ),
                 ),
+              ),
 
               const SizedBox(height: 8),
 
@@ -98,19 +129,19 @@ class OrderedMedicinesCard extends StatelessWidget {
               _buildDetailRow(
                 icon: Icons.calendar_today_outlined,
                 title: 'Order Date',
-                value: _formatDate(booking['createdAt']),
+                value: _formatDate(order['createdAt']),
               ),
               const SizedBox(height: 8),
               _buildDetailRow(
                 icon: Icons.access_time_outlined,
                 title: 'Expected Delivery',
-                value: _formatDate(booking['expectedDeliveryTime']),
+                value: _formatDate(order['expectedDeliveryTime']),
               ),
               const SizedBox(height: 8),
               _buildDetailRow(
                 icon: Icons.attach_money_outlined,
                 title: 'Total Amount',
-                value: '\$${booking['finalAmount']?.toStringAsFixed(2) ?? '0.00'}',
+                value: '\$${order['finalAmount']?.toStringAsFixed(2) ?? '0.00'}',
               ),
 
               const SizedBox(height: 16),
@@ -124,7 +155,7 @@ class OrderedMedicinesCard extends StatelessWidget {
                         child: _buildActionButton(
                           context: context,
                           icon: Icons.chat_bubble_outline,
-                          label: 'Message Store',
+                          label: 'Message Patient',
                           onPressed: onChat,
                           backgroundColor: colorScheme.primaryContainer,
                           textColor: colorScheme.onPrimaryContainer,
@@ -135,29 +166,49 @@ class OrderedMedicinesCard extends StatelessWidget {
                   const SizedBox(height: 8),
 
                   if (showActions)
-                    Row(
+                    Column(
                       children: [
-                        Expanded(
-                          child: _buildActionButton(
-                            context: context,
-                            icon: Icons.cancel_outlined,
-                            label: 'Cancel Order',
-                            onPressed: onCancel,
-                            backgroundColor: colorScheme.errorContainer,
-                            textColor: colorScheme.onErrorContainer,
+                        if (order['status'] == 'Pending')
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildActionButton(
+                                  context: context,
+                                  icon: Icons.check_circle_outline,
+                                  label: 'Accept Order',
+                                  onPressed: onAccept,
+                                  backgroundColor: Colors.green,
+                                  textColor: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _buildActionButton(
+                                  context: context,
+                                  icon: Icons.cancel_outlined,
+                                  label: 'Reject Order',
+                                  onPressed: onCancel,
+                                  backgroundColor: colorScheme.errorContainer,
+                                  textColor: colorScheme.onErrorContainer,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildActionButton(
-                            context: context,
-                            icon: Icons.check_circle_outlined,
-                            label: 'Mark Complete',
-                            onPressed: onComplete,
-                            backgroundColor: colorScheme.tertiaryContainer,
-                            textColor: colorScheme.onTertiaryContainer,
+                        if (order['status'] == 'Preparing')
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildActionButton(
+                                  context: context,
+                                  icon: Icons.delivery_dining,
+                                  label: 'Mark as Delivered',
+                                  onPressed: onComplete,
+                                  backgroundColor: Colors.teal,
+                                  textColor: Colors.white,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
                       ],
                     ),
                 ],
@@ -263,12 +314,10 @@ class OrderedMedicinesCard extends StatelessWidget {
         return Colors.blue;
       case 'completed':
         return Colors.green;
-      case 'cancelled':
-        return Colors.red;
-      case 'in progress':
-        return Colors.purple;
       case 'delivered':
         return Colors.teal;
+      case 'cancelled':
+        return Colors.red;
       default:
         return Colors.grey;
     }

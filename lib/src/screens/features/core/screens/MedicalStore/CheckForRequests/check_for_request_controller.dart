@@ -38,6 +38,7 @@ class CheckForRequestsController extends GetxController {
   }
 
   void startPolling() {
+    fetchActiveRequests();
     pollingTimer = Timer.periodic(Duration(seconds: 10), (_) {
       fetchActiveRequests();
     });
@@ -124,7 +125,7 @@ class CheckForRequestsController extends GetxController {
       final deliveryTime = (storeLocation != null && patientLocation != null)
           ? calculateDeliveryTime(patientLocation, storeLocation)
           : '30-45 min';
-
+       print('=================================> $deliveryFee');
       final bidData = {
         'storeName': storeName,
         'storeEmail': medicalStore.value?.userEmail ?? '',

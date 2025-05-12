@@ -9,7 +9,6 @@ import '../../../../../../repository/user_repository/user_repository.dart';
 import '../../../../authentication/models/chat_user_model.dart';
 
 class MyOrdersScreenMedicineController extends GetxController {
-
   final Logger _logger = Logger();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   var totalReceivedOrdersCount = 0.obs;
@@ -19,7 +18,7 @@ class MyOrdersScreenMedicineController extends GetxController {
     super.onInit();
     fetchTotalMedicineOrdersCount();
   }
-  // Fetch all received bookings count for current nurse (without filtering status)
+
   Future<void> fetchTotalMedicineOrdersCount() async {
     final userEmail = _auth.currentUser?.email;
     if (userEmail == null) {
@@ -29,41 +28,30 @@ class MyOrdersScreenMedicineController extends GetxController {
     }
 
     try {
-      final bookings = await MongoDatabase.patientNurseBookingsCollection?.find(
-        where.eq('patientEmail', userEmail.trim().toLowerCase())
-            .sortBy('bookingDate', descending: false),
+      final bookings = await MongoDatabase.medicalOrdersCollection?.find(
+        where.eq('patientEmail', userEmail.trim().toLowerCase()),
       ).toList();
       totalReceivedOrdersCount.value = bookings?.length ?? 0;
-      print('Total bookings count fetched: ${totalReceivedOrdersCount.value}');
     } catch (e) {
-      print('Error fetching total received bookings count: $e');
+      print('Error fetching total medicine orders count: $e');
       totalReceivedOrdersCount.value = 0;
     }
   }
 
-
-
-  /// Fetch all nurse bookings for a specific patient.
   Future<List<Map<String, dynamic>>> fetchOrderedMedicines(String patientEmail) async {
     try {
-      debugPrint('Fetching all nurse bookings for: $patientEmail');
       final bookings = await MongoDatabase.medicalOrdersCollection?.find(
-        where.eq('patientEmail', patientEmail.trim().toLowerCase())
-            .sortBy('bookingDate', descending: false),
+        where.eq('patientEmail', patientEmail.trim().toLowerCase()),
       ).toList();
-
-      debugPrint('Fetched ${bookings?.length ?? 0} nurse bookings.');
       return bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
     } catch (e, stackTrace) {
-      _logger.e('Error fetching nurse bookings', error: e, stackTrace: stackTrace);
+      _logger.e('Error fetching medicine orders', error: e, stackTrace: stackTrace);
       return [];
     }
   }
 
-  /// Fetch user data from all user collections.
   Future<ChatUserModelMongoDB?> fetchUserData(String email) async {
     try {
-      debugPrint('Fetching user data for: $email');
       final userData = await UserRepository.instance.getUserByEmailFromAllCollections(email);
       return userData != null ? ChatUserModelMongoDB.fromMap(userData) : null;
     } catch (e) {
@@ -72,11 +60,8 @@ class MyOrdersScreenMedicineController extends GetxController {
     }
   }
 
-  /// Update booking status (generic).
   Future<bool> updateOrderStatus(dynamic bookingId, String newStatus) async {
     try {
-      debugPrint('Updating booking [$bookingId] to status: $newStatus');
-
       final id = _parseObjectId(bookingId);
       final result = await MongoDatabase.medicalOrdersCollection?.updateOne(
         where.id(id),
@@ -84,109 +69,80 @@ class MyOrdersScreenMedicineController extends GetxController {
             .set('status', newStatus)
             .set('updatedAt', DateTime.now()),
       );
-
-      debugPrint('Update result: ${result?.isSuccess}');
       return result?.isSuccess ?? false;
     } catch (e, stackTrace) {
-      _logger.e('Error updating booking status', error: e, stackTrace: stackTrace);
+      _logger.e('Error updating order status', error: e, stackTrace: stackTrace);
       return false;
     }
   }
+
   Future<bool> deleteOrder(dynamic bookingId) async {
     try {
-      debugPrint('Deleting booking [$bookingId]');
-
       final id = _parseObjectId(bookingId);
       final result = await MongoDatabase.medicalOrdersCollection?.deleteOne(
         where.id(id),
       );
-
-      debugPrint('Delete result: ${result?.isSuccess}');
       return result?.isSuccess ?? false;
     } catch (e, stackTrace) {
-      _logger.e('Error deleting booking', error: e, stackTrace: stackTrace);
+      _logger.e('Error deleting order', error: e, stackTrace: stackTrace);
       return false;
     }
   }
 
-  /// Cancel a booking
   Future<bool> cancelOrder(dynamic bookingId) async {
     return await deleteOrder(bookingId);
   }
 
-  /// Complete a booking
   Future<bool> completeOrder(dynamic bookingId) async {
     return await updateOrderStatus(bookingId, 'Completed');
   }
 
-  /// Get detailed info about a specific booking
   Future<Map<String, dynamic>?> getOrderDetails(dynamic bookingId) async {
     try {
-      debugPrint('Getting booking details for: $bookingId');
       final id = _parseObjectId(bookingId);
       final booking = await MongoDatabase.medicalOrdersCollection?.findOne(where.id(id));
-      if (booking != null) {
-        debugPrint('Booking found: ${booking['_id']}');
-        return _sanitizeBookingData(booking);
-      } else {
-        debugPrint('No booking found with ID: $bookingId');
-        return null;
-      }
+      return booking != null ? _sanitizeBookingData(booking) : null;
     } catch (e, stackTrace) {
-      _logger.e('Error getting booking details', error: e, stackTrace: stackTrace);
+      _logger.e('Error getting order details', error: e, stackTrace: stackTrace);
       return null;
     }
   }
 
-  /// Get upcoming bookings (not completed or cancelled)
   Future<List<Map<String, dynamic>>> getUpcomingOrders(String patientEmail) async {
     try {
-      debugPrint('Fetching upcoming bookings for: $patientEmail');
       final bookings = await MongoDatabase.medicalOrdersCollection?.find(
         where.eq('patientEmail', patientEmail.trim().toLowerCase())
             .ne('status', 'Completed')
-            .ne('status', 'Cancelled')
-            .sortBy('bookingDate', descending: false),
+            .ne('status', 'Cancelled'),
       ).toList();
-
-      debugPrint('Upcoming bookings count: ${bookings?.length ?? 0}');
       return bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
     } catch (e, stackTrace) {
-      _logger.e('Error fetching upcoming bookings', error: e, stackTrace: stackTrace);
+      _logger.e('Error fetching upcoming orders', error: e, stackTrace: stackTrace);
       return [];
     }
   }
 
-  /// Get past bookings (completed or cancelled)
   Future<List<Map<String, dynamic>>> getPastOrders(String patientEmail) async {
     try {
-      debugPrint('Fetching past bookings for: $patientEmail');
-      final bookings = await MongoDatabase.patientNurseBookingsCollection?.find(
+      final bookings = await MongoDatabase.medicalOrdersCollection?.find(
         where.eq('patientEmail', patientEmail.trim().toLowerCase())
             .or([
           where.eq('status', 'Completed'),
           where.eq('status', 'Cancelled'),
-        ] as SelectorBuilder)
-            .sortBy('bookingDate', descending: true),
+        ] as SelectorBuilder),
       ).toList();
-
-      debugPrint('Past bookings count: ${bookings?.length ?? 0}');
       return bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
     } catch (e, stackTrace) {
-      _logger.e('Error fetching past bookings', error: e, stackTrace: stackTrace);
+      _logger.e('Error fetching past orders', error: e, stackTrace: stackTrace);
       return [];
     }
   }
 
-  /// Parse different ObjectId formats
   ObjectId _parseObjectId(dynamic id) {
     try {
       if (id is ObjectId) return id;
       if (id is String) {
-        // Remove any quotes or ObjectId wrapper if present
         String cleanedId = id.replaceAll('ObjectId("', '').replaceAll('")', '').trim();
-
-        // Check if the string is a valid 24-character hex string
         if (cleanedId.length == 24 && RegExp(r'^[0-9a-fA-F]{24}$').hasMatch(cleanedId)) {
           return ObjectId.fromHexString(cleanedId);
         }
@@ -198,28 +154,23 @@ class MyOrdersScreenMedicineController extends GetxController {
     }
   }
 
-  /// Sanitize and format the booking data
   Map<String, dynamic> _sanitizeBookingData(Map<String, dynamic> booking) {
     return {
       '_id': booking['_id'],
-      'bookingId': booking['bookingId'] ?? '',
-      'patientId': booking['patientId'] ?? '',
-      'patientName': booking['patientName'] ?? 'Unknown Patient',
+      'requestId': booking['requestId'] ?? '',
+      'bidId': booking['bidId'] ?? '',
       'patientEmail': booking['patientEmail']?.toString().toLowerCase() ?? '',
-      'nurseEmail': booking['storeEmail']?.toString().toLowerCase() ?? '',
-      'nurseName': booking['StoreName'] ?? 'Unknown Store',
+      'storeName': booking['storeName'] ?? 'Unknown Store',
+      'storeEmail': booking['storeEmail']?.toString().toLowerCase() ?? '',
+      'finalAmount': _parsePrice(booking['finalAmount']),
       'status': (booking['status'] ?? 'Pending').toString(),
-      'price': _parsePrice(booking['price']),
-      'bookingDate': booking['bookingDate']?.toString() ?? '',
-      'duration': booking['duration'] ?? '1 hour',
-      'address': booking['address'] ?? 'No address provided',
-      'location': booking['location'] ?? '',
-      'createdAt': booking['createdAt']?.toString() ?? '',
-      'bids': booking['bids'] ?? [],
+      'distance': booking['distance'] ?? '0m',
+      'createdAt': _parseDate(booking['createdAt']),
+      'expectedDeliveryTime': _parseDate(booking['expectedDeliveryTime']),
+      'deliveryTime': booking['deliveryTime'] ?? '',
     };
   }
 
-  /// Parse price from different formats
   double _parsePrice(dynamic price) {
     try {
       if (price is num) return price.toDouble();
@@ -230,6 +181,19 @@ class MyOrdersScreenMedicineController extends GetxController {
       return 0.0;
     } catch (e) {
       return 0.0;
+    }
+  }
+
+  String _parseDate(dynamic date) {
+    try {
+      if (date is String) return date;
+      if (date is Map && date['\$date'] != null) {
+        final milliseconds = date['\$date']['\$numberLong'];
+        return DateTime.fromMillisecondsSinceEpoch(int.parse(milliseconds)).toString();
+      }
+      return date?.toString() ?? '';
+    } catch (e) {
+      return '';
     }
   }
 }

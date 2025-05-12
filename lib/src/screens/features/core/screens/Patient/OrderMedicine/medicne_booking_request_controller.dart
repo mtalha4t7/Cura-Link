@@ -150,7 +150,6 @@ class MedicalStoreController extends GetxController {
 
   Future<void> acceptBid(String bidId, String patientEmail) async {
     try {
-
       // 1. Update bid status
       final result = await MongoDatabase.medicalBidsCollection?.updateOne(
         where.eq('requestId', bidId),
@@ -163,6 +162,9 @@ class MedicalStoreController extends GetxController {
       final bid = await MongoDatabase.medicalBidsCollection?.findOne(
         where.eq('requestId', bidId),
       );
+    final patient= await MongoDatabase.userPatientCollection?.findOne(
+        where.eq('userEmail', patientEmail),
+      );
 
       print(bidId); // Prints String
       print(bid);   // Should not be null
@@ -172,32 +174,45 @@ class MedicalStoreController extends GetxController {
       final requestId = bid['requestId'];
       final storeEmail = bid['storeEmail'];
       final bidAmount = bid['totalPrice'];
-      final storeName= bid['storedName'];
-      final patientName= bid['patientName'];
-      final storeLocation= bid['storeLocation'];
+      final storeName = bid['storeName'];
+      final distance = bid['Distance'];
+      final deliveryTimeString = bid['deliveryTime'];
+      final patientName= patient!['userName'];
+
+
+      // Parse the delivery time string to get minutes
+      final minutes = _parseDeliveryTime(deliveryTimeString);
+
+      // Calculate expected delivery time (current time + parsed minutes)
+      final createdAt = DateTime.now().toUtc();
+      final expectedDeliveryTime = createdAt.add(Duration(minutes: minutes));
 
       // 3. Update medical request status
       await MongoDatabase.medicalRequestsCollection?.updateOne(
-        where.eq('_id', cleanObjectId(requestId)), // ✅ Same here
+        where.eq('_id', cleanObjectId(requestId)),
         modify
           ..set('status', 'accepted')
           ..set('acceptedBidId', bidId)
           ..set('acceptedAmount', bidAmount),
       );
 
-     final patientLocation = await MongoDatabase.getLocationByEmail(patientEmail);
+      final patientLocation = await MongoDatabase.getLocationByEmail(patientEmail);
+
       // 4. Insert order
       final orderData = {
         'requestId': requestId,
         'bidId': bidId,
-        'patientLocation':patientLocation,
-        'storeLocation':storeLocation,
+        'patientLocation': patientLocation,
+        'distance': distance,
         'patientEmail': patientEmail,
-        'storeName':storeName,
+        'patientName':patientName,
+        'storeName': storeName,
         'storeEmail': storeEmail,
         'finalAmount': bidAmount,
         'status': 'preparing',
-        'createdAt': DateTime.now().toUtc(),
+        'createdAt': createdAt,
+        'expectedDeliveryTime': expectedDeliveryTime,
+        'deliveryTime': deliveryTimeString, // Keep the original string format
       };
 
       await MongoDatabase.medicalOrdersCollection?.insertOne(orderData);
@@ -210,7 +225,18 @@ class MedicalStoreController extends GetxController {
     }
   }
 
-// Add this method to your CheckForRequestsController
+  // Helper function to parse delivery time string (e.g., "16 mins" → 16)
+  int _parseDeliveryTime(String deliveryTime) {
+    try {
+      // Remove all non-digit characters and parse to int
+      final minutes = int.parse(deliveryTime.replaceAll(RegExp(r'[^0-9]'), ''));
+      return minutes;
+    } catch (e) {
+      print('Error parsing delivery time, defaulting to 30 minutes: $e');
+      return 30; // Default fallback value
+    }
+  }
+
 
 
 

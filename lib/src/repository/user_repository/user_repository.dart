@@ -798,7 +798,7 @@ class UserRepository extends GetxController {
   Future<int?> getLabVerification(String email) => getVerification(email: email, collection: _labCollection);
   Future<String?> getLabUserName(String email) => getFullNameByEmail(email: email, collection: _labCollection);
   Future<String?> getLabUserPhone(String email) => getPhoneNumberByEmail(email: email, collection: _labCollection);
-
+  Future<String?> getStoreUserName(String email) => getFullNameByEmail(email: email, collection: _medicalStoreCollection);
   // Nurse-specific methods
   Future<void> createNurseUser(Map<String, dynamic> data) => createUser(userData: data, collection: _nurseCollection);
   Future<Map<String, dynamic>?> getNurseUserByEmail(String email) => getUserByEmail(email: email, collection: _nurseCollection);

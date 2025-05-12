@@ -1,5 +1,6 @@
 import 'package:cura_link/src/screens/features/core/screens/MedicalStore/CheckForRequests/check_for_requests.dart';
 import 'package:cura_link/src/screens/features/core/screens/MedicalStore/MedicalStoreProfile/MedicalStore_Profile_Screen.dart';
+import 'package:cura_link/src/screens/features/core/screens/MedicalStore/MyPendingAndCompletedOrders/pending_orders_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -22,6 +23,7 @@ class MedicalStoreDashboard extends StatefulWidget {
 class _MedicalStoreDashboardState extends State<MedicalStoreDashboard> {
   final MedicalStoreDashboardController controller = Get.find();
   bool isVerified = false;
+  final storeEmail=FirebaseAuth.instance.currentUser?.email;
 
   @override
   void initState() {
@@ -258,7 +260,9 @@ class _MedicalStoreDashboardState extends State<MedicalStoreDashboard> {
                           ServiceCard(
                             icon: Icons.pending_actions,
                             title: 'Pending Orders',
-                            onTap: () {},
+                            onTap: () {
+                              Get.to(() => PendingOrdersScreen(storeEmail: storeEmail!));
+                            },
                           ),
                           ServiceCard(
                             icon: Icons.local_shipping,
