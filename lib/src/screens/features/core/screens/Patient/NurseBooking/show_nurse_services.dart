@@ -177,19 +177,7 @@ class _ShowNurseServicesState extends State<ShowNurseServices> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: subItems.map((subItem) => InkWell(
-                            onTap: () async {
-                              final prefs = await SharedPreferences.getInstance();
-                              if (prefs.containsKey('nurseRequestId')) {
-                                _showExistingRequestDialog(context, prefs, subItem['name'],subItem['price']);
-                              } else {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => NurseBookingScreen(selectedServiceName: subItem['name'],selectedServicePrice: subItem['price'].toString()),
-                                  ),
-                                );
-                              }
-                            },
+                            onTap: () => _confirmServiceSelection(context, subItem['name'], subItem['price']),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               child: Row(
@@ -236,7 +224,44 @@ class _ShowNurseServicesState extends State<ShowNurseServices> {
     );
   }
 
-  void _showExistingRequestDialog(BuildContext context, SharedPreferences prefs, String serviceName,String servicePrice) {
+  void _confirmServiceSelection(BuildContext context, String serviceName, int servicePrice) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Service'),
+        content: Text('Are you sure you want to choose "$serviceName"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Yes'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.containsKey('nurseRequestId')) {
+        _showExistingRequestDialog(context, prefs, serviceName, servicePrice.toString());
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => NurseBookingScreen(
+              selectedServiceName: serviceName,
+              selectedServicePrice: servicePrice.toString(),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showExistingRequestDialog(BuildContext context, SharedPreferences prefs, String serviceName, String servicePrice) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -249,7 +274,7 @@ class _ShowNurseServicesState extends State<ShowNurseServices> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const NurseBookingScreen(selectedServiceName: '',selectedServicePrice: ''),
+                  builder: (_) => const NurseBookingScreen(selectedServiceName: '', selectedServicePrice: ''),
                 ),
               );
             },
@@ -265,7 +290,10 @@ class _ShowNurseServicesState extends State<ShowNurseServices> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => NurseBookingScreen(selectedServiceName: serviceName,selectedServicePrice:servicePrice),
+                  builder: (_) => NurseBookingScreen(
+                    selectedServiceName: serviceName,
+                    selectedServicePrice: servicePrice,
+                  ),
                 ),
               );
             },
