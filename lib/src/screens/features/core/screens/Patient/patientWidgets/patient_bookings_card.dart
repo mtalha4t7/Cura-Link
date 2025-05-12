@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../MyBookings/MyBooking_widgets/RatingButton.dart';
 
-
 class MessageButton extends StatelessWidget {
   final VoidCallback onPressed;
 
@@ -29,7 +28,7 @@ class MessageButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
+            const Icon(
               Icons.chat,
               color: Colors.white,
               size: 20,
@@ -106,7 +105,8 @@ class PatientBookingsCard extends StatelessWidget {
   final VoidCallback onReject;
   final VoidCallback onModify;
   final VoidCallback onMessage;
-  final VoidCallback onRate;
+  final VoidCallback? onRate;
+  final bool hasRating;
   final bool showAcceptButton;
 
   const PatientBookingsCard({
@@ -122,6 +122,7 @@ class PatientBookingsCard extends StatelessWidget {
     required this.onModify,
     required this.onMessage,
     required this.onRate,
+    required this.hasRating,
     required this.showAcceptButton,
   });
 
@@ -181,23 +182,21 @@ class PatientBookingsCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-
             MessageButton(onPressed: onMessage),
             const SizedBox(height: 12),
-
-            RateButton(
-              enabled: isAccepted,
-              onPressed: onRate,
-            ),
-            const SizedBox(height: 12),
-
+            if (isAccepted)
+              RateButton(
+                enabled: !hasRating && onRate != null,
+                onPressed: hasRating ? null : onRate,
+              ),
+            if (isAccepted) const SizedBox(height: 12),
             if (status == 'Pending' || status == 'Modified')
               Row(
-                mainAxisAlignment: MainAxisAlignment.center, // Center the buttons
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  if (showAcceptButton) // Show Accept only if Modified
+                  if (showAcceptButton)
                     Padding(
-                      padding: const EdgeInsets.only(right: 8), // Add spacing between buttons
+                      padding: const EdgeInsets.only(right: 8),
                       child: CustomButton(
                         text: 'Accept',
                         backgroundColor: Colors.green,
@@ -206,7 +205,7 @@ class PatientBookingsCard extends StatelessWidget {
                       ),
                     ),
                   Padding(
-                    padding: const EdgeInsets.only(right: 8), // Spacing between Reject & Modify
+                    padding: const EdgeInsets.only(right: 8),
                     child: CustomButton(
                       text: 'Reject',
                       backgroundColor: Colors.red,
@@ -238,6 +237,8 @@ class PatientBookingsCard extends StatelessWidget {
         return isDark ? Colors.orangeAccent : Colors.orange;
       case 'modified':
         return isDark ? Colors.amberAccent : Colors.amber;
+      case 'completed':
+        return Colors.purple;
       default:
         return isDark ? Colors.white70 : Colors.black54;
     }

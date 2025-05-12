@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-
 class RateButton extends StatelessWidget {
   final bool enabled;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   const RateButton({super.key, required this.enabled, required this.onPressed});
 
@@ -28,10 +27,14 @@ class RateButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.star, color: Colors.white, size: 20),
+            Icon(
+              Icons.star,
+              color: enabled ? Colors.amber : Colors.white,
+              size: 20,
+            ),
             const SizedBox(width: 8),
             Text(
-              enabled ? 'Rate Lab' : 'Accept to Rate',
+              enabled ? 'Rate Lab' : 'Already Rated',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 14,

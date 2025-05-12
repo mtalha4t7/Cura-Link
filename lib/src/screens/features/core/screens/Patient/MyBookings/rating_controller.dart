@@ -1,10 +1,10 @@
 import 'package:bson/bson.dart';
-
+import 'package:flutter/cupertino.dart';
 import '../../../../../../mongodb/mongodb.dart';
 import '../../../models/lab_Rating_Model.dart';
 
 class RatingsController {
-  static Future<void> submitRating({
+  static Future<bool> submitRating({
     required String labEmail,
     required String userEmail,
     required double rating,
@@ -12,14 +12,13 @@ class RatingsController {
     required ObjectId bookingId,
   }) async {
     try {
-      // Prevent duplicate rating
+      // Check if rating already exists
       final existing = await MongoDatabase.labRatingsCollection.findOne({
         'bookingId': bookingId,
-        'userEmail': userEmail,
       });
 
       if (existing != null) {
-        throw Exception('Rating already submitted for this booking.');
+        return false; // Rating already exists
       }
 
       final labRating = LabRating(
@@ -32,8 +31,22 @@ class RatingsController {
       );
 
       await MongoDatabase.insertLabRating(labRating.toJson());
+      return true; // Success
     } catch (e) {
-      throw Exception('Failed to submit rating: $e');
+      debugPrint('Failed to submit rating: $e');
+      return false; // Failure
+    }
+  }
+
+  static Future<bool> hasRatingForBooking(ObjectId bookingId) async {
+    try {
+      final existing = await MongoDatabase.labRatingsCollection.findOne({
+        'bookingId': bookingId,
+      });
+      return existing != null;
+    } catch (e) {
+      debugPrint('Error checking rating: $e');
+      return false;
     }
   }
 }

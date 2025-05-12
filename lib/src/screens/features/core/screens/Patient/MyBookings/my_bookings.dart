@@ -4,6 +4,7 @@ import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidge
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import '../../../../../../mongodb/mongodb.dart';
 import '../../../../../../repository/user_repository/user_repository.dart';
 import '../../../../authentication/models/chat_user_model.dart';
 import '../PatientChat/chat_screen.dart';
@@ -18,6 +19,35 @@ class MyBookingsScreen extends StatefulWidget {
 
 class _MyBookingsScreenState extends State<MyBookingsScreen> {
   final MyBookingsController _controller = MyBookingsController();
+  final Map<ObjectId, bool> _hasRatingCache = {};
+  List<Map<String, dynamic>> _bookings = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBookingsAndRatings();
+  }
+
+  Future<void> _loadBookingsAndRatings() async {
+    try {
+      final bookings = await _controller.fetchUserBookings();
+      final ratingStatuses = await Future.wait(
+        bookings.map((b) => _checkIfRatingExists(b['_id'])),
+      );
+
+      setState(() {
+        _bookings = bookings;
+        for (int i = 0; i < bookings.length; i++) {
+          _hasRatingCache[bookings[i]['_id']] = ratingStatuses[i];
+        }
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showSnackBar('Failed to load bookings: ${e.toString()}');
+    }
+  }
 
   String formatDate(String rawDate) {
     try {
@@ -65,8 +95,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           ),
         ],
       ),
-    ) ??
-        false;
+    ) ?? false;
   }
 
   @override
@@ -91,61 +120,69 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                 style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
             Expanded(
-              child: FutureBuilder<List<Map<String, dynamic>>>( // Fetch bookings data
-                future: _controller.fetchUserBookings(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(
-                      child: Text(
-                        'No bookings found.',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: isDarkTheme ? Colors.white54 : Colors.black54,
-                        ),
-                      ),
+              child: RefreshIndicator(
+                onRefresh: _loadBookingsAndRatings,
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _bookings.isEmpty
+                    ? Center(
+                  child: Text(
+                    'No bookings found.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: isDarkTheme ? Colors.white54 : Colors.black54,
+                    ),
+                  ),
+                )
+                    : ListView.builder(
+                  itemCount: _bookings.length,
+                  itemBuilder: (context, index) {
+                    final booking = _bookings[index];
+                    final price = booking['price']?.toString() ?? '0.0';
+                    final bookingId = booking['_id'];
+                    final hasRating = _hasRatingCache[bookingId] ?? false;
+                    final canRate = booking['status'] == 'Accepted' && !hasRating;
+
+                    return PatientBookingsCard(
+                      labUserName: booking['labUserName'] ?? 'Unknown Lab',
+                      testName: booking['testName'] ?? 'Unknown Test',
+                      bookingDate: formatDate(
+                          booking['bookingDate'] ?? DateTime.now().toString()),
+                      status: booking['status'] ?? 'Pending',
+                      price: price,
+                      isDark: isDarkTheme,
+                      onAccept: () => _handleAccept(booking),
+                      onReject: () => _handleReject(booking),
+                      onModify: () => _handleModify(booking),
+                      onMessage: () => _handleMessage(booking),
+                      hasRating: hasRating,
+                      onRate: canRate
+                          ? () => _showRatingDialog(
+                        context,
+                        booking['labUserEmail'],
+                        booking['patientUserEmail'],
+                        bookingId,
+                      )
+                          : null,
+                      showAcceptButton: booking['status'] == 'Modified' &&
+                          booking['lastModifiedBy'] == 'lab',
                     );
-                  }
-
-                  final bookings = snapshot.data!;
-                  return ListView.builder(
-                    itemCount: bookings.length,
-                    itemBuilder: (context, index) {
-                      final booking = bookings[index];
-                      final price = booking['price']?.toString() ?? '0.0';
-
-                      // Pass showAcceptButton based on the booking status
-                      return PatientBookingsCard(
-                        labUserName: booking['labUserName'] ?? 'Unknown Lab',
-                        testName: booking['testName'] ?? 'Unknown Test',
-                        bookingDate: formatDate(booking['bookingDate'] ?? DateTime.now().toString()),
-                        status: booking['status'] ?? 'Pending',
-                        price: price,
-                        isDark: isDarkTheme,
-                        onAccept: () => _handleAccept(booking),
-                        onReject: () => _handleReject(booking),
-                        onModify: () => _handleModify(booking),
-                        onMessage: () => _handleMessage(booking),
-                        onRate: () => _showRatingDialog(
-                          context,
-                          booking['labUserEmail'],
-                          booking['patientUserEmail'],
-                          booking['_id'],
-                        ),
-                        showAcceptButton: booking['status'] == 'Modified' &&
-                            booking['lastModifiedBy'] == 'lab', // Show button only for 'Modified' status
-                      );
-                    },
-                  );
-                },
+                  },
+                ),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<bool> _checkIfRatingExists(ObjectId bookingId) async {
+    if (_hasRatingCache.containsKey(bookingId)) {
+      return _hasRatingCache[bookingId]!;
+    }
+    final hasRating = await RatingsController.hasRatingForBooking(bookingId);
+    _hasRatingCache[bookingId] = hasRating;
+    return hasRating;
   }
 
   Future<void> _handleAccept(Map<String, dynamic> booking) async {
@@ -162,7 +199,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           'Accepted',
           lastModifiedBy: 'patient',
         );
-        setState(() {});
+        await _loadBookingsAndRatings();
       }
     } else {
       _showSnackBar('You can only accept when booking is modified by Lab');
@@ -179,7 +216,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       );
       if (confirmed) {
         await _controller.rejectAndDeleteBooking(booking['bookingId']);
-        setState(() {});
+        await _loadBookingsAndRatings();
       }
     } else {
       _showSnackBar('Once accepted, you cannot cancel the booking');
@@ -247,7 +284,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           lastModifiedBy: 'patient',
         );
 
-        setState(() {});
+        await _loadBookingsAndRatings();
       }
     }
   }
@@ -255,6 +292,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   void _showRatingDialog(BuildContext context, String labEmail, String patientEmail, ObjectId bookingId) {
     double rating = 3.0;
     final TextEditingController reviewController = TextEditingController();
+    bool isSubmitting = false;
 
     showDialog(
       context: context,
@@ -273,11 +311,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                 allowHalfRating: true,
                 itemCount: 5,
                 itemBuilder: (context, _) => const Icon(Icons.star, color: Colors.amber),
-                onRatingUpdate: (newRating) {
-                  setState(() {
-                    rating = newRating;
-                  });
-                },
+                onRatingUpdate: (newRating) => rating = newRating,
               ),
               const SizedBox(height: 10),
               TextField(
@@ -292,31 +326,43 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            TextButton(
+              onPressed: isSubmitting ? null : () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
             ElevatedButton(
-              child: const Text('Submit'),
-              onPressed: () async {
+              onPressed: isSubmitting ? null : () async {
                 final review = reviewController.text.trim();
                 if (review.isEmpty) {
                   _showSnackBar('Please write a review before submitting');
                   return;
                 }
 
-                try {
-                  await RatingsController.submitRating(
-                    labEmail: labEmail,
-                    userEmail: patientEmail,
-                    rating: rating,
-                    review: review,
-                    bookingId: bookingId,
-                  );
-                  Navigator.pop(context);
-                  _showSnackBar('Thanks for your rating!');
-                } catch (e) {
-                  Navigator.pop(context);
-                  _showSnackBar('Error: ${e.toString()}');
+                setState(() => isSubmitting = true);
+
+                final success = await RatingsController.submitRating(
+                  labEmail: labEmail,
+                  userEmail: patientEmail,
+                  rating: rating,
+                  review: review,
+                  bookingId: bookingId,
+                );
+
+                if (mounted) {
+                  setState(() => isSubmitting = false);
+                  if (success) {
+                    _hasRatingCache[bookingId] = true;
+                    Navigator.pop(context);
+                    _showSnackBar('Thanks for your rating!');
+                    await _loadBookingsAndRatings();
+                  } else {
+                    _showSnackBar('This booking has already been rated');
+                  }
                 }
               },
+              child: isSubmitting
+                  ? const CircularProgressIndicator()
+                  : const Text('Submit'),
             ),
           ],
         ),

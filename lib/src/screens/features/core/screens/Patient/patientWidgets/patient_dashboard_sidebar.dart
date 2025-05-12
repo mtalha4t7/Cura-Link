@@ -42,24 +42,7 @@ class PatientDashboardSidebar extends StatelessWidget {
                       builder: (context) => const PatientProfileScreen()));
             },
           ),
-          ListTile(
-            leading: Icon(Icons.shopping_bag,
-                color: isDark ? Colors.white : Colors.black),
-            title: Text('Shop',
-                style: TextStyle(color: isDark ? Colors.white : Colors.black)),
-            onTap: () {
-              Get.toNamed('/shop');
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.favorite,
-                color: isDark ? Colors.white : Colors.black),
-            title: Text('Wishlist',
-                style: TextStyle(color: isDark ? Colors.white : Colors.black)),
-            onTap: () {
-              Get.toNamed('/wishlist');
-            },
-          ),
+
         ],
       ),
     );
