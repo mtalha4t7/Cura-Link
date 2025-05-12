@@ -20,12 +20,10 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
   final MyBookedNursesController _controller = MyBookedNursesController();
   late Future<List<Map<String, dynamic>>> _bookingsFuture;
   String _currentFilter = 'upcoming';
-  late final String email;
 
   @override
   void initState() {
     super.initState();
-    email = widget.patientEmail;
     _loadBookings();
   }
 
@@ -62,11 +60,9 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
     if (user != null && mounted) {
       Get.to(() => ChatScreen(user: user));
     } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not fetch user data for chat')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not fetch user data for chat')),
+      );
     }
   }
 
@@ -91,7 +87,7 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
 
     if (confirmed == true && mounted) {
       final success = await _controller.cancelBooking(bookingId);
-      if (success && mounted) {
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Booking cancelled successfully')),
         );
@@ -111,8 +107,19 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
   }
 
   Future<void> _showRatingDialog(Map<String, dynamic> booking) async {
+    final bookingId = booking['_id'].toString();
+    final alreadyRated = await _controller.hasRatingForBooking(bookingId);
+
+    if (alreadyRated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You already rated this booking')),
+      );
+      return;
+    }
+
     double rating = 0;
-    TextEditingController reviewController = TextEditingController();
+    final TextEditingController reviewController = TextEditingController();
+    bool isSubmitting = false;
 
     await showDialog(
       context: context,
@@ -130,11 +137,7 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(5, (index) {
                       return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            rating = index + 1.0;
-                          });
-                        },
+                        onTap: () => setState(() => rating = index + 1.0),
                         child: Icon(
                           index < rating ? Icons.star : Icons.star_border,
                           color: Colors.amber,
@@ -162,19 +165,26 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
                 TextButton(
                   onPressed: () async {
                     if (rating > 0) {
+                      setState(() => isSubmitting = true);
+
                       final success = await _controller.submitRating(
-                        bookingId: booking['_id'].toString(),
+                        bookingId: bookingId,
                         nurseEmail: booking['nurseEmail'],
                         userEmail: widget.patientEmail,
                         rating: rating,
                         review: reviewController.text,
                       );
 
-                      if (success && mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Thank you for your rating!')),
-                        );
-                        Navigator.pop(context);
+                      if (mounted) {
+                        setState(() => isSubmitting = false);
+
+                        if (success) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Thank you for your rating!')),
+                          );
+                          Navigator.pop(context);
+                          _loadBookings();
+                        }
                       }
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -182,7 +192,9 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
                       );
                     }
                   },
-                  child: const Text('Submit'),
+                  child: isSubmitting
+                      ? const CircularProgressIndicator()
+                      : const Text('Submit'),
                 ),
               ],
             );
@@ -211,14 +223,8 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
             child: DropdownButton<String>(
               value: _currentFilter,
               items: const [
-                DropdownMenuItem(
-                  value: 'upcoming',
-                  child: Text('Upcoming'),
-                ),
-                DropdownMenuItem(
-                  value: 'past',
-                  child: Text('Past'),
-                ),
+                DropdownMenuItem(value: 'upcoming', child: Text('Upcoming')),
+                DropdownMenuItem(value: 'past', child: Text('Past')),
               ],
               onChanged: (value) {
                 if (value != null) {
@@ -243,12 +249,8 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _currentFilter == 'upcoming'
-                  ? "Upcoming Appointments"
-                  : "Past Appointments",
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              _currentFilter == 'upcoming' ? "Upcoming Appointments" : "Past Appointments",
+              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Expanded(
@@ -257,43 +259,50 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return Center(
-                      child: Text('Error: ${snapshot.error}'),
-                    );
-                  } else if (snapshot.hasData) {
-                    final bookings = snapshot.data!;
-                    if (bookings.isEmpty) {
-                      return Center(
-                        child: Text(
-                          'No ${_currentFilter} appointments found.',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: isDarkTheme ? Colors.white70 : Colors.black54,
-                          ),
+                      child: Text(
+                        'No ${_currentFilter} appointments found.',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: isDarkTheme ? Colors.white70 : Colors.black54,
                         ),
-                      );
-                    }
-                    return ListView.separated(
-                      itemCount: bookings.length,
-                      separatorBuilder: (context, index) =>
-                      const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final booking = bookings[index];
-                        return MyBookedNursesCard(
-                          booking: booking,
-                          isDark: isDarkTheme,
-                          onChat: () => _startChat(booking['nurseEmail']),
-                          onLocation: () => _launchMaps(booking['location']),
-                          formattedDate: _formatDate(booking['createdAt']),
-                          showActions: _currentFilter == 'upcoming',
-                          onCancel: () => _cancelBooking(booking['_id'].toString()),
-                          onComplete: () => _completeBooking(booking['_id'].toString()),
-                          onRate: () => _showRatingDialog(booking),
-                        );
-                      },
+                      ),
                     );
                   }
-                  return const Center(child: Text('No data found.'));
+
+                  final bookings = snapshot.data!;
+                  return ListView.separated(
+                    itemCount: bookings.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final booking = bookings[index];
+                      final bookingId = booking['_id'].toString();
+
+                      return FutureBuilder<bool>(
+                        future: _controller.hasRatingForBooking(bookingId),
+                        builder: (context, ratingSnapshot) {
+                          final hasRated = ratingSnapshot.data ?? false;
+
+                          return MyBookedNursesCard(
+                            booking: booking,
+                            isDark: isDarkTheme,
+                            onChat: () => _startChat(booking['nurseEmail']),
+                            onLocation: () => _launchMaps(booking['address']),
+                            formattedDate: _formatDate(booking['createdAt']),
+                            showActions: _currentFilter == 'upcoming',
+                            onCancel: () => _cancelBooking(bookingId),
+                            onComplete: () => _completeBooking(bookingId),
+                            onRate: () => _showRatingDialog(booking),
+                            hasRated: hasRated,
+                          );
+                        },
+                      );
+                    },
+                  );
                 },
               ),
             ),

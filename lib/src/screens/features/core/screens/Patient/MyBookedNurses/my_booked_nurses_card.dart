@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
- // Make sure this import path is correct
 
 class MyBookedNursesCard extends StatelessWidget {
   final Map<String, dynamic> booking;
@@ -8,10 +7,10 @@ class MyBookedNursesCard extends StatelessWidget {
   final VoidCallback onLocation;
   final String formattedDate;
   final bool showActions;
-
   final VoidCallback onCancel;
   final VoidCallback onComplete;
   final VoidCallback onRate;
+  final bool hasRated;
 
   const MyBookedNursesCard({
     super.key,
@@ -24,6 +23,7 @@ class MyBookedNursesCard extends StatelessWidget {
     required this.onCancel,
     required this.onComplete,
     required this.onRate,
+    required this.hasRated,
   });
 
   @override
@@ -34,9 +34,7 @@ class MyBookedNursesCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 1,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -46,7 +44,6 @@ class MyBookedNursesCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with nurse name and status
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -60,7 +57,6 @@ class MyBookedNursesCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
@@ -79,8 +75,6 @@ class MyBookedNursesCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-
-              // Service Type
               Text(
                 booking['serviceName'] ?? "",
                 style: theme.textTheme.bodyLarge?.copyWith(
@@ -89,8 +83,6 @@ class MyBookedNursesCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // Details Section
               _buildDetailRow(
                 icon: Icons.calendar_today_outlined,
                 title: 'Appointment Date',
@@ -102,13 +94,9 @@ class MyBookedNursesCard extends StatelessWidget {
                 title: 'Price',
                 value: booking['price'].toString(),
               ),
-
               const SizedBox(height: 16),
-
-              // Action Buttons
               Column(
                 children: [
-                  // Primary Actions (Chat and Location)
                   Row(
                     children: [
                       Expanded(
@@ -135,8 +123,6 @@ class MyBookedNursesCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-
-                  // Conditional Action Buttons
                   if (showActions)
                     Row(
                       children: [
@@ -167,9 +153,9 @@ class MyBookedNursesCard extends StatelessWidget {
                     _buildActionButton(
                       context: context,
                       icon: Icons.star_outline,
-                      label: 'Rate Service',
-                      onPressed: onRate,
-                      backgroundColor: Colors.deepPurple.withValues(),
+                      label: hasRated ? 'Already Rated' : 'Rate Service',
+                      onPressed: hasRated ? null : onRate,
+                      backgroundColor: hasRated ? Colors.grey : Colors.deepPurple,
                       textColor: Colors.white,
                     ),
                 ],
@@ -181,7 +167,6 @@ class MyBookedNursesCard extends StatelessWidget {
     );
   }
 
-  // Existing helper methods remain unchanged
   Widget _buildDetailRow({
     required IconData icon,
     required String title,
@@ -222,7 +207,7 @@ class MyBookedNursesCard extends StatelessWidget {
     required BuildContext context,
     required IconData icon,
     required String label,
-    required VoidCallback onPressed,
+    required VoidCallback? onPressed,
     required Color backgroundColor,
     required Color textColor,
   }) {
