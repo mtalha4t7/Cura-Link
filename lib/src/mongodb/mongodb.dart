@@ -32,6 +32,8 @@ class MongoDatabase {
   static DbCollection? _medicalBidsCollection;
  static DbCollection? _medicalRequestsCollection;
 static DbCollection? _medicalOrdersCollection;
+static DbCollection? _completedOrdersCollection;
+
 
 
   // Connect to MongoDB and initialize the collections
@@ -63,6 +65,7 @@ static DbCollection? _medicalOrdersCollection;
       _medicalRequestsCollection = _db!.collection('storeServiceRequests');
       _medicalOrdersCollection = _db!.collection('medicalOrderCollection');
       _nurseRatingCollection = _db!.collection('nurseRating');
+      _completedOrdersCollection = _db!.collection('completedOrders');
 
 
 
@@ -116,6 +119,7 @@ static DbCollection? _medicalOrdersCollection;
   static DbCollection? get  medicalBidsCollection =>  _medicalBidsCollection;
 static DbCollection? get  medicalRequestsCollection =>  _medicalRequestsCollection;
 static DbCollection? get  medicalOrdersCollection =>  _medicalOrdersCollection;
+static DbCollection? get  completedOrdersCollection =>  _completedOrdersCollection;
 
 
 
@@ -138,6 +142,7 @@ static DbCollection? get  medicalOrdersCollection =>  _medicalOrdersCollection;
       _medicalBidsCollection=null;
       _medicalRequestsCollection=null;
       _medicalOrdersCollection=null;
+      _completedOrdersCollection=null;
 
       logger.i('MongoDB connection closed');
     }
