@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../../../stripe/stripe_services.dart';
 import 'ordered_medicines_card.dart';
 import 'my_orders_Medicine_screen_controller.dart';
 
@@ -20,6 +21,7 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
   final MyOrdersScreenMedicineController _controller = MyOrdersScreenMedicineController();
   late Future<List<Map<String, dynamic>>> _ordersFuture;
   String _currentFilter = 'upcoming';
+  String? _selectedPaymentMethod;
 
   @override
   void initState() {
@@ -87,8 +89,31 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
     }
   }
 
-  Future<void> _completeOrder(String orderId) async {
-    final success = await _controller.completeOrder(orderId);
+  Future<void> _completeOrder(String orderId,double totalAmount) async {
+    // Show payment method selection
+    final paymentMethod = await _showPaymentMethodDialog();
+    if (paymentMethod == null) return;
+
+    setState(() => _selectedPaymentMethod = paymentMethod);
+
+    bool paymentSuccess = true;
+
+    if (paymentMethod == 'online') {
+      _showPaymentProcessing();
+      try {
+        paymentSuccess =
+        await StripeService.instance.makePayment(totalAmount.toInt());
+        if (mounted) Navigator.pop(context);
+
+        if (!paymentSuccess) {
+          throw Exception('Payment failed');
+        }
+      } catch (e) {
+        if (mounted) Navigator.pop(context);
+        rethrow;
+      }
+    }
+    final success = await _controller.completeOrder(orderId,paymentMethod);
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Order marked as completed')),
@@ -96,6 +121,54 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
       _loadOrders();
     }
   }
+
+  Future<String?> _showPaymentMethodDialog() async {
+    return await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Payment Method'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.credit_card, color: Colors.blue),
+              title: const Text('Online Payment'),
+              onTap: () => Navigator.pop(context, 'online'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.money, color: Colors.green),
+              title: const Text('Cash Payment'),
+              onTap: () => Navigator.pop(context, 'cash'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPaymentProcessing() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Processing payment...'),
+          ],
+        ),
+      ),
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -191,7 +264,7 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
                           formattedDate: _formatDate(order['expectedDeliveryTime']),
                           showActions: _currentFilter == 'upcoming',
                           onCancel: () => _cancelOrder(order['_id'].toString()),
-                          onComplete: () => _completeOrder(order['_id'].toString()),
+                          onComplete: () => _completeOrder(order['_id'].toString(),order['finalAmount']),
                         );
                       },
                     );

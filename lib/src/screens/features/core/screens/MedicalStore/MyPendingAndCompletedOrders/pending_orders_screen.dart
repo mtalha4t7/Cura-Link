@@ -1,10 +1,8 @@
 import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabChat/chat_screen.dart';
+import 'package:cura_link/src/screens/features/core/screens/MedicalStore/MyPendingAndCompletedOrders/pending_orders_screen_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-
-import 'ordered_medicines_card.dart';
-import 'pending_orders_screen_controller.dart';
 
 class PendingOrdersScreen extends StatefulWidget {
   final String storeEmail;
@@ -17,8 +15,8 @@ class PendingOrdersScreen extends StatefulWidget {
 
 class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
   final PendingAndCompletedOrdersController _controller = PendingAndCompletedOrdersController();
-  late Future<List<Map<String, dynamic>>> _pendingOrdersFuture;
-  late Future<List<Map<String, dynamic>>> _preparingOrdersFuture;
+  Future<List<Map<String, dynamic>>>? _pendingOrdersFuture;
+  Future<List<Map<String, dynamic>>>? _deliveredOrdersFuture;
   String _currentTab = 'pending';
 
   @override
@@ -30,14 +28,14 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
   void _loadOrders() {
     setState(() {
       _pendingOrdersFuture = _controller.getPendingOrders(widget.storeEmail);
-      _preparingOrdersFuture = _controller.getPreparingOrders(widget.storeEmail);
+      _deliveredOrdersFuture = _controller.getDeliveredOrders(widget.storeEmail);
     });
   }
 
   String _formatDate(String rawDate) {
     try {
       final parsedDate = DateTime.parse(rawDate);
-      return DateFormat.yMMMMEEEEd().add_jm().format(parsedDate);
+      return DateFormat('MMM dd, yyyy - hh:mm a').format(parsedDate);
     } catch (e) {
       return rawDate;
     }
@@ -56,174 +54,143 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
     }
   }
 
-  Future<void> _acceptOrder(String orderId) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirm Acceptance'),
-        content: const Text('Are you sure you want to accept this order?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('No'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Yes'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      final success = await _controller.acceptOrder(orderId);
-      if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Order accepted successfully')),
-        );
-        _loadOrders();
-      }
-    }
-  }
-
-  Future<void> _completeOrder(String orderId) async {
+  Future<void> _markAsDelivered(String orderId) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirm Delivery'),
-        content: const Text('Mark this order as delivered?'),
+        content: const Text('Are you sure you want to mark this order as delivered?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('No'),
+            child: const Text('Cancel'),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Yes'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+            ),
+            child: const Text('Confirm', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
 
     if (confirmed == true && mounted) {
-      final success = await _controller.completeOrder(orderId);
+      final success = await _controller.updateOrderStatus(orderId, 'delivered');
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Order marked as delivered')),
+          const SnackBar(
+            content: Text('Order marked as delivered'),
+            backgroundColor: Colors.green,
+          ),
         );
         _loadOrders();
       }
     }
   }
 
-  Future<void> _cancelOrder(String orderId) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirm Rejection'),
-        content: const Text('Are you sure you want to reject this order?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('No'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Yes'),
-          ),
-        ],
-      ),
-    );
+  double _calculateDeliveryProgress(Map<String, dynamic> order) {
+    try {
+      final createdAt = DateTime.parse(order['createdAt']);
+      final deliveryTime = order['deliveryTime'] ?? '15 mins';
+      final minutes = int.tryParse(deliveryTime.replaceAll(RegExp(r'[^0-9]'), '')) ?? 15;
+      final expectedDeliveryTime = createdAt.add(Duration(minutes: minutes));
+      final now = DateTime.now();
 
-    if (confirmed == true && mounted) {
-      final success = await _controller.cancelOrder(orderId);
-      if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Order rejected successfully')),
-        );
-        _loadOrders();
-      }
+      if (now.isAfter(expectedDeliveryTime)) return 1.0;
+
+      final totalDuration = expectedDeliveryTime.difference(createdAt).inMinutes;
+      final elapsedDuration = now.difference(createdAt).inMinutes;
+
+      return (elapsedDuration / totalDuration).clamp(0.0, 1.0);
+    } catch (e) {
+      return 0.0;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDarkTheme = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
 
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Store Orders'),
+          title: const Text('Medicine Orders', style: TextStyle(fontWeight: FontWeight.bold)),
           centerTitle: true,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.pop(context),
           ),
           bottom: TabBar(
+            indicatorColor: colorScheme.primary,
+            labelColor: colorScheme.primary,
+            unselectedLabelColor: Colors.grey,
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold),
             onTap: (index) {
               setState(() {
-                _currentTab = index == 0 ? 'pending' : 'preparing';
+                _currentTab = index == 0 ? 'pending' : 'delivered';
               });
             },
             tabs: const [
-              Tab(text: 'Pending Orders'),
-              Tab(text: 'Preparing Orders'),
+              Tab(text: 'Pending'),
+              Tab(text: 'Delivered'),
             ],
           ),
         ),
         body: TabBarView(
           children: [
-            _buildOrdersList(_pendingOrdersFuture, 'pending'),
-            _buildOrdersList(_preparingOrdersFuture, 'preparing'),
+            _buildPendingOrdersList(),
+            _buildDeliveredOrdersList(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildOrdersList(Future<List<Map<String, dynamic>>> future, String status) {
-    final theme = Theme.of(context);
-    final isDarkTheme = theme.brightness == Brightness.dark;
-
+  Widget _buildPendingOrdersList() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.all(16.0),
       child: FutureBuilder<List<Map<String, dynamic>>>(
-        future: future,
+        future: _pendingOrdersFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(
-              child: Text('Error: ${snapshot.error}'),
+              child: Text('Error: ${snapshot.error}', style: TextStyle(color: Colors.red)),
             );
           } else if (snapshot.hasData) {
             final orders = snapshot.data!;
             if (orders.isEmpty) {
               return Center(
-                child: Text(
-                  'No ${status == 'pending' ? 'pending' : 'preparing'} orders found.',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: isDarkTheme ? Colors.white70 : Colors.black54,
-                  ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey[400]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No pending orders',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
                 ),
               );
             }
             return ListView.separated(
               itemCount: orders.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              separatorBuilder: (context, index) => const Divider(height: 24),
               itemBuilder: (context, index) {
                 final order = orders[index];
-                return OrderedMedicinesCard(
+                return _buildOrderCard(
                   order: order,
-                  isDark: isDarkTheme,
-                  onChat: () => _startChat(order['patientEmail']),
-                  formattedDate: _formatDate(order['expectedDeliveryTime']),
-                  showActions: true,
-                  onAccept: () => _acceptOrder(order['_id'].toString()),
-                  onComplete: () => _completeOrder(order['_id'].toString()),
-                  onCancel: () => _cancelOrder(order['_id'].toString()),
+                  isPending: true,
+                  onDeliver: () => _markAsDelivered(order['_id'].toString()),
                 );
               },
             );
@@ -232,5 +199,225 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
         },
       ),
     );
+  }
+
+  Widget _buildDeliveredOrdersList() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _deliveredOrdersFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Text('Error: ${snapshot.error}', style: TextStyle(color: Colors.red)),
+            );
+          } else if (snapshot.hasData) {
+            final orders = snapshot.data!;
+            if (orders.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle_outline, size: 48, color: Colors.grey[400]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No delivered orders yet',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+            return ListView.separated(
+              itemCount: orders.length,
+              separatorBuilder: (context, index) => const Divider(height: 24),
+              itemBuilder: (context, index) {
+                final order = orders[index];
+                return _buildOrderCard(
+                  order: order,
+                  isPending: false,
+                );
+              },
+            );
+          }
+          return const Center(child: Text('No orders found.'));
+        },
+      ),
+    );
+  }
+
+  Widget _buildOrderCard({
+    required Map<String, dynamic> order,
+    required bool isPending,
+    VoidCallback? onDeliver,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final progress = isPending ? 0.0 : _calculateDeliveryProgress(order);
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    order['patientName'] ?? 'Customer',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(order['status'] ?? 'Pending').withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _getStatusColor(order['status'] ?? 'Pending'),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    (order['status'] ?? 'Pending').toUpperCase(),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: _getStatusColor(order['status'] ?? 'Pending'),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Order details
+            _buildDetailItem(Icons.calendar_today_outlined, 'Order Date', _formatDate(order['createdAt'])),
+            const SizedBox(height: 8),
+            _buildDetailItem(Icons.access_time_outlined, 'Expected Delivery', _formatDate(order['expectedDeliveryTime'])),
+            const SizedBox(height: 8),
+            _buildDetailItem(Icons.attach_money_outlined, 'Total Amount', '\$${order['finalAmount']?.toStringAsFixed(2) ?? '0.00'}'),
+
+            if (!isPending) ...[
+              const SizedBox(height: 12),
+              LinearProgressIndicator(
+                value: progress,
+                backgroundColor: Colors.grey[200],
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  progress == 1.0 ? Colors.green : colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                progress == 1.0
+                    ? 'Delivery completed'
+                    : 'Delivery progress: ${(progress * 100).toStringAsFixed(0)}%',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 16),
+
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.chat_outlined, size: 18),
+                    label: const Text('Message'),
+                    onPressed: () => _startChat(order['patientEmail']),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+                if (isPending) ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.delivery_dining, size: 18),
+                      label: const Text('Mark Delivered'),
+                      onPressed: onDeliver,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailItem(IconData icon, String title, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: Colors.grey[600]),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return Colors.orange;
+      case 'preparing':
+        return Colors.blue;
+      case 'completed':
+      case 'delivered':
+        return Colors.green;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
   }
 }

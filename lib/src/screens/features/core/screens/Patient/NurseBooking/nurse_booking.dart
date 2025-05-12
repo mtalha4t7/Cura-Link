@@ -37,7 +37,7 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
   bool _isSearching = true;
   Timer? _bidTimer;
   bool _isResuming = false;
-  String? _selectedPaymentMethod;
+
 
   @override
   void initState() {
@@ -214,88 +214,21 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
     });
   }
 
-  Future<String?> _showPaymentMethodDialog() async {
-    return await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select Payment Method'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.credit_card, color: Colors.blue),
-              title: const Text('Online Payment'),
-              onTap: () => Navigator.pop(context, 'online'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.money, color: Colors.green),
-              title: const Text('Cash Payment'),
-              onTap: () => Navigator.pop(context, 'cash'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
-  }
 
-  void _showPaymentProcessing() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Processing payment...'),
-          ],
-        ),
-      ),
-    );
-  }
 
   Future<void> _acceptBid(Bid bid) async {
     try {
-      // Show payment method selection
-      final paymentMethod = await _showPaymentMethodDialog();
-      if (paymentMethod == null) return;
 
-      setState(() => _selectedPaymentMethod = paymentMethod);
 
-      bool paymentSuccess = true;
-
-      if (paymentMethod == 'online') {
-        _showPaymentProcessing();
-        try {
-          paymentSuccess = await StripeService.instance.makePayment(bid.price.toInt());
-          if (mounted) Navigator.pop(context);
-
-          if (!paymentSuccess) {
-            throw Exception('Payment failed');
-          }
-        } catch (e) {
-          if (mounted) Navigator.pop(context);
-          rethrow;
-        }
-      }
-
-      if (paymentSuccess) {
         final patientEmail = FirebaseAuth.instance.currentUser?.email.toString();
         if (patientEmail == null) throw Exception('User not logged in');
 
-        await NurseBookingController.acceptBid(bid.id, patientEmail, paymentMethod: paymentMethod);
+        await NurseBookingController.acceptBid(bid.id, patientEmail);
         await _clearRequestFromPrefs();
 
 
         _showConfirmationDialog(bid);
-      }
+
     } catch (e) {
       showDialog(
         context: context,
@@ -326,7 +259,6 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
             Text('Nurse: ${bid.nurseName ?? 'Unknown'}'),
             Text('Service: ${bid.serviceName}'),
             Text('Amount: \$${bid.price.toStringAsFixed(2)}'),
-            Text('Payment Method: ${_selectedPaymentMethod == 'online' ? 'Online' : 'Cash'}'),
             const SizedBox(height: 16),
             const Text('The nurse will contact you shortly.'),
           ],

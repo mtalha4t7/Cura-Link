@@ -9,9 +9,9 @@ class OrderedMedicinesCard extends StatelessWidget {
   final VoidCallback onChat;
   final String formattedDate;
   final bool showActions;
-  final VoidCallback onAccept;
-  final VoidCallback onComplete;
-  final VoidCallback onCancel;
+  final VoidCallback? onAccept;
+  final VoidCallback? onComplete;
+  final VoidCallback? onCancel;
 
   const OrderedMedicinesCard({
     super.key,
@@ -20,39 +20,59 @@ class OrderedMedicinesCard extends StatelessWidget {
     required this.onChat,
     required this.formattedDate,
     required this.showActions,
-    required this.onAccept,
-    required this.onComplete,
-    required this.onCancel,
+     this.onAccept,
+     this.onComplete,
+     this.onCancel,
   });
+
+  double _calculateDeliveryProgress() {
+    try {
+      final createdAt = DateTime.parse(order['createdAt']);
+      final deliveryTime = order['deliveryTime'] ?? '15 mins';
+      final minutes = int.tryParse(deliveryTime.replaceAll(RegExp(r'[^0-9]'), '')) ?? 15;
+      final expectedDeliveryTime = createdAt.add(Duration(minutes: minutes));
+      final now = DateTime.now();
+
+      if (now.isAfter(expectedDeliveryTime)) return 1.0;
+
+      final totalDuration = expectedDeliveryTime.difference(createdAt).inMinutes;
+      final elapsedDuration = now.difference(createdAt).inMinutes;
+
+      return (elapsedDuration / totalDuration).clamp(0.0, 1.0);
+    } catch (e) {
+      return 0.0;
+    }
+  }
+
+  Future<void> _launchMaps() async {
+    try {
+      final location = order['patientLocation'];
+      if (location != null && location['coordinates'] != null) {
+        final lat = location['coordinates'][0]['\$numberDouble'];
+        final lng = location['coordinates'][1]['\$numberDouble'];
+        final coordinates = '$lat,$lng';
+
+        final Uri uri = Uri.parse(
+          'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(coordinates)}',
+        );
+
+        if (!await launchUrl(uri)) {
+          throw Exception('Could not launch maps');
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(Get.context!).showSnackBar(
+        SnackBar(content: Text('Error opening maps: ${e.toString()}')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-
-    Future<void> _launchMaps() async {
-      try {
-        final location = order['patientLocation'];
-        if (location != null && location['coordinates'] != null) {
-          final lat = location['coordinates'][0]['\$numberDouble'];
-          final lng = location['coordinates'][1]['\$numberDouble'];
-          final coordinates = '$lat,$lng';
-
-          final Uri uri = Uri.parse(
-            'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(coordinates)}',
-          );
-
-          if (!await launchUrl(uri)) {
-            throw Exception('Could not launch maps');
-          }
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(Get.context!).showSnackBar(
-          SnackBar(content: Text('Error opening maps: ${e.toString()}')),
-        );
-      }
-    }
-
+    final isDelivered = order['status']?.toLowerCase() == 'delivered';
+    final progress = isDelivered ? _calculateDeliveryProgress() : 0.0;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -144,6 +164,30 @@ class OrderedMedicinesCard extends StatelessWidget {
                 value: '\$${order['finalAmount']?.toStringAsFixed(2) ?? '0.00'}',
               ),
 
+              // Delivery progress for delivered orders
+              if (isDelivered) ...[
+                const SizedBox(height: 12),
+                LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: Colors.grey[300],
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    progress == 1.0 ? Colors.green : Colors.blue,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    progress == 1.0
+                        ? 'Delivery completed successfully'
+                        : 'Delivery in progress (${(progress * 100).toStringAsFixed(0)}%)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 16),
 
               // Action Buttons
@@ -165,7 +209,7 @@ class OrderedMedicinesCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
 
-                  if (showActions)
+                  if (showActions && !isDelivered)
                     Column(
                       children: [
                         if (order['status'] == 'Pending')
@@ -176,7 +220,7 @@ class OrderedMedicinesCard extends StatelessWidget {
                                   context: context,
                                   icon: Icons.check_circle_outline,
                                   label: 'Accept Order',
-                                  onPressed: onAccept,
+                                  onPressed: onAccept!,
                                   backgroundColor: Colors.green,
                                   textColor: Colors.white,
                                 ),
@@ -187,7 +231,7 @@ class OrderedMedicinesCard extends StatelessWidget {
                                   context: context,
                                   icon: Icons.cancel_outlined,
                                   label: 'Reject Order',
-                                  onPressed: onCancel,
+                                  onPressed: onCancel!,
                                   backgroundColor: colorScheme.errorContainer,
                                   textColor: colorScheme.onErrorContainer,
                                 ),
@@ -202,7 +246,7 @@ class OrderedMedicinesCard extends StatelessWidget {
                                   context: context,
                                   icon: Icons.delivery_dining,
                                   label: 'Mark as Delivered',
-                                  onPressed: onComplete,
+                                  onPressed: onComplete!,
                                   backgroundColor: Colors.teal,
                                   textColor: Colors.white,
                                 ),
@@ -313,9 +357,8 @@ class OrderedMedicinesCard extends StatelessWidget {
       case 'preparing':
         return Colors.blue;
       case 'completed':
-        return Colors.green;
       case 'delivered':
-        return Colors.teal;
+        return Colors.green;
       case 'cancelled':
         return Colors.red;
       default:
