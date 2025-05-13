@@ -133,8 +133,8 @@ class _ShowLabServicesState extends State<ShowLabServices> {
             ),
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Close the dialog
-                // Add navigation to bookings screen if needed
+                Navigator.pop(context);
+
                  Navigator.push(context, MaterialPageRoute(builder: (context) => MyBookingsScreen()));
               },
               child: const Text('VIEW BOOKINGS', style: TextStyle(fontSize: 16)),
@@ -143,7 +143,7 @@ class _ShowLabServicesState extends State<ShowLabServices> {
         ),
       );
 
-      // Fetch full booking details for notification
+
       final bookedService = await MongoDatabase.patientBookingsCollection
           ?.findOne({'bookingId': bookingId});
 
@@ -176,7 +176,7 @@ class _ShowLabServicesState extends State<ShowLabServices> {
       }
 
     } catch (e) {
-      Navigator.pop(context); // Dismiss loading indicator in case of error
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error occurred: ${e.toString()}')),
       );
