@@ -19,6 +19,7 @@ class CompletedOrderCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final medicines = order['medicines'] as List<dynamic>? ?? [];
+    final prescriptionDetails = order['prescriptionDetails']?.toString() ?? '';
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -74,7 +75,7 @@ class CompletedOrderCard extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            // Medicines Section
+            // Medicines or Prescription Section
             if (medicines.isNotEmpty) ...[
               Text(
                 'Medicines:',
@@ -86,6 +87,32 @@ class CompletedOrderCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               ...medicines.map((medicine) => _buildMedicineItem(medicine)).toList(),
+              const SizedBox(height: 8),
+            ] else if (prescriptionDetails.isNotEmpty) ...[
+              Text(
+                'Prescription Details:',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? Colors.white70 : Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.grey[800] : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  prescriptionDetails,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                ),
+              ),
               const SizedBox(height: 8),
             ],
 

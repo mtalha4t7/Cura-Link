@@ -134,6 +134,7 @@ class PendingAndCompletedOrdersController extends GetxController {
       'deliveryTime': order['deliveryTime'] ?? '',
       'medicines': order['medicines'],
       'patientLocation': order['patientLocation'] ?? {},
+      'prescriptionDetails':order['prescriptionDetails']
     };
   }
 

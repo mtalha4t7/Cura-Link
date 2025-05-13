@@ -106,38 +106,76 @@ class CheckForRequestsController extends GetxController {
         String? prescriptionDetails,
         List<dynamic>? medicines,
         String? prescriptionImage,
-        Map<String, dynamic>? location,
       }) async {
     try {
       isLoading(true);
-      final email = FirebaseAuth.instance.currentUser!.email!;
+      print("==================== $storeName");
 
+      final email = FirebaseAuth.instance.currentUser?.email;
+      if (email == null) {
+        throw Exception("Store email is null. User might not be logged in.");
+      }
+      print(patientEmail);
+      if (patientEmail == null) {
+        throw Exception("Patient email is null. Cannot submit bid.");
+      }
+
+      final storeLocation = await MongoDatabase.getUserLocationByEmail(email);
+      final patientLocation = await MongoDatabase.getUserLocationByEmail(patientEmail);
+
+      final distanceInKm = await calculateDistanceBetweenLocations(patientLocation!);
+      String distanceString = distanceInKm < 1.0
+          ? '${(distanceInKm * 1000).round()}m'
+          : '${distanceInKm.toStringAsFixed(1)} km';
+      final deliveryTime = (storeLocation != null && patientLocation != null)
+          ? calculateDeliveryTime(patientLocation, storeLocation)
+          : '30-45 min';
+      print('=================================> $deliveryFee');
       final bidData = {
         'storeName': storeName,
-        'storeEmail': email,
-        'basePrice': basePrice,
+        'storeEmail': medicalStore.value?.userEmail ?? '',
+        'Base-price': basePrice,
         'deliveryFee': deliveryFee,
-        'totalPrice': totalPrice,
-        'medicines': medicines,
-        'prescriptionDetails': prescriptionDetails,
-        'prescriptionImage': prescriptionImage,
-        'location': location,
+        'medicines':medicines,
+        'Distance' :distanceString,
         'submittedAt': DateTime.now(),
+        'deliveryTime': deliveryTime,
+        'requestId':requestId,
+        if (prescriptionDetails != null)
+          'prescriptionDetails': prescriptionDetails,
+        if (medicines != null)
+          'medicines': medicines,
+        'totalPrice': totalPrice,
+        if (prescriptionImage != null)
+          'prescriptionImage': prescriptionImage,
+        'storeLocation': storeLocation,
       };
+
 
       await MongoDatabase.submitStoreBid(
         requestId: requestId,
         bidData: bidData,
       );
 
-      Get.snackbar('Success', 'Bid submitted successfully');
-      fetchActiveRequests();
+      Get.snackbar(
+        'Success',
+        prescriptionDetails != null
+            ? 'Prescription bid submitted successfully'
+            : 'Bid submitted successfully',
+      );
+
+      await fetchActiveRequests();
     } catch (e) {
-      Get.snackbar('Error', 'Failed to submit bid: ${e.toString()}');
+      Get.snackbar(
+        'Error',
+        'Failed to submit bid: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading(false);
     }
   }
+
 
 
   Future<double> calculateDistanceBetweenLocations(Map<String, dynamic> patientLocation) async {

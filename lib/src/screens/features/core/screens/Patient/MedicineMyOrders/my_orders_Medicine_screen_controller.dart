@@ -205,6 +205,7 @@ class MyOrdersScreenMedicineController extends GetxController {
       'expectedDeliveryTime': _parseDate(booking['expectedDeliveryTime']),
       'deliveryTime': booking['deliveryTime'] ?? '',
       'medicines': booking['medicines'],
+      'prescriptionDetails':booking['prescriptionDetails']
     };
   }
 

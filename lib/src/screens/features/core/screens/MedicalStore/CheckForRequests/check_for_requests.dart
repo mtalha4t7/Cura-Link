@@ -110,7 +110,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
               if (patientLocation != null)
                 _buildDetailRow(
                   Icons.location_on_outlined,
-                  _parseLocation(patientLocation) ?? 'Location not available',
+                  request['deliveryAddress'] ?? 'Location not available',
                 ),
               _buildDetailRow(
                 Icons.directions_car,
@@ -260,7 +260,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
         currentBid?['basePrice']?.toDouble() ?? 0.0,
         deliveryFee,
         currentBid?['prescriptionDetails']?.toString() ?? '',
-        request['location'],
+        request['patientLocation'],
       )
           : _showNonPrescriptionBidDialog(
         context,
@@ -271,7 +271,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
         hasBid,
         (currentBid?['basePrice']?.toDouble() ?? (request['subtotal']?.toDouble() ?? 0.0)),
         deliveryFee,
-        request['location'],
+        request['patientLocation'],
       ),
       child: Text(hasBid ? 'UPDATE BID' : 'PLACE BID'),
     );
@@ -337,7 +337,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                           });
                         },
                       ),
-                       Text('Include Delivery Fee (PKR ${deliveryFee.toStringAsFixed(2)})'),
+                       Text('Delivery Fee (PKR ${deliveryFee.toStringAsFixed(2)})'),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -380,7 +380,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                     basePrice,
                     name ?? "Unknown Store",
                     prescriptionDetails: detailsController.text,
-                    location: location,
+
                   );
 
                   Navigator.pop(context);
@@ -505,7 +505,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                                   const SizedBox(width: 8),
                                   Flexible(
                                     child: Text(
-                                      'Include Delivery Fee: PKR ${deliveryFee.toStringAsFixed(2)}',
+                                      'Delivery Fee: PKR ${deliveryFee.toStringAsFixed(2)}',
                                       style: Theme.of(context).textTheme.titleMedium,
                                     ),
                                   ),
@@ -583,7 +583,6 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
                               basePrice,
                               name ?? "Unknown Store",
                               medicines: medicines,
-                              location: location,
                             );
 
                             Navigator.pop(context);

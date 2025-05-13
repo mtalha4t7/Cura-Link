@@ -7,6 +7,7 @@ class MedicalStoreBid {
   final double deliveryFee;
   final double totalPrice;
   final String deliveryTime;
+  final String? prescriptionDetails;
   final String distance;
   final DateTime submittedAt;
   final Map<String, dynamic>? storeLocation;
@@ -25,6 +26,7 @@ class MedicalStoreBid {
     required this.submittedAt,
     this.storeLocation,
     this.medicines, // <-- NEW PARAMETER
+  this.prescriptionDetails,
   });
 
   factory MedicalStoreBid.fromMap(Map<String, dynamic> map) {
@@ -40,7 +42,8 @@ class MedicalStoreBid {
       distance: map['Distance'] ?? 'N/A',
       submittedAt: DateTime.tryParse(map['submittedAt'].toString()) ?? DateTime.now(),
       storeLocation: map['storeLocation'],
-      medicines: List<dynamic>.from(map['medicines'] ?? []), // <-- NEW EXTRACTION
+      medicines: List<dynamic>.from(map['medicines'] ?? []),
+        prescriptionDetails: map['prescriptionDetails']// <-- NEW EXTRACTION
     );
   }
 }
