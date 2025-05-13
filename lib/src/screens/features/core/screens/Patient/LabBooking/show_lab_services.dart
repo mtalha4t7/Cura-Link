@@ -56,9 +56,9 @@ class _ShowLabServicesState extends State<ShowLabServices> {
     // Select date
     DateTime? selectedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(Duration(days: 365)),
+      initialDate:  DateTime.now().toUtc().add(Duration(hours:5)),
+      firstDate: DateTime.now().toUtc().add(Duration(hours:5)),
+      lastDate:  DateTime.now().toUtc().add(Duration(hours:5)).add(Duration(days: 365)),
     );
 
     if (selectedDate == null) return;

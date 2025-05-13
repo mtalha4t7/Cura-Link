@@ -138,7 +138,7 @@ class CheckForRequestsController extends GetxController {
         'deliveryFee': deliveryFee,
         'medicines':medicines,
         'Distance' :distanceString,
-        'submittedAt': DateTime.now(),
+        'submittedAt':  DateTime.now().toUtc().add(Duration(hours:5)),
         'deliveryTime': deliveryTime,
         'requestId':requestId,
         if (prescriptionDetails != null)

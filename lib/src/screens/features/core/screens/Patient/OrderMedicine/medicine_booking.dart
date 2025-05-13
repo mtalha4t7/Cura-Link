@@ -82,7 +82,7 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
         try {
           final bytes = base64Decode(base64Image);
           final tempDir = Directory.systemTemp;
-          final file = File('${tempDir.path}/prescription_${DateTime.now().millisecondsSinceEpoch}.png');
+          final file = File('${tempDir.path}/prescription_${ DateTime.now().toUtc().add(Duration(hours:5)).millisecondsSinceEpoch}.png');
           _prescriptionImage = await file.writeAsBytes(bytes);
         } catch (e) {
           debugPrint('Error loading saved prescription image: $e');
@@ -148,7 +148,7 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
     try {
       final bytes = base64Decode(base64Image);
       final tempDir = Directory.systemTemp;
-      final file = File('${tempDir.path}/prescription_${DateTime.now().millisecondsSinceEpoch}.png');
+      final file = File('${tempDir.path}/prescription_${ DateTime.now().toUtc().add(Duration(hours:5)).millisecondsSinceEpoch}.png');
       return await file.writeAsBytes(bytes);
     } catch (e) {
       debugPrint('Error loading prescription image: $e');

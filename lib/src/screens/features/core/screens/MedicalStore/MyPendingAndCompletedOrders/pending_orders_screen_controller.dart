@@ -84,11 +84,37 @@ class PendingAndCompletedOrdersController extends GetxController {
   Future<bool> updateOrderStatus(String orderId, String newStatus) async {
     try {
       final id = _parseObjectId(orderId);
+      final now =  DateTime.now().toUtc().add(Duration(hours:5));
+
+      final modifications = modify.set('status', newStatus).set('updatedAt', now);
+
+      if (newStatus == 'delivered') {
+        final order = await MongoDatabase.medicalOrdersCollection?.findOne(where.id(id));
+
+        if (order != null) {
+          final createdAt = order['createdAt'] as DateTime;
+          final deliveryDuration = now.difference(createdAt);
+
+          // Convert delivery time to double (minutes as decimal)
+          final deliveryTimeInDouble = deliveryDuration.inMinutes.toDouble();
+
+          // Example: Add to finalAmount (adjust as needed)
+          final currentAmount = order['finalAmount'] as double;
+          final updatedAmount = currentAmount + deliveryTimeInDouble;
+
+          modifications
+              .set('actualDeliveryTime', now)
+              .set('deliveryDurationMinutes', deliveryTimeInDouble)
+              .set('deliveryTime', '${deliveryTimeInDouble.toStringAsFixed(2)} mins')
+              .set('finalAmount', updatedAmount); // Update final amount
+        }
+      }
+
       final result = await MongoDatabase.medicalOrdersCollection?.updateOne(
         where.id(id),
-        modify.set('status', newStatus)
-            .set('updatedAt', DateTime.now()),
+        modifications,
       );
+
       return result?.isSuccess ?? false;
     } catch (e, stackTrace) {
       _logger.e('Error updating order status', error: e, stackTrace: stackTrace);

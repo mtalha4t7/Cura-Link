@@ -41,7 +41,7 @@ class MyBookingsNurseController {
         where.id(id),
         modify
             .set('status', newStatus)
-            .set('updatedAt', DateTime.now()),
+            .set('updatedAt',  DateTime.now().toUtc().add(Duration(hours:5))),
       );
 
       debugPrint('Update result: ${result?.isSuccess}, matched: ${result?.nMatched}, modified: ${result?.nModified}');

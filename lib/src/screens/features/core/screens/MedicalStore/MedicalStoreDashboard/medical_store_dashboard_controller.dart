@@ -48,7 +48,6 @@ class MedicalStoreDashboardController extends GetxController {
       isLoading(true);
       final newStatus = !isAvailable.value;
       isAvailable(newStatus);
-
       await UserRepository.instance.updateMedicalStoreUser(
         userEmail ?? '',
         {'isAvailable': newStatus},

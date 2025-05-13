@@ -41,6 +41,7 @@ class MedicalStoreController extends GetxController {
           'category': m['category'],
         }).toList();
       }
+
       final patientLocation = await MongoDatabase.getLocationByEmail(patientEmail);
       final patientName= await UserRepository.instance.getFullNameByEmail(email: patientEmail, collection: MongoDatabase.userPatientCollection);
       final requestData = {
@@ -55,8 +56,8 @@ class MedicalStoreController extends GetxController {
         'patientLocation':patientLocation,
         'status': 'pending', // pending, bid_submitted, accepted, completed
         'requestType': requestType, // <-- new field
-        'createdAt': DateTime.now().toUtc(),
-        'updatedAt': DateTime.now().toUtc(),
+        'createdAt': DateTime.now().toUtc().add(Duration(hours:5)),
+        'updatedAt': DateTime.now().toUtc().add(Duration(hours:5)),
       };
 
       final result = await MongoDatabase.medicalRequestsCollection?.insertOne(requestData);
@@ -202,7 +203,7 @@ class MedicalStoreController extends GetxController {
       final minutes = _parseDeliveryTime(deliveryTimeString);
       print('[5] Parsed delivery time to $minutes minutes');
 
-      final createdAt = DateTime.now().toUtc();
+      final createdAt =DateTime.now().toUtc().add(Duration(hours:5));
       final expectedDeliveryTime = createdAt.add(Duration(minutes: minutes));
       print('[5.1] Calculated expected delivery time: $expectedDeliveryTime');
 

@@ -45,7 +45,7 @@ class MyOrdersScreenMedicineController extends GetxController {
         'rating': rating,
         'review': review,
         'bookingId': bookingId,
-        'createdAt': DateTime.now(),
+        'createdAt':  DateTime.now().toUtc().add(Duration(hours:5)),
       };
 
       final insertResult = await MongoDatabase.medicalStoreRatingCollection?.insertOne(ratingDoc);
@@ -141,7 +141,7 @@ class MyOrdersScreenMedicineController extends GetxController {
         modify
             .set('status', newStatus)
             .set('paymentMethod', paymentMethod)
-            .set('updatedAt', DateTime.now()),
+            .set('updatedAt',  DateTime.now().toUtc().add(Duration(hours:5))),
       );
 
       if (!(updateResult?.isSuccess ?? false)) {
@@ -153,10 +153,10 @@ class MyOrdersScreenMedicineController extends GetxController {
         // Add additional completion data
         final completedOrder = {
           ...order,
-          'completionDate': DateTime.now(),
+          'completionDate':  DateTime.now().toUtc().add(Duration(hours:5)),
           'status': newStatus,
           'paymentMethod': paymentMethod,
-          'updatedAt': DateTime.now(),
+          'updatedAt': DateTime.now().toUtc().add(Duration(hours:5)),
         };
 
         // Insert into completed orders collection

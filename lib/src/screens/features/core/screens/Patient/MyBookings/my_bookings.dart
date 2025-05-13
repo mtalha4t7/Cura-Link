@@ -146,7 +146,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                       labUserName: booking['labUserName'] ?? 'Unknown Lab',
                       testName: booking['testName'] ?? 'Unknown Test',
                       bookingDate: formatDate(
-                          booking['bookingDate'] ?? DateTime.now().toString()),
+                          booking['bookingDate'] ??  DateTime.now().toUtc().add(Duration(hours:5)).toString()),
                       status: booking['status'] ?? 'Pending',
                       price: price,
                       isDark: isDarkTheme,
@@ -255,7 +255,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   }
 
   Future<void> _showModifyDialog(BuildContext context, Map<String, dynamic> booking) async {
-    DateTime selectedDate = DateTime.tryParse(booking['bookingDate']) ?? DateTime.now();
+    DateTime selectedDate = DateTime.tryParse(booking['bookingDate']) ??  DateTime.now().toUtc().add(Duration(hours:5));
 
     DateTime? newDate = await showDatePicker(
       context: context,

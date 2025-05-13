@@ -31,7 +31,7 @@ class OrderedMedicinesCard extends StatelessWidget {
       final deliveryTime = order['deliveryTime'] ?? '15 mins';
       final minutes = int.tryParse(deliveryTime.replaceAll(RegExp(r'[^0-9]'), '')) ?? 15;
       final expectedDeliveryTime = createdAt.add(Duration(minutes: minutes));
-      final now = DateTime.now();
+      final now = DateTime.now().toUtc().add(Duration(hours:5));
 
       if (now.isAfter(expectedDeliveryTime)) return 1.0;
 

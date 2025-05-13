@@ -40,7 +40,7 @@ class MedicalStoreBid {
       totalPrice: (map['totalPrice'] ?? (map['price'] ?? 0)).toDouble(),
       deliveryTime: map['deliveryTime'] ?? 'N/A',
       distance: map['Distance'] ?? 'N/A',
-      submittedAt: DateTime.tryParse(map['submittedAt'].toString()) ?? DateTime.now(),
+      submittedAt: DateTime.tryParse(map['submittedAt'].toString()) ?? DateTime.now().toUtc().add(Duration(hours:5)),
       storeLocation: map['storeLocation'],
       medicines: List<dynamic>.from(map['medicines'] ?? []),
         prescriptionDetails: map['prescriptionDetails']// <-- NEW EXTRACTION

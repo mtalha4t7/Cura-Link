@@ -29,6 +29,7 @@ Future<void> main() async {
 
   // Initialize MongoDB
   await MongoDatabase.connect();
+  
 
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)

@@ -70,7 +70,7 @@ class MyBookedNursesController extends GetxController {
       final id = _parseObjectId(bookingId);
       final result = await MongoDatabase.patientNurseBookingsCollection?.updateOne(
         where.id(id),
-        modify.set('status', newStatus).set('updatedAt', DateTime.now()),
+        modify.set('status', newStatus).set('updatedAt',  DateTime.now().toUtc().add(Duration(hours:5))),
       );
       return result?.isSuccess ?? false;
     } catch (e, stackTrace) {
@@ -113,7 +113,7 @@ class MyBookedNursesController extends GetxController {
         'userEmail': userEmail.trim().toLowerCase(),
         'rating': rating,
         'review': review,
-        'createdAt': DateTime.now().millisecondsSinceEpoch,
+        'createdAt':  DateTime.now().toUtc().add(Duration(hours:5)).millisecondsSinceEpoch,
         'bookingId': bookingId,
       };
 

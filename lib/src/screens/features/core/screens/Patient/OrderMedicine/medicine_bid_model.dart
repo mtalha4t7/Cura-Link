@@ -43,7 +43,7 @@ class MedicineBid {
       price: (map['price'] as num?)?.toDouble() ?? 0.0,
       status: map['status']?.toString() ?? '',
       createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ??
-          DateTime.now(),
+          DateTime.now().toUtc().add(Duration(hours:5)),
       nurseName: map['userName']?.toString(), // 👈 added support for userName
       rating: (map['rating'] as num?)?.toDouble(),
     );

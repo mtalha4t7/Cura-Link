@@ -129,7 +129,7 @@ class NurseBookingController extends GetxController {
          'patientName': patientName,
          'price': price,
          'status': 'accepted',
-         'createdAt': DateTime.now().toUtc(),
+         'createdAt': DateTime.now().toUtc().add(Duration(hours:5)),
        };
 
        // 6. Send notification to nurse
@@ -156,7 +156,7 @@ class NurseBookingController extends GetxController {
        logger.e('❌ Critical error in acceptBid:',
            error: e,
            stackTrace: stackTrace,
-           time: DateTime.now()
+           time: DateTime.now().toUtc().add(Duration(hours:5)),
        );
        rethrow;
      }

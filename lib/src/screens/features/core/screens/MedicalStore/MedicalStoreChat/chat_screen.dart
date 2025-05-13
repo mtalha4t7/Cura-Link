@@ -50,7 +50,7 @@ class _ChatScreenState extends State<ChatScreen> {
       type: _isEmojiOnly(messageText.trim())
           ? MessageType.emoji
           : MessageType.text,
-      sent: DateTime.now().toIso8601String(),
+      sent: DateTime.now().toUtc().add(Duration(hours:5)).toIso8601String(),
     );
 
     await UserRepository.instance.sendMessageToDatabase(message);
@@ -118,7 +118,7 @@ class _ChatScreenState extends State<ChatScreen> {
         dateTime = DateTime.parse(lastActive);
       }
 
-      final now = DateTime.now();
+      final now =  DateTime.now().toUtc().add(Duration(hours:5));
       final today = DateTime(now.year, now.month, now.day);
       final messageDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
 

@@ -42,7 +42,7 @@ class Bid {
       nurseEmail: map['nurseEmail']?.toString() ?? '',
       price: (map['price'] as num?)?.toDouble() ?? 0.0,
       status: map['status']?.toString() ?? '',
-      createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ??  DateTime.now().toUtc().add(Duration(hours:5)),
       serviceName: map['serviceName']?.toString(), // 👈 Parse serviceName
       nurseName: map['userName']?.toString(),
       rating: (map['rating'] as num?)?.toDouble(),
