@@ -223,7 +223,8 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
                       child: Text('Error: ${snapshot.error}'),
                     );
                   } else if (snapshot.hasData) {
-                    final bookings = snapshot.data!;
+                    final bookings = snapshot.data!..sort((a, b) => DateTime.parse(b['createdAt']).compareTo(DateTime.parse(a['createdAt'])));
+
                     if (bookings.isEmpty) {
                       return Center(
                         child: Text(

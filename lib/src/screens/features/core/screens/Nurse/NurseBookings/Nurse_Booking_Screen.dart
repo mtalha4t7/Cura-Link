@@ -251,135 +251,171 @@ class NurseBookingsScreen extends StatelessWidget {
         builder: (context, setState) {
           return Dialog(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${hasBid ? 'Update' : 'Place'} Bid',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    serviceName ?? 'Service Request',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Enter your bid amount (PKR)',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildPriceAdjustButton(
-                        icon: Icons.remove,
-                        onPressed: () {
-                          setState(() {
-                            currentBid = (currentBid - 100).clamp(servicePrice, double.infinity);
-                            priceController.text = currentBid.toStringAsFixed(0);
-                          });
-                        },
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        width: 120,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey[300]!),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: TextField(
-                          controller: priceController,
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 18,
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: const Color(0xFF2C2C2C), // greyish black
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.gavel, color: Colors.white),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${hasBid ? 'Update' : 'Place'} Bid',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.zero,
-                            prefix: Text('PKR '),
-                          ),
-                          onChanged: (value) {
-                            currentBid = double.tryParse(value) ?? servicePrice;
-                          },
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      _buildPriceAdjustButton(
-                        icon: Icons.add,
-                        onPressed: () {
-                          setState(() {
-                            currentBid += 100;
-                            priceController.text = currentBid.toStringAsFixed(0);
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Service base price: PKR ${servicePrice.toStringAsFixed(0)}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('CANCEL'),
+                    const SizedBox(height: 8),
+                    Text(
+                      serviceName ?? 'Service Request',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.white,
                       ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 12),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Enter your bid amount',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildPriceAdjustButton(
+                          icon: Icons.remove,
+                          onPressed: () {
+                            setState(() {
+                              currentBid = (currentBid - 100).clamp(servicePrice, servicePrice + 1000);
+                              priceController.text = currentBid.toStringAsFixed(0);
+                            });
+                          },
+
                         ),
-                        onPressed: () async {
-                          final price = double.tryParse(priceController.text.trim());
-                          if (price == null || price < servicePrice) {
-                            Get.snackbar(
-                              'Invalid Amount',
-                              'Bid must be at least PKR ${servicePrice.toStringAsFixed(0)}',
-                              snackPosition: SnackPosition.BOTTOM,
-                              backgroundColor: Colors.red[400],
-                              colorText: Colors.white,
-                            );
-                            return;
-                          }
+                        const SizedBox(width: 16),
+                        Container(
+                          width: 140,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[300]!),
+                          ),
+                          child: TextField(
+                            controller: priceController,
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black, // price text color
+                            ),
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              isCollapsed: true,
+                              prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
+                            ),
+                            onChanged: (value) {
+                              currentBid = double.tryParse(value) ?? servicePrice;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        _buildPriceAdjustButton(
+                          icon: Icons.add,
+                          onPressed: () {
+                            setState(() {
+                              currentBid = (currentBid + 100).clamp(servicePrice, servicePrice + 1000);
+                              priceController.text = currentBid.toStringAsFixed(0);
+                            });
+                          },
 
-                          final cleanRequestId = _extractObjectId(requestId);
-                          final name = await UserRepository.instance
-                              .getNurseUserName(email.toString());
-
-                          controller.submitBid(
-                            cleanRequestId,
-                            price,
-                            name ?? "Unknown Nurse",
-                            serviceName!
-
-                          );
-
-                          Navigator.pop(context);
-                        },
-                        child: const Text('SUBMIT'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Minimum: PKR ${servicePrice.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                        ),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: 28),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('CANCEL'),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: () async {
+                            final price = double.tryParse(priceController.text.trim());
+                            if (price == null || price < servicePrice) {
+                              Get.snackbar(
+                                'Invalid Amount',
+                                'Bid must be at least PKR ${servicePrice.toStringAsFixed(0)}',
+                                snackPosition: SnackPosition.BOTTOM,
+                                backgroundColor: Colors.red[400],
+                                colorText: Colors.white,
+                              );
+                              return;
+                            }
+
+                            final cleanRequestId = _extractObjectId(requestId);
+                            final name = await UserRepository.instance
+                                .getNurseUserName(email.toString());
+
+                            controller.submitBid(
+                              cleanRequestId,
+                              price,
+                              name ?? "Unknown Nurse",
+                              serviceName!,
+                            );
+
+                            Navigator.pop(context);
+                          },
+                          child: Text(
+                            hasBid ? 'UPDATE BID' : 'SUBMIT BID',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           );
