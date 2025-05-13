@@ -30,10 +30,10 @@ class MongoDatabase {
   static DbCollection? _nurseReceivedBookingsCollection;
   static DbCollection? _nurseRatingCollection;
   static DbCollection? _medicalBidsCollection;
- static DbCollection? _medicalRequestsCollection;
-static DbCollection? _medicalOrdersCollection;
-static DbCollection? _completedOrdersCollection;
-  static DbCollection? medicalStoreRatingCollection;
+  static DbCollection? _medicalRequestsCollection;
+  static DbCollection? _medicalOrdersCollection;
+  static DbCollection? _completedOrdersCollection;
+  static DbCollection? _medicalStoreRatingCollection;
 
 
 
@@ -67,7 +67,7 @@ static DbCollection? _completedOrdersCollection;
       _medicalOrdersCollection = _db!.collection('medicalOrderCollection');
       _nurseRatingCollection = _db!.collection('nurseRating');
       _completedOrdersCollection = _db!.collection('completedOrders');
-      medicalStoreRatingCollection = db!.collection('medicalStoreRating');
+      _medicalStoreRatingCollection = db!.collection('medicalStoreRating');
 
 
 
@@ -121,6 +121,7 @@ static DbCollection? _completedOrdersCollection;
 static DbCollection? get  medicalRequestsCollection =>  _medicalRequestsCollection;
 static DbCollection? get  medicalOrdersCollection =>  _medicalOrdersCollection;
 static DbCollection? get  completedOrdersCollection =>  _completedOrdersCollection;
+static DbCollection? get  medicalStoreRatingCollection =>  _medicalStoreRatingCollection;
 
 
 
@@ -144,6 +145,7 @@ static DbCollection? get  completedOrdersCollection =>  _completedOrdersCollecti
       _medicalRequestsCollection=null;
       _medicalOrdersCollection=null;
       _completedOrdersCollection=null;
+      _medicalStoreRatingCollection=null;
 
       logger.i('MongoDB connection closed');
     }
@@ -173,6 +175,7 @@ static DbCollection? get  completedOrdersCollection =>  _completedOrdersCollecti
       return null;
     }
   }
+
 
 
   static Future<void> submitStoreBid({
@@ -234,7 +237,25 @@ static DbCollection? get  completedOrdersCollection =>  _completedOrdersCollecti
     }
   }
 
+  static Future<bool> deleteMedicalRequestById(String requestId) async {
+    try {
+      final objectId = ObjectId.parse(requestId);// Ensure you have a helper for ObjectId
+      final result = await _medicalRequestsCollection?.deleteOne(
+        where.id(objectId),
+      );
 
+      if (result?.isSuccess ?? false) {
+        logger.i('Request $requestId successfully deleted from medicalRequestsCollection');
+        return true;
+      } else {
+        logger.w('Failed to delete request $requestId');
+        return false;
+      }
+    } catch (e, stackTrace) {
+      logger.e('Error deleting medical request $requestId', error: e, stackTrace: stackTrace);
+      return false;
+    }
+  }
   static Future<List<Map<String, dynamic>>> getMedicalStores() async {
     try {
       if (_userMedicalStoreCollection == null) {

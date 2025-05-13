@@ -212,8 +212,8 @@ class MedicalStoreController extends GetxController {
         where.eq('_id', cleanObjectId(requestId)),
         modify.set('status', 'accepted'),
       );
-
-      print('Request status update result: ${requestUpdateResult?.isSuccess}');
+      await MongoDatabase.medicalRequestsCollection?.deleteOne(
+          where.id(ObjectId.parse(requestId)));
 
 
       // 7. Get patient location

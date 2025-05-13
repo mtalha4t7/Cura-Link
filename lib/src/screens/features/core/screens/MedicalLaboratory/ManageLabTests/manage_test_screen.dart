@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../../../constants/text_strings.dart';
 import '../MedicalLabWidgets/test_service_card.dart';
 import '../MedicalLabWidgets/custom_button.dart';
@@ -265,6 +266,7 @@ class _ManageTestServicesScreenState extends State<ManageTestServicesScreen> {
     );
   }
 
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -273,9 +275,14 @@ class _ManageTestServicesScreenState extends State<ManageTestServicesScreen> {
     TextInputType keyboardType = TextInputType.text,
     required bool isDark,
   }) {
-    return TextField(
+    return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      inputFormatters: keyboardType == TextInputType.number
+          ? [
+        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')), // Allows only positive numbers and decimals
+      ]
+          : [],
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
@@ -296,6 +303,15 @@ class _ManageTestServicesScreenState extends State<ManageTestServicesScreen> {
       style: TextStyle(
         color: isDark ? Colors.white : Colors.black,
       ),
+      validator: (value) {
+        if (keyboardType == TextInputType.number && value != null) {
+          final number = double.tryParse(value);
+          if (number == null || number < 0) {
+            return 'Please enter a valid non-negative number';
+          }
+        }
+        return null;
+      },
     );
   }
 

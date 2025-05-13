@@ -226,17 +226,32 @@ class _MedicalStoreDashboardState extends State<MedicalStoreDashboard> {
                         ),
                       )),
                       const SizedBox(height: 20),
-
-                      // Rest of your content...
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           QuickAccessButton(
                             icon: Icons.medical_services_rounded,
                             label: 'View Order Requests',
-                            onTap: () {
-                              Get.to(() => CheckForRequestsScreen());
-                            },
+                              onTap: () async {
+                                final userEmail = FirebaseAuth.instance.currentUser?.email;
+
+                                if (userEmail == null) {
+                                  Get.snackbar('Error', 'User not logged in');
+                                  return;
+                                }
+                                try {
+                                  final isVerified = controller.isVerified;
+
+                                  if (isVerified == true) {
+                                    Get.to(() => CheckForRequestsScreen());
+                                  } else {
+                                    Get.snackbar('Access Denied', 'Your account is not verified yet');
+                                  }
+                                } catch (e) {
+                                  print('[onTap] Error checking verification status: $e');
+                                  Get.snackbar('Error', 'Failed to verify user');
+                                }
+                              }
                           ),
                           QuickAccessButton(
                             icon: Icons.star,

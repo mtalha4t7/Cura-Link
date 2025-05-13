@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../../../mongodb/mongodb.dart';
 import '../../../../../../stripe/stripe_services.dart';
 import 'medical_store_model.dart';
 import 'medicne_booking_request_controller.dart';
@@ -260,27 +261,52 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
 
   Future<void> _acceptBid(MedicalStoreBid bid) async {
     try {
-
-      final patientEmail = _auth.currentUser?.email;
-
-        if (patientEmail == null) throw Exception('User not logged in');
-        await _controller.acceptBid(bid.requestId, patientEmail!);
-        await _clearRequestFromPrefs();
-        _showConfirmationDialog(bid);
-      } catch (e) {
+      // Show loading dialog
       showDialog(
         context: context,
-        builder: (context) =>
-            AlertDialog(
-              title: const Text('Error'),
-              content: Text('Failed to accept bid: ${e.toString()}'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('OK'),
-                ),
+        barrierDismissible: false, // Prevent user from closing it
+        builder: (context) {
+          return const AlertDialog(
+            content: Row(
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 16),
+                Text('Processing...'),
               ],
             ),
+          );
+        },
+      );
+
+      final patientEmail = _auth.currentUser?.email;
+      if (patientEmail == null) throw Exception('User not logged in');
+
+      // Perform actions
+      await _controller.acceptBid(bid.requestId, patientEmail);
+      await _clearRequestFromPrefs();
+
+      // Close loading dialog
+      Navigator.pop(context);
+
+      // Show success confirmation
+      _showConfirmationDialog(bid);
+    } catch (e) {
+      // Ensure loading dialog is closed if error occurs
+      Navigator.pop(context);
+
+      // Show error dialog
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Error'),
+          content: Text('Failed to accept bid: ${e.toString()}'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
       );
     }
   }
@@ -295,9 +321,9 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('Store: ${bid.storeName ?? 'Unknown Store'}'),
-            Text('Bid Total: PKR ${bid.totalPrice.toStringAsFixed(2)}'),
+            Text('Bid Total: PKR ${bid.totalPrice.toInt()}'),
             Text('Store Distance:  ${bid.distance}'),
-            Text('Delivery Fee:  ${bid.deliveryFee.toStringAsFixed(2)}'),
+            Text('Delivery Fee:  ${bid.deliveryFee.toInt()}'),
 
             const SizedBox(height: 10),
             const Text('The store will prepare your order and contact you shortly.'),
@@ -305,7 +331,16 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+            onPressed: () async {
+              try {
+                await MongoDatabase.deleteMedicalRequestById(bid.requestId);
+                print('Request deleted from medicalRequestsCollection');
+              } catch (e) {
+                print('Error deleting request: $e');
+              }
+
+              Navigator.popUntil(context, (route) => route.isFirst);
+            },
             child: const Text('OK'),
           ),
         ],

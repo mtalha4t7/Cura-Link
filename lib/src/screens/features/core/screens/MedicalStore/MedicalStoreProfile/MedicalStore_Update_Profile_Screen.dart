@@ -41,13 +41,22 @@ class _MedicalStoreProfileFormScreenState extends State<MedicalStoreProfileFormS
       final userData = await UserRepository.instance.getMedicalStoreUserByEmail(_email!);
       if (userData != null) {
         setState(() {
-          _nameController.text = userData['userName'] ?? '';
-          _phoneController.text = userData['userPhone'] ?? '';
-          _locationController.text = userData['userAddress'] ?? '';
+          _nameController.text = userData['userName']?.toString() ?? '';
+          _phoneController.text = userData['userPhone']?.toString() ?? '';
+
+          // Handle location which might be a Map or String
+          if (userData['userAddress'] is String) {
+            _locationController.text = userData['userAddress'];
+          } else if (userData['location'] is Map) {
+            final coords = userData['location']['coordinates'] as List;
+            _locationController.text = '${coords[1]}, ${coords[0]}'; // lat, lng
+          } else {
+            _locationController.text = '';
+          }
         });
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to load profile data");
+      Get.snackbar("Error", "Failed to load profile data: ${e.toString()}");
     } finally {
       setState(() => _isLoading = false);
     }
