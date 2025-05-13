@@ -8,6 +8,9 @@ class OrderedMedicinesCard extends StatelessWidget {
   final bool showActions;
   final VoidCallback onCancel;
   final VoidCallback onComplete;
+  final bool showRating;
+  final VoidCallback onRate;
+  final bool hasRated;
 
   const OrderedMedicinesCard({
     super.key,
@@ -18,6 +21,9 @@ class OrderedMedicinesCard extends StatelessWidget {
     required this.showActions,
     required this.onCancel,
     required this.onComplete,
+    required this.showRating,
+    required this.onRate,
+    required this.hasRated,
   });
 
   @override
@@ -196,6 +202,38 @@ class OrderedMedicinesCard extends StatelessWidget {
                         ),
                       ],
                     ),
+
+                  if (showRating)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: _buildActionButton(
+                        context: context,
+                        icon: Icons.star_outline,
+                        label: 'Rate Service',
+                        onPressed: onRate,
+                        backgroundColor: Colors.deepPurple[400]!,
+                        textColor: Colors.white,
+                      ),
+                    ),
+
+                  if (hasRated)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.green, size: 18),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Rated',
+                            style: TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ],
@@ -279,7 +317,7 @@ class OrderedMedicinesCard extends StatelessWidget {
     required BuildContext context,
     required IconData icon,
     required String label,
-    required VoidCallback onPressed,
+    required VoidCallback? onPressed,
     required Color backgroundColor,
     required Color textColor,
   }) {

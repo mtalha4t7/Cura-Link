@@ -33,6 +33,7 @@ class MongoDatabase {
  static DbCollection? _medicalRequestsCollection;
 static DbCollection? _medicalOrdersCollection;
 static DbCollection? _completedOrdersCollection;
+  static DbCollection? medicalStoreRatingCollection;
 
 
 
@@ -66,7 +67,7 @@ static DbCollection? _completedOrdersCollection;
       _medicalOrdersCollection = _db!.collection('medicalOrderCollection');
       _nurseRatingCollection = _db!.collection('nurseRating');
       _completedOrdersCollection = _db!.collection('completedOrders');
-
+      medicalStoreRatingCollection = db!.collection('medicalStoreRating');
 
 
 

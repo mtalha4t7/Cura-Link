@@ -170,6 +170,84 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
   }
 
 
+  Future<void> _showRatingDialog(Map<String, dynamic> order) async {
+    int selectedRating = 0;
+    TextEditingController reviewController = TextEditingController();
+    bool isSubmitting = false;
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Rate Service'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('How would you rate this service?'),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) => IconButton(
+                  icon: Icon(
+                    index < selectedRating ? Icons.star : Icons.star_border,
+                    color: Colors.amber,
+                    size: 40,
+                  ),
+                  onPressed: () => setState(() => selectedRating = index + 1),
+                )),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: reviewController,
+                decoration: const InputDecoration(
+                  labelText: 'Review (optional)',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
+              ),
+              if (isSubmitting) const CircularProgressIndicator(),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (selectedRating > 0) {
+                  setState(() => isSubmitting = true);
+                  final success = await _controller.submitRating(
+                    bookingId: order['_id'].toString(),
+                    storeEmail: order['storeEmail'],
+                    rating: selectedRating,
+                    review: reviewController.text,
+                  );
+                  setState(() => isSubmitting = false);
+
+                  if (success && mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Rating submitted successfully!')),
+                    );
+                    _loadOrders();
+                  }
+                }
+              },
+              child: const Text('Submit'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+
+
+
+
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -257,25 +335,29 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
                       const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final order = orders[index];
-                        return OrderedMedicinesCard(
-                          booking: order,
-                          isDark: isDarkTheme,
-                          onChat: () => _startChat(order['storeEmail']),
-                          formattedDate: _formatDate(order['expectedDeliveryTime']),
-                          showActions: _currentFilter == 'upcoming',
-                          onCancel: () => _cancelOrder(order['_id'].toString()),
-                          onComplete: () async {
-                            if (order['status'] == 'delivered') {
-                              // Status is 'delivered', so allow the order to be marked as complete
-                              await _completeOrder(order['_id'].toString(), order['finalAmount']);
-                            } else {
-                              // Status is not 'delivered', prevent marking the order as complete
-                              print('Cannot mark as complete. The order status is not delivered.');
-                              // Optionally, show an error message or a toast to the user
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Cannot mark as complete. The order is not delivered.')),
-                              );
-                            }
+                        final isCompleted = order['status'].toLowerCase() == 'completed';
+
+                        return FutureBuilder<bool>(
+                          future: _controller.hasRatingForBooking(order['_id'].toString()),
+                          builder: (context, snapshot) {
+                            final hasRated = snapshot.data ?? false;
+
+                            return OrderedMedicinesCard(
+                              booking: order,
+                              isDark: isDarkTheme,
+                              onChat: () => _startChat(order['storeEmail']),
+                              formattedDate: _formatDate(order['expectedDeliveryTime']),
+                              showActions: _currentFilter == 'upcoming',
+                              onCancel: () => _cancelOrder(order['_id'].toString()),
+                              onComplete: () async {
+                                if (order['status'] == 'delivered') {
+                                  await _completeOrder(order['_id'].toString(), order['finalAmount']);
+                                }
+                              },
+                              showRating: _currentFilter == 'past' && isCompleted && !hasRated,
+                              onRate: () => _showRatingDialog(order),
+                              hasRated: hasRated,
+                            );
                           },
                         );
                       },

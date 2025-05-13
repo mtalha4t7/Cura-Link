@@ -9,15 +9,79 @@ import '../../../../../../repository/user_repository/user_repository.dart';
 import '../../../../authentication/models/chat_user_model.dart';
 
 class MyOrdersScreenMedicineController extends GetxController {
+
   final Logger _logger = Logger();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   var totalReceivedOrdersCount = 0.obs;
+  final Map<String, bool> _hasRatingCache = {};
 
   @override
   void onInit() {
     super.onInit();
     fetchTotalMedicineOrdersCount();
   }
+
+
+  Future<bool> submitRating({
+    required String bookingId,
+    required String storeEmail,
+    required int rating,
+    required String review,
+  }) async {
+    try {
+      final userEmail = _auth.currentUser?.email;
+      if (userEmail == null) return false;
+
+      final existingRating = await MongoDatabase.medicalStoreRatingCollection?.findOne({
+        'bookingId': bookingId,
+        'patientEmail': userEmail.toLowerCase(),
+      });
+
+      if (existingRating != null) return false;
+
+      final ratingDoc = {
+        'storeEmail': storeEmail.toLowerCase(),
+        'patientEmail': userEmail.toLowerCase(),
+        'rating': rating,
+        'review': review,
+        'bookingId': bookingId,
+        'createdAt': DateTime.now(),
+      };
+
+      final insertResult = await MongoDatabase.medicalStoreRatingCollection?.insertOne(ratingDoc);
+
+      if (insertResult?.isSuccess ?? false) {
+        await MongoDatabase.completedOrdersCollection?.updateOne(
+          where.id(_parseObjectId(bookingId)),
+          modify.set('rated', true),
+        );
+        _hasRatingCache[bookingId] = true;
+        return true;
+      }
+      return false;
+    } catch (e, stackTrace) {
+      _logger.e('Error submitting rating', error: e, stackTrace: stackTrace);
+      return false;
+    }
+  }
+
+  Future<bool> hasRatingForBooking(String bookingId) async {
+    if (_hasRatingCache.containsKey(bookingId)) {
+      return _hasRatingCache[bookingId]!;
+    }
+
+    try {
+      final rating = await MongoDatabase.medicalStoreRatingCollection?.findOne(
+          where.eq('bookingId', bookingId)
+      );
+      final hasRating = rating != null;
+      _hasRatingCache[bookingId] = hasRating;
+      return hasRating;
+    } catch (e) {
+      return false;
+    }
+  }
+
 
   Future<void> fetchTotalMedicineOrdersCount() async {
     final userEmail = _auth.currentUser?.email;
