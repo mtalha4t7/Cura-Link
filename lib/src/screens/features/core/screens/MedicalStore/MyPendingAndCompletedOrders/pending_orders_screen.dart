@@ -163,7 +163,7 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
               child: Text('Error: ${snapshot.error}', style: TextStyle(color: Colors.red)),
             );
           } else if (snapshot.hasData) {
-            final orders = snapshot.data!;
+            final orders = snapshot.data!..sort((a, b) => DateTime.parse(b['createdAt']).compareTo(DateTime.parse(a['createdAt'])));
             if (orders.isEmpty) {
               return Center(
                 child: Column(
@@ -214,7 +214,7 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
               child: Text('Error: ${snapshot.error}', style: TextStyle(color: Colors.red)),
             );
           } else if (snapshot.hasData) {
-            final orders = snapshot.data!;
+            final orders = snapshot.data!..sort((a, b) => DateTime.parse(b['createdAt']).compareTo(DateTime.parse(a['createdAt'])));
             if (orders.isEmpty) {
               return Center(
                 child: Column(

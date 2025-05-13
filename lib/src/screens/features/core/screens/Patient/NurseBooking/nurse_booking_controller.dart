@@ -162,10 +162,82 @@ class NurseBookingController extends GetxController {
      }
    }
 
-  Future<void> cancelServiceRequest(String requestId) async {
-    await mongoDatabase.deleteServiceRequestById(requestId);
-  }
+   Future<void> cancelServiceRequest(String requestId) async {
+     try {
+       final requestObjectId = ObjectId.parse(requestId);
+       logger.i('🏁 Starting cancellation process for request: $requestId');
 
+       // 1. Get the service request details before deleting
+       final request = await MongoDatabase.nurseServiceRequestsCollection?.findOne(
+         where.id(requestObjectId),
+       );
+
+       if (request == null) {
+         logger.e('❌ Service request not found: $requestId');
+         throw Exception('Service request not found');
+       }
+
+       final patientEmail = request['patientEmail'];
+       final serviceName = request['serviceType'] ?? request['serviceName'] ?? 'service';
+       final acceptedBidId = request['acceptedBidId'];
+
+       // 2. Get patient details for notification
+       final patient = await MongoDatabase.userPatientCollection?.findOne(
+         {'userEmail': patientEmail},
+       );
+       final patientName = patient?['userName'] ?? 'Patient';
+
+       // 3. Delete the service request
+       await mongoDatabase.deleteServiceRequestById(requestId);
+
+       // 4. Notify the accepted nurse (if any)
+       if (acceptedBidId != null) {
+         final bid = await MongoDatabase.nurseBidsCollection?.findOne(
+           where.id(ObjectId.parse(acceptedBidId)),
+         );
+         final nurseEmail = bid?['nurseEmail'];
+
+         if (nurseEmail != null) {
+           final token = await MongoDatabase.getDeviceTokenByEmail(nurseEmail);
+           if (token != null) {
+             await SendNotificationService.sendNotificationUsingApi(
+               token: token,
+               title: "Booking Cancelled",
+               body: "$patientName cancelled your $serviceName booking",
+               data: {"screen": "MyBookedNursesScreen"},
+             );
+           }
+         }
+       }
+
+       // 5. Notify all available nurses (like in createServiceRequest)
+       final availableNurses = await MongoDatabase.getAvailableNurses();
+       if (availableNurses != null && availableNurses.isNotEmpty) {
+         for (final nurse in availableNurses) {
+           final deviceToken = nurse['userDeviceToken'];
+           final nurseName = nurse['userName'] ?? 'Nurse';
+           if (deviceToken != null && deviceToken.isNotEmpty) {
+             await SendNotificationService.sendNotificationUsingApi(
+               token: deviceToken,
+               title: "Request Cancelled",
+               body: "$patientName cancelled a $serviceName request. Check for new opportunities!",
+               data: {"screen": "AvailableRequestsScreen"},
+             );
+           }
+         }
+       } else {
+         logger.i('No available nurses to notify about cancellation');
+       }
+
+       logger.i('✅ Service request cancellation completed successfully');
+     } catch (e, stackTrace) {
+       logger.e('❌ Critical error in cancelServiceRequest:',
+         error: e,
+         stackTrace: stackTrace,
+       );
+       rethrow;
+     }
+   }
 
 
 
