@@ -264,7 +264,19 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
                           formattedDate: _formatDate(order['expectedDeliveryTime']),
                           showActions: _currentFilter == 'upcoming',
                           onCancel: () => _cancelOrder(order['_id'].toString()),
-                          onComplete: () => _completeOrder(order['_id'].toString(),order['finalAmount']),
+                          onComplete: () async {
+                            if (order['status'] == 'delivered') {
+                              // Status is 'delivered', so allow the order to be marked as complete
+                              await _completeOrder(order['_id'].toString(), order['finalAmount']);
+                            } else {
+                              // Status is not 'delivered', prevent marking the order as complete
+                              print('Cannot mark as complete. The order status is not delivered.');
+                              // Optionally, show an error message or a toast to the user
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Cannot mark as complete. The order is not delivered.')),
+                              );
+                            }
+                          },
                         );
                       },
                     );

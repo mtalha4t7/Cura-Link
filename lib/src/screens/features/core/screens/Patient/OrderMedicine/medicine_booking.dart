@@ -297,7 +297,7 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
             Text('Store: ${bid.storeName ?? 'Unknown Store'}'),
             Text('Bid Total: PKR ${bid.totalPrice.toStringAsFixed(2)}'),
             Text('Store Distance:  ${bid.distance}'),
-            Text('Delivery Fee:  ${bid.deliveryFee}'),
+            Text('Delivery Fee:  ${bid.deliveryFee.toStringAsFixed(2)}'),
 
             const SizedBox(height: 10),
             const Text('The store will prepare your order and contact you shortly.'),
@@ -399,7 +399,33 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
             : const Text('Available Bids'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () async {
+            final shouldCancel = await showDialog<bool>(
+              context: context,
+              builder: (context) =>
+                  AlertDialog(
+                    title: const Text('Active Request'),
+                    content: const Text('Keep request running in background?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context, false); // Minimize
+                          Get.to(() => PatientDashboard());
+                        },
+                        child: const Text('Minimize'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Cancel Request'),
+                      ),
+                    ],
+                  ),
+            );
+
+            if (shouldCancel ?? false) {
+              await _cancelRequest();
+            }
+          },
         ),
       ),
       body: _requestId == null
@@ -411,7 +437,6 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
           : _buildBidsList(),
     );
   }
-
   Widget _buildRequestForm() {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;

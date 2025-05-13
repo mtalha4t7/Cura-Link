@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
-import 'ordered_medicines_card.dart';
+import 'completed_orders_card.dart';
 import 'pending_orders_screen_controller.dart';
 
 class CompletedOrdersScreen extends StatefulWidget {
@@ -95,15 +95,11 @@ class _CompletedOrdersScreenState extends State<CompletedOrdersScreen> {
                 separatorBuilder: (context, index) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final order = orders[index];
-                  return OrderedMedicinesCard(
+                  return CompletedOrderCard(
                     order: order,
                     isDark: isDarkTheme,
                     onChat: () => _startChat(order['patientEmail']),
                     formattedDate: _formatDate(order['expectedDeliveryTime']),
-                    showActions: false, // No actions for completed orders
-                    onAccept: () {}, // Empty callbacks
-                    onComplete: () {},
-                    onCancel: () {},
                   );
                 },
               );

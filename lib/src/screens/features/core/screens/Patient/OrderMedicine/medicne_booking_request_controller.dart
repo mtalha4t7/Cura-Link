@@ -150,75 +150,122 @@ class MedicalStoreController extends GetxController {
 
   Future<void> acceptBid(String bidId, String patientEmail) async {
     try {
-      // 1. Update bid status
-      final result = await MongoDatabase.medicalBidsCollection?.updateOne(
+      print('[1] Starting bid acceptance process for bidId: $bidId');
+
+      // 1. Update bid status to 'accepted'
+      final updateResult = await MongoDatabase.medicalBidsCollection?.updateOne(
         where.eq('requestId', bidId),
         modify.set('status', 'accepted'),
       );
 
-      print('Update result: ${result?.isSuccess}'); // Debugging
+      if (updateResult == null || !updateResult.isSuccess) {
+        print('[1.1] Failed to update bid status');
+        throw Exception('Failed to update bid status');
+      }
+      print('[1.2] Bid status updated successfully');
 
       // 2. Get bid details
       final bid = await MongoDatabase.medicalBidsCollection?.findOne(
         where.eq('requestId', bidId),
       );
-    final patient= await MongoDatabase.userPatientCollection?.findOne(
+
+      if (bid == null) {
+        print('[2] Bid not found for requestId: $bidId');
+        throw Exception('Bid not found');
+      }
+      print('[2] Bid fetched successfully');
+
+      // 3. Get patient details
+      final patient = await MongoDatabase.userPatientCollection?.findOne(
         where.eq('userEmail', patientEmail),
       );
 
-      print(bidId); // Prints String
-      print(bid);   // Should not be null
+      if (patient == null) {
+        print('[3] Patient not found for email: $patientEmail');
+        throw Exception('Patient not found');
+      }
+      print('[3] Patient fetched successfully');
 
-      if (bid == null) throw Exception('Bid not found');
-
+      // 4. Extract fields
       final requestId = bid['requestId'];
       final storeEmail = bid['storeEmail'];
       final bidAmount = bid['totalPrice'];
       final storeName = bid['storeName'];
       final distance = bid['Distance'];
       final deliveryTimeString = bid['deliveryTime'];
-      final patientName= patient!['userName'];
+      final patientName = patient['userName'];
+      final medicines = bid['medicines'];
 
+      print('[4] Extracted bid and patient data');
 
-      // Parse the delivery time string to get minutes
+      // 5. Parse delivery time
       final minutes = _parseDeliveryTime(deliveryTimeString);
+      print('[5] Parsed delivery time to $minutes minutes');
 
-      // Calculate expected delivery time (current time + parsed minutes)
       final createdAt = DateTime.now().toUtc();
       final expectedDeliveryTime = createdAt.add(Duration(minutes: minutes));
+      print('[5.1] Calculated expected delivery time: $expectedDeliveryTime');
 
-      // 3. Update medical request status
+      // 6. Delete medical request from collection
+      final requestUpdateResult = await MongoDatabase.medicalRequestsCollection
+          ?.updateOne(
+        where.eq('_id', cleanObjectId(requestId)),
+        modify.set('status', 'accepted'),
+      );
 
-      await MongoDatabase.medicalRequestsCollection?.deleteOne(where.eq('_id',cleanObjectId(requestId)));
+      print('Request status update result: ${requestUpdateResult?.isSuccess}');
+
+
+      // 7. Get patient location
       final patientLocation = await MongoDatabase.getLocationByEmail(patientEmail);
+      if (patientLocation == null) {
+        print('[7] Warning: Patient location is null');
+      } else {
+        print('[7] Patient location retrieved');
+      }
 
-      // 4. Insert order
+      // 8. Prepare order data
       final orderData = {
         'requestId': requestId,
         'bidId': bidId,
         'patientLocation': patientLocation,
         'distance': distance,
         'patientEmail': patientEmail,
-        'patientName':patientName,
+        'patientName': patientName,
         'storeName': storeName,
         'storeEmail': storeEmail,
         'finalAmount': bidAmount,
         'status': 'pending',
+        'medicines': medicines,
         'createdAt': createdAt,
         'expectedDeliveryTime': expectedDeliveryTime,
-        'deliveryTime': deliveryTimeString, // Keep the original string format
+        'deliveryTime': deliveryTimeString,
       };
+      print('[8] Order data constructed');
 
-      await MongoDatabase.medicalOrdersCollection?.insertOne(orderData);
+      // 9. Insert new order
+      final insertResult = await MongoDatabase.medicalOrdersCollection?.insertOne(orderData);
+      if (insertResult == null || !insertResult.isSuccess) {
+        print('[9] Failed to insert order');
+        throw Exception('Failed to insert order');
+      }
+      print('[9] Order inserted successfully');
 
-      // 5. Notify
+      // 10. Notify the store
       await _notifyStoreAboutAcceptedBid(storeEmail, requestId);
-      await MongoDatabase.medicalRequestsCollection?.deleteOne(where.eq('requestId', requestId),);
-    } catch (e) {
-      print('Error accepting bid: $e');
+      print('[10] Notification sent to store: $storeEmail');
+
+      // 11. Clean up duplicate request entry if exists
+
+      print('[✅] Bid acceptance completed successfully');
+
+    } catch (e, stackTrace) {
+      print('[❌] Error accepting bid: $e');
+      print('StackTrace:\n$stackTrace');
       rethrow;
     }
   }
+
 
   // Helper function to parse delivery time string (e.g., "16 mins" → 16)
   int _parseDeliveryTime(String deliveryTime) {
@@ -231,6 +278,7 @@ class MedicalStoreController extends GetxController {
       return 30; // Default fallback value
     }
   }
+
 
 
 

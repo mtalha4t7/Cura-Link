@@ -38,9 +38,14 @@ class CheckForRequestsController extends GetxController {
   }
 
   void startPolling() {
-    fetchActiveRequests();
-    pollingTimer = Timer.periodic(Duration(seconds: 10), (_) {
+    // Initial call after 1.5 seconds
+    Future.delayed(Duration(milliseconds: 1500), () {
       fetchActiveRequests();
+
+      // Start periodic polling every 10 seconds after first call
+      pollingTimer = Timer.periodic(Duration(seconds: 10), (_) {
+        fetchActiveRequests();
+      });
     });
   }
 
@@ -101,75 +106,38 @@ class CheckForRequestsController extends GetxController {
         String? prescriptionDetails,
         List<dynamic>? medicines,
         String? prescriptionImage,
+        Map<String, dynamic>? location,
       }) async {
     try {
       isLoading(true);
-      print("==================== $storeName");
+      final email = FirebaseAuth.instance.currentUser!.email!;
 
-      final email = FirebaseAuth.instance.currentUser?.email;
-      if (email == null) {
-        throw Exception("Store email is null. User might not be logged in.");
-      }
-         print(patientEmail);
-      if (patientEmail == null) {
-        throw Exception("Patient email is null. Cannot submit bid.");
-      }
-
-      final storeLocation = await MongoDatabase.getUserLocationByEmail(email);
-      final patientLocation = await MongoDatabase.getUserLocationByEmail(patientEmail);
-
-      final distanceInKm = await calculateDistanceBetweenLocations(patientLocation!);
-      String distanceString = distanceInKm < 1.0
-          ? '${(distanceInKm * 1000).round()}m'
-          : '${distanceInKm.toStringAsFixed(1)} km';
-      final deliveryTime = (storeLocation != null && patientLocation != null)
-          ? calculateDeliveryTime(patientLocation, storeLocation)
-          : '30-45 min';
-       print('=================================> $deliveryFee');
       final bidData = {
         'storeName': storeName,
-        'storeEmail': medicalStore.value?.userEmail ?? '',
-        'Base-price': basePrice,
+        'storeEmail': email,
+        'basePrice': basePrice,
         'deliveryFee': deliveryFee,
-        'Distance' :distanceString,
+        'totalPrice': totalPrice,
+        'medicines': medicines,
+        'prescriptionDetails': prescriptionDetails,
+        'prescriptionImage': prescriptionImage,
+        'location': location,
         'submittedAt': DateTime.now(),
-        'deliveryTime': deliveryTime,
-        'requestId':requestId,
-        if (prescriptionDetails != null)
-          'prescriptionDetails': prescriptionDetails,
-        if (medicines != null)
-          'medicines': medicines,
-          'totalPrice': totalPrice,
-        if (prescriptionImage != null)
-          'prescriptionImage': prescriptionImage,
-        'storeLocation': storeLocation,
       };
-
 
       await MongoDatabase.submitStoreBid(
         requestId: requestId,
         bidData: bidData,
       );
 
-      Get.snackbar(
-        'Success',
-        prescriptionDetails != null
-            ? 'Prescription bid submitted successfully'
-            : 'Bid submitted successfully',
-      );
-
-      await fetchActiveRequests();
+      Get.snackbar('Success', 'Bid submitted successfully');
+      fetchActiveRequests();
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to submit bid: ${e.toString()}',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar('Error', 'Failed to submit bid: ${e.toString()}');
     } finally {
       isLoading(false);
     }
   }
-
 
 
   Future<double> calculateDistanceBetweenLocations(Map<String, dynamic> patientLocation) async {
@@ -199,13 +167,27 @@ class CheckForRequestsController extends GetxController {
   }
 
   Future<Map<String, double>> getDeliveryDetails(Map<String, dynamic> patientLocation) async {
-    final distance = await calculateDistanceBetweenLocations(patientLocation);
-    final fee = await calculateDeliveryFee(patientLocation);
-    return {
-      'distance': distance,
-      'fee': fee,
-    };
+    try {
+      print('[getDeliveryDetails] Calculating delivery details for location: $patientLocation');
+
+      final distance = await calculateDistanceBetweenLocations(patientLocation);
+      print('[getDeliveryDetails] Calculated distance: $distance meters');
+
+      final fee = await calculateDeliveryFee(patientLocation);
+      print('[getDeliveryDetails] Calculated delivery fee: PKR $fee');
+
+      return {'distance': distance, 'fee': fee};
+    } catch (e, stackTrace) {
+      print('[getDeliveryDetails] Error occurred: $e');
+      print('[getDeliveryDetails] StackTrace: $stackTrace');
+
+      return {
+        'distance': 0.0,
+        'fee': MIN_DELIVERY_FEE,
+      };
+    }
   }
+
 
   Future<double> calculateDeliveryFee(Map<String, dynamic> patientLocation) async {
     try {

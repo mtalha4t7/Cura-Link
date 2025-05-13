@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+
 
 class OrderedMedicinesCard extends StatelessWidget {
   final Map<String, dynamic> booking;
@@ -25,6 +25,7 @@ class OrderedMedicinesCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final medicines = booking['medicines'] as List<dynamic>? ?? [];
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -94,17 +95,26 @@ class OrderedMedicinesCard extends StatelessWidget {
 
               const SizedBox(height: 8),
 
-              // Details Section
-              _buildDetailRow(
-                icon: Icons.calendar_today_outlined,
-                title: 'Order Date',
-                value: _formatDate(booking['createdAt']),
-              ),
-              const SizedBox(height: 8),
+              // Medicines Section
+              if (medicines.isNotEmpty) ...[
+                Text(
+                  'Medicines:',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...medicines.map((medicine) => _buildMedicineItem(medicine)).toList(),
+                const SizedBox(height: 8),
+              ],
+
+              // Delivery and Amount Section
               _buildDetailRow(
                 icon: Icons.access_time_outlined,
                 title: 'Expected Delivery',
-                value: _formatDate(booking['expectedDeliveryTime']),
+                value: formattedDate,
               ),
               const SizedBox(height: 8),
               _buildDetailRow(
@@ -169,13 +179,38 @@ class OrderedMedicinesCard extends StatelessWidget {
     );
   }
 
-  String _formatDate(String dateString) {
-    try {
-      final date = DateTime.parse(dateString);
-      return DateFormat('MMM dd, yyyy - hh:mm a').format(date);
-    } catch (e) {
-      return dateString;
-    }
+  Widget _buildMedicineItem(dynamic medicine) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.medical_services_outlined, size: 20, color: Colors.green),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  medicine['name'] ?? 'Unknown Medicine',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  ' ${medicine['price']?.toStringAsFixed(2) ?? '0.00'}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildDetailRow({
