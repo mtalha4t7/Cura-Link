@@ -44,7 +44,7 @@ class PendingAndCompletedOrdersController extends GetxController {
 
   Future<List<Map<String, dynamic>>> getCompletedOrders(String storeEmail) async {
     try {
-      final orders = await MongoDatabase.medicalOrdersCollection?.find(
+      final orders = await MongoDatabase.completedOrdersCollection?.find(
         where.eq('storeEmail', storeEmail.trim().toLowerCase())
             .eq('status', 'Completed'),
       ).toList();
@@ -54,6 +54,7 @@ class PendingAndCompletedOrdersController extends GetxController {
       return [];
     }
   }
+
   Future<List<Map<String, dynamic>>> getPendingOrders(String storeEmail) async {
     try {
       final orders = await MongoDatabase.medicalOrdersCollection?.find(
@@ -131,6 +132,7 @@ class PendingAndCompletedOrdersController extends GetxController {
       'createdAt': _parseDate(order['createdAt']),
       'expectedDeliveryTime': _parseDate(order['expectedDeliveryTime']),
       'deliveryTime': order['deliveryTime'] ?? '',
+      'medicines': order['medicines'],
       'patientLocation': order['patientLocation'] ?? {},
     };
   }

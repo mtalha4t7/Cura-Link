@@ -1,5 +1,6 @@
 import 'package:cura_link/src/screens/features/core/screens/MedicalStore/CheckForRequests/check_for_requests.dart';
 import 'package:cura_link/src/screens/features/core/screens/MedicalStore/MedicalStoreProfile/MedicalStore_Profile_Screen.dart';
+import 'package:cura_link/src/screens/features/core/screens/MedicalStore/MyPendingAndCompletedOrders/completed_orders_screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/MedicalStore/MyPendingAndCompletedOrders/pending_orders_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -267,7 +268,9 @@ class _MedicalStoreDashboardState extends State<MedicalStoreDashboard> {
                           ServiceCard(
                             icon: Icons.local_shipping,
                             title: 'Completed Orders',
-                            onTap: () {},
+                            onTap: () {
+                              Get.to(() => CompletedOrdersScreen(storeEmail: storeEmail!));
+                            },
                           ),
                         ],
                       ),

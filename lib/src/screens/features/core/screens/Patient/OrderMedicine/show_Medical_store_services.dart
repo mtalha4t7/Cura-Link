@@ -162,7 +162,7 @@ class _MedicalStoreServicesScreenState extends State<MedicalStoreServicesScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Flexible(child: Text(medicine['name'])),
-                  Text('PKR ${medicine['price']}'),
+                  Text('PKR ${medicine['price'].toInt()}'),
                 ],
               ),
             )),
@@ -173,7 +173,7 @@ class _MedicalStoreServicesScreenState extends State<MedicalStoreServicesScreen>
                 const Text('Total:',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
-                  'PKR ${otcSelected.fold<double>(0, (sum, item) => sum + (item['price'] as double))}',
+                  'PKR ${otcSelected.fold<double>(0, (sum, item) => sum + (item['price'].toInt()))}',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],

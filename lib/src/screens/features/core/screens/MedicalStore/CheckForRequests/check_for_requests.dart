@@ -7,31 +7,23 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:photo_view/photo_view.dart';
 
-
 class CheckForRequestsScreen extends StatefulWidget {
   const CheckForRequestsScreen({super.key});
-
 
   @override
   State<CheckForRequestsScreen> createState() => _CheckForRequestsScreenState();
 }
 
 class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
-
   Uint8List? base64ToImage(String base64String) {
-
-        base64String = base64String;
-
-      return base64Decode(base64String);
-;
+    return base64Decode(base64String);
   }
+
   @override
   Widget build(BuildContext context) {
-    final CheckForRequestsController controller = Get.put(CheckForRequestsController());
+    final controller = Get.put(CheckForRequestsController());
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final String? email = FirebaseAuth.instance.currentUser?.email;
-
 
     return Scaffold(
       appBar: AppBar(
@@ -47,11 +39,9 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
-
         if (controller.activeRequests.isEmpty) {
           return _buildEmptyState(theme);
         }
-
         return ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: controller.activeRequests.length,
@@ -74,249 +64,173 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
       }),
     );
   }
-  Future<Map<String, double>> _getPrescriptionDeliveryDetails(
-      CheckForRequestsController controller,
-      Map<String, dynamic>? patientLocation,
-      ) async {
-    try {
-      final distance = await controller.calculateDistanceBetweenLocations(patientLocation ?? {});
-      final fee = await controller.calculateDeliveryFee(patientLocation ?? {});
-      return {'distance': distance, 'fee': fee};
-    } catch (e) {
-      return {
-        'distance': 0.0,
-        'fee': CheckForRequestsController.MIN_DELIVERY_FEE
-      };
-    }
-  }
 
   Widget _buildPrescriptionRequestCard(
       BuildContext context,
       Map<String, dynamic> request,
       CheckForRequestsController controller,
       ) {
-    final theme = Theme.of(context);
-    final patientLocation = request['location'] as Map<String, dynamic>?;
-    final prescriptionImage = base64ToImage(request['prescriptionImage']!.toString());
-
-    final requestType = request['requestType'];
-    bool isPrescription=true;
-    if(requestType=="notPrescription"){
-      isPrescription=false;
-    }
+    final prescriptionImage = base64ToImage(request['prescriptionImage']?.toString() ?? '');
+    final patientLocation = request['patientLocation'] as Map<String, dynamic>?;
 
     return FutureBuilder<Map<String, double>>(
-      future: _getPrescriptionDeliveryDetails(controller, patientLocation),
+      future: controller.getDeliveryDetails(patientLocation ?? {}),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-
         final distance = snapshot.data?['distance'] ?? 0.0;
         final deliveryFee = snapshot.data?['fee'] ?? CheckForRequestsController.MIN_DELIVERY_FEE;
-         final total=0.00;
-        return InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: prescriptionImage != null
-              ? () => _showFullScreenPrescription(context, prescriptionImage!)
-              : null,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'Prescription Request',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                    ),
-                    _buildStatusBadge(request['status']?.toString()),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _buildDetailRow(
-                  Icons.person_outline,
-                  'Patient: ${request['patientEmail'] ?? 'Unknown'}',
-                ),
-                _buildDetailRow(
-                  Icons.calendar_today,
-                  'Posted: ${_formatDate(request['createdAt'])}',
-                ),
-                if (patientLocation != null)
-                  _buildDetailRow(
-                    Icons.location_on_outlined,
-                    _parseLocation(patientLocation) ?? 'Location not available',
-                  ),
-                _buildDetailRow(
-                  Icons.directions_car,
-                  'Distance: ${distance.toStringAsFixed(2)} km',
-                ),
-                if (prescriptionImage != null) ...[
-                  const SizedBox(height: 16),
-                  const Text('Prescription:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Container(
-                    height: 150,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.memory(
-                        prescriptionImage,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Center(child: Icon(Icons.error, color: Colors.red));
-                        },
-                      ),
+        final basePrice = (request['basePrice'] as num?)?.toDouble() ?? 0.0;
+        final totalPrice = basePrice + deliveryFee;
+
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Prescription Request',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Tap to view full prescription',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
+                  _buildStatusBadge(request['status']?.toString()),
                 ],
+              ),
+              const SizedBox(height: 12),
+              _buildDetailRow(
+                Icons.person_outline,
+                'Patient: ${request['patientEmail'] ?? 'Unknown'}',
+              ),
+              _buildDetailRow(
+                Icons.calendar_today,
+                'Posted: ${_formatDate(request['createdAt'])}',
+              ),
+              if (patientLocation != null)
+                _buildDetailRow(
+                  Icons.location_on_outlined,
+                  _parseLocation(patientLocation) ?? 'Location not available',
+                ),
+              _buildDetailRow(
+                Icons.directions_car,
+                'Distance: ${distance.toStringAsFixed(2)} km',
+              ),
+              _buildDetailRow(
+                Icons.local_shipping,
+                'Delivery Fee: PKR ${deliveryFee.toStringAsFixed(2)}',
+              ),
+              if (prescriptionImage != null) ...[
                 const SizedBox(height: 16),
-                _buildBidButton(
-                  context,
-                  request,
-                  controller,
-                  deliveryFee,
-                  total,
-                  isPrescription,
+                InkWell(
+                  onTap: () => _showFullScreenPrescription(context, prescriptionImage!),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Prescription:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      Container(
+                        height: 150,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.memory(
+                            prescriptionImage,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
-            ),
+              const SizedBox(height: 16),
+              _buildBidButton(
+                context,
+                request,
+                controller,
+                deliveryFee,
+                totalPrice,
+                true, // isPrescription
+              ),
+            ],
           ),
         );
       },
     );
   }
-
 
   Widget _buildNonPrescriptionRequestCard(
       BuildContext context,
       Map<String, dynamic> request,
       CheckForRequestsController controller,
       ) {
-    final theme = Theme.of(context);
     final patientLocation = request['patientLocation'] as Map<String, dynamic>?;
     final subtotal = (request['subtotal'] as num?)?.toDouble() ?? 0.0;
-    final requestType = request['requestType'];
-    bool isPrescription=true;
-    if(requestType=="notPrescription"){
-      isPrescription=false;
-    }
-
-
 
     return FutureBuilder<Map<String, double>>(
-      future: _getDeliveryDetails(controller, patientLocation, subtotal),
+      future: controller.getDeliveryDetails(patientLocation ?? {}),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        final distance = snapshot.data?['distance'] ?? 0.0;
         final deliveryFee = snapshot.data?['fee'] ?? CheckForRequestsController.MIN_DELIVERY_FEE;
-        final total = snapshot.data?['total'] ?? subtotal;
+        final totalPrice = subtotal + deliveryFee;
 
-        return InkWell(
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Medicine Order',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Medicine Order',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
-                    _buildStatusBadge(request['status']?.toString()),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _buildDetailRow(
-                  Icons.person_outline,
-                  'Patient: ${request['patientName'] ?? 'Unknown'}',
-                ),
-                _buildDetailRow(
-                  Icons.location_city,
-                  'Address: ${request['deliveryAddress'] ?? 'Address not provided'}',
-                ),
-
-                _buildDetailRow(
-                  Icons.directions_car,
-                  'Distance: ${distance.toStringAsFixed(2)} km',
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Order Summary:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                ..._buildMedicineList(request['medicines'] as List<dynamic>?),
-                const SizedBox(height: 12),
-                _buildPriceDetailRow('Subtotal', subtotal),
-                _buildPriceDetailRow('Delivery Fee', deliveryFee),
-                _buildPriceDetailRow('Total', total, isTotal: true),
-                const SizedBox(height: 16),
-                _buildBidButton(context, request, controller, deliveryFee,total,isPrescription),
-              ],
-            ),
+                  ),
+                  _buildStatusBadge(request['status']?.toString()),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _buildDetailRow(
+                Icons.person_outline,
+                'Patient: ${request['patientName'] ?? 'Unknown'}',
+              ),
+              _buildDetailRow(
+                Icons.location_on_outlined,
+                'Address: ${request['deliveryAddress'] ?? 'Address not provided'}',
+              ),
+              _buildDetailRow(
+                Icons.directions_car,
+                'Distance: ${(snapshot.data?['distance'] ?? 0.0).toStringAsFixed(2)} km',
+              ),
+              _buildDetailRow(
+                Icons.local_shipping,
+                'Delivery Fee: PKR ${deliveryFee.toStringAsFixed(2)}',
+              ),
+              const SizedBox(height: 16),
+              ..._buildMedicineList(request['medicines'] as List<dynamic>?),
+              const SizedBox(height: 12),
+              _buildPriceDetailRow('Subtotal', subtotal),
+              _buildPriceDetailRow('Total', totalPrice, isTotal: true),
+              const SizedBox(height: 16),
+              _buildBidButton(
+                context,
+                request,
+                controller,
+                deliveryFee,
+                totalPrice,
+                false, // isPrescription
+              ),
+            ],
           ),
         );
       },
     );
   }
-
-
-// Helper function for prescription delivery details
-  Future<Map<String, double>> _getDeliveryDetails(
-      CheckForRequestsController controller,
-      Map<String, dynamic>? patientLocation,
-      double subtotal,
-      ) async {
-    try {
-      final distance = await controller.calculateDistanceBetweenLocations(patientLocation ?? {});
-      final fee = await controller.calculateDeliveryFee(patientLocation ?? {});
-      return {
-        'distance': distance,
-        'fee': fee,
-        'total': subtotal + fee,
-      };
-    } catch (e) {
-      return {
-        'distance': 0.0,
-        'fee': CheckForRequestsController.MIN_DELIVERY_FEE,
-        'total': subtotal,
-      };
-    }
-  }
-
 
   Widget _buildBidButton(
       BuildContext context,
@@ -327,320 +241,370 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
       bool isPrescription,
       ) {
     final bids = request['bids'] as List<dynamic>? ?? [];
-    final hasBid = bids.any((bid) =>
-    bid['storeEmail'] == controller.medicalStore.value?.userEmail);
-    final currentBid = hasBid
-        ? bids.firstWhere((bid) =>
-    bid['storeEmail'] == controller.medicalStore.value?.userEmail)
-        : null;
+    final hasBid = bids.any((bid) => bid['storeEmail'] == controller.medicalStore.value?.userEmail);
+    final currentBid = hasBid ? bids.firstWhere((bid) => bid['storeEmail'] == controller.medicalStore.value?.userEmail) : null;
 
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          backgroundColor: hasBid ? Colors.orange : Theme.of(context).primaryColor,
-          foregroundColor: Colors.white,
-        ),
-        onPressed: () => isPrescription
-            ? _showPrescriptionBidDialog(
-          context,
-          request['patientEmail'].toString(),
-          request['_id'].toString(),
-          controller,
-          hasBid,
-          totalPrice,
-          deliveryFee,
-          request['location'],
-        )
-            : _showBidDialog(
-          context,
-          request['patientEmail'].toString(),
-          request['_id'].toString(),
-          controller,
-          hasBid,
-          totalPrice,
-          deliveryFee,
-          isPrescription,
-          request['location'],
-        ),
-        child: Text(
-          hasBid ? 'UPDATE BID' : 'PLACE BID',
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
-          ),
-        ),
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: hasBid ? Colors.orange : Theme.of(context).primaryColor,
+        foregroundColor: Colors.white,
+        minimumSize: const Size(double.infinity, 50),
       ),
+      onPressed: () => isPrescription
+          ? _showPrescriptionBidDialog(
+        context,
+        request['patientEmail'].toString(),
+        request['_id'].toString(),
+        controller,
+        hasBid,
+        currentBid?['basePrice']?.toDouble() ?? 0.0,
+        deliveryFee,
+        currentBid?['prescriptionDetails']?.toString() ?? '',
+        request['location'],
+      )
+          : _showNonPrescriptionBidDialog(
+        context,
+        request['patientEmail'].toString(),
+        request['_id'].toString(),
+        request['medicines'],
+        controller,
+        hasBid,
+        (currentBid?['basePrice']?.toDouble() ?? (request['subtotal']?.toDouble() ?? 0.0)),
+        deliveryFee,
+        request['location'],
+      ),
+      child: Text(hasBid ? 'UPDATE BID' : 'PLACE BID'),
     );
   }
 
-
-
-
-  List<Widget> _buildMedicineList(List<dynamic>? medicines) {
-    if (medicines == null || medicines.isEmpty) {
-      return [const Text('No medicines specified')];
-    }
-    return medicines.map((medicine) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            const Icon(Icons.medical_services, size: 16, color: Colors.grey),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                '${medicine['name']} (x${medicine['quantity']})',
-                style: const TextStyle(fontSize: 14),
-              ),
-            ),
-            Text(
-              'PKR ${medicine['price'].toStringAsFixed(2)}',
-              style: const TextStyle(fontSize: 14),
-            ),
-          ],
-        ),
-      );
-    }).toList();
-  }
-
-  Widget _buildPriceDetailRow(String label, dynamic value,
-      {bool isTotal = false}) {
-    final amount = value is num ? value : 0.0;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-          Text(
-            'PKR ${amount.toStringAsFixed(2)}',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showPrescriptionBidDialog(BuildContext context,
+  void _showPrescriptionBidDialog(
+      BuildContext context,
       String patientEmail,
       String requestId,
       CheckForRequestsController controller,
       bool hasBid,
-      double currentPrice,
-      double deliverPrice,
+      double currentBasePrice,
+      double deliveryFee,
       String currentDetails,
-
+      dynamic location,
       ) {
-    final priceController = TextEditingController(
-      text: currentPrice.toStringAsFixed(0),
-    );
+    final basePriceController = TextEditingController(text: currentBasePrice.toStringAsFixed(2));
     final detailsController = TextEditingController(text: currentDetails);
-    final email = FirebaseAuth.instance.currentUser?.email;
-    double currentBid = currentPrice;
+    bool includeDelivery = true;
+    double totalPrice = currentBasePrice + deliveryFee;
 
     showDialog(
       context: context,
-      builder: (_) =>
-          StatefulBuilder(
-            builder: (context, setState) {
-              return Dialog(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${hasBid ? 'Update' : 'Place'} Prescription Bid',
-                          style: Theme
-                              .of(context)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'Enter prescription details:',
-                          style: TextStyle(fontSize: 14),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: detailsController,
-                          maxLines: 3,
-                          decoration: InputDecoration(
-                            hintText: 'Enter medicine details, dosage instructions etc.',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'Enter your bid amount (PKR)',
-                          style: TextStyle(fontSize: 14),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SizedBox(width: 12),
-                            Container(
-                              width: 120,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey[300]!),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: TextField(
-                                controller: priceController,
-                                keyboardType: TextInputType.number,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.zero,
-                                  prefix: Text('PKR '),
-                                ),
-                                onChanged: (value) {
-                                  currentBid = double.tryParse(value) ?? 0;
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('CANCEL'),
-                            ),
-                            const SizedBox(width: 8),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 12),
-                              ),
-                              onPressed: () async {
-                                final price = double.tryParse(
-                                    priceController.text.trim());
-                                if (price == null || price <= 0) {
-                                  Get.snackbar(
-                                    'Invalid Amount',
-                                    'Please enter a valid bid amount',
-                                    snackPosition: SnackPosition.BOTTOM,
-                                    backgroundColor: Colors.red[400],
-                                    colorText: Colors.white,
-                                  );
-                                  return;
-                                }
-
-                                if (detailsController.text
-                                    .trim()
-                                    .isEmpty) {
-                                  Get.snackbar(
-                                    'Missing Details',
-                                    'Please enter prescription details',
-                                    snackPosition: SnackPosition.BOTTOM,
-                                    backgroundColor: Colors.red[400],
-                                    colorText: Colors.white,
-                                  );
-                                  return;
-                                }
-
-                                final cleanRequestId = _extractObjectId(
-                                    requestId);
-                                final name = await UserRepository.instance
-                                    .getMedicalStoreUserName(email.toString());
-
-                                // Get the current request to access prescription image
-                                final request = controller.activeRequests.firstWhere(
-                                      (req) => req['_id'].toString().contains(cleanRequestId),
-                                  orElse: () => {},
-                                );
-                                final basePrice=price;
-                                controller.submitBid(
-                                  cleanRequestId,
-                                  patientEmail,
-                                  price,
-                                  deliverPrice,
-                                  basePrice,
-                                  name ?? "Unknown Store",
-                                  prescriptionDetails: detailsController.text
-                                      .trim(),
-                                  prescriptionImage: request['prescriptionImage'],
-                                );
-
-                                Navigator.pop(context);
-                              },
-                              child: const Text('SUBMIT'),
-                            ),
-                          ],
-                        ),
-                      ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text('${hasBid ? 'Update' : 'Place'} Prescription Bid'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: detailsController,
+                    decoration: const InputDecoration(
+                      labelText: 'Prescription Details',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: basePriceController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Base Price (PKR)',
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (value) {
+                      final base = double.tryParse(value) ?? 0.0;
+                      setState(() => totalPrice = base + (includeDelivery ? deliveryFee : 0));
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: includeDelivery,
+                        onChanged: (value) {
+                          setState(() {
+                            includeDelivery = value!;
+                            totalPrice = (double.tryParse(basePriceController.text) ?? 0.0) +
+                                (includeDelivery ? deliveryFee : 0);
+                          });
+                        },
+                      ),
+                       Text('Include Delivery Fee (PKR ${deliveryFee.toStringAsFixed(2)})'),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Total Bid Price: PKR ${totalPrice.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
                     ),
                   ),
-                ),
-              );
-            },
-          ),
-    );
-  }
-  void _showFullScreenPrescription(BuildContext context, Uint8List imageBytes) {
-    showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(0),
-        child: Stack(
-          children: [
-            PhotoView(
-              imageProvider: MemoryImage(imageBytes),
-              minScale: PhotoViewComputedScale.contained,
-              maxScale: PhotoViewComputedScale.covered * 2,
-            ),
-            Positioned(
-              top: 40,
-              right: 20,
-              child: IconButton(
-                icon: const Icon(
-                    Icons.close, color: Colors.white, size: 30),
-                onPressed: () => Navigator.pop(context),
+                ],
               ),
             ),
-          ],
-        ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final basePrice = double.tryParse(basePriceController.text) ?? 0.0;
+                  final total = basePrice + (includeDelivery ? deliveryFee : 0);
+
+                  if (basePrice <= 0) {
+                    Get.snackbar('Error', 'Please enter a valid base price');
+                    return;
+                  }
+
+                  final cleanRequestId = _extractObjectId(requestId);
+                  final name = await UserRepository.instance.getMedicalStoreUserName(
+                      FirebaseAuth.instance.currentUser!.email!
+                  );
+
+                  controller.submitBid(
+                    cleanRequestId,
+                    patientEmail,
+                    includeDelivery ? deliveryFee : 0,
+                    total,
+                    basePrice,
+                    name ?? "Unknown Store",
+                    prescriptionDetails: detailsController.text,
+                    location: location,
+                  );
+
+                  Navigator.pop(context);
+                },
+                child: const Text('Submit Bid'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
+  void _showNonPrescriptionBidDialog(
+      BuildContext context,
+      String patientEmail,
+      String requestId,
+      List<dynamic> medicines,
+      CheckForRequestsController controller,
+      bool hasBid,
+      double currentBasePrice,
+      double deliveryFee,
+      dynamic location,
+      ) {
+    final basePriceController = TextEditingController(text: currentBasePrice.toStringAsFixed(2));
+    bool includeDelivery = true;
+    double totalPrice = currentBasePrice + deliveryFee;
 
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.all(20),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: StatefulBuilder(
+          builder: (context, setState) {
+            return ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${hasBid ? 'Update' : 'Place'} Medicine Bid',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                          tooltip: 'Close',
+                        ),
+                      ],
+                    ),
 
+                    const Divider(height: 30, thickness: 1),
+
+                    // Content
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Base Price Input
+                            Text(
+                              'Base Price (PKR)',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: basePriceController,
+                              keyboardType: TextInputType.numberWithOptions(decimal: true),
+                              decoration: InputDecoration(
+                                hintText: 'Enter base price',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 14),
+                              ),
+                              onChanged: (value) {
+                                final base = double.tryParse(value) ?? 0.0;
+                                setState(() => totalPrice = base + (includeDelivery ? deliveryFee : 0));
+                              },
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // Delivery Fee Toggle
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              child: Row(
+                                children: [
+                                  Transform.scale(
+                                    scale: 1.2,
+                                    child: Checkbox(
+                                      value: includeDelivery,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          includeDelivery = value!;
+                                          totalPrice = (double.tryParse(basePriceController.text) ?? 0.0) +
+                                              (includeDelivery ? deliveryFee : 0);
+                                        });
+                                      },
+                                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      'Include Delivery Fee: PKR ${deliveryFee.toStringAsFixed(2)}',
+                                      style: Theme.of(context).textTheme.titleMedium,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 24),
+
+                            // Total Price Display
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Theme.of(context).primaryColor.withOpacity(0.3),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Total Bid Amount',
+                                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'PKR ${totalPrice.toStringAsFixed(2)}',
+                                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green[800],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Actions
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
+                          ),
+                          child: const Text('Cancel'),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: () async {
+                            final basePrice = double.tryParse(basePriceController.text) ?? 0.0;
+                            final total = basePrice + (includeDelivery ? deliveryFee : 0);
+
+                            final cleanRequestId = _extractObjectId(requestId);
+                            final name = await UserRepository.instance.getMedicalStoreUserName(
+                                FirebaseAuth.instance.currentUser!.email!
+                            );
+
+                            controller.submitBid(
+                              cleanRequestId,
+                              patientEmail,
+                              includeDelivery ? deliveryFee : 0,
+                              total,
+                              basePrice,
+                              name ?? "Unknown Store",
+                              medicines: medicines,
+                              location: location,
+                            );
+
+                            Navigator.pop(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
+                          ),
+                          child: const Text('Submit Bid'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
   Widget _buildEmptyState(ThemeData theme) {
     return Center(
       child: Column(
@@ -709,152 +673,82 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
     );
   }
 
-
-
-  void _showBidDialog(
-      BuildContext context,
-      String patientEmail,
-      String requestId,
-      CheckForRequestsController controller,
-      bool hasBid,
-      double totalPrice,
-      double deliveryPrice,
-      bool isPrescription,
-      dynamic location,
-      ) {
-    final email = FirebaseAuth.instance.currentUser?.email;
-    double basePrice = totalPrice-deliveryPrice;
-    bool includeDelivery = true; // default selection
-    double finalBid = basePrice + deliveryPrice;
-
-    showDialog(
-      context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (context, setState) {
-          finalBid = includeDelivery ? totalPrice : basePrice;
-          deliveryPrice= includeDelivery ? deliveryPrice : 0.00;
-
-          return Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${hasBid ? 'Update' : 'Place'} ${isPrescription ? 'Prescription ' : ''}Bid',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  if (isPrescription) ...[
-                    const Text(
-                      'Enter prescription details:',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        hintText: 'Enter medicine details, dosage instructions etc.',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-
-                  const Text(
-                    'Delivery Fee:',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Radio<bool>(
-                        value: true,
-                        groupValue: includeDelivery,
-                        onChanged: (value) {
-                          setState(() {
-                            includeDelivery = value!;
-                          });
-                        },
-                      ),
-                      const Text("Include delivery fee"),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Radio<bool>(
-                        value: false,
-                        groupValue: includeDelivery,
-                        onChanged: (value) {
-                          setState(() {
-                            includeDelivery = value!;
-                          });
-                        },
-                      ),
-                      const Text("Exclude delivery fee"),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-                  Center(
-                    child: Text(
-                      'Your Bid: PKR ${finalBid.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('CANCEL'),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 12),
-                        ),
-                        onPressed: () async {
-                          final cleanRequestId = _extractObjectId(requestId);
-                          final name = await UserRepository.instance
-                              .getMedicalStoreUserName(email.toString());
-
-                          controller.submitBid(
-                            cleanRequestId,
-                            patientEmail,
-                            deliveryPrice,
-                            finalBid,
-                            basePrice,
-                            name ?? "Unknown Store",
-                          );
-
-                          Navigator.pop(context);
-                        },
-                        child: const Text('SUBMIT'),
-                      ),
-                    ],
-                  ),
-                ],
+  List<Widget> _buildMedicineList(List<dynamic>? medicines) {
+    if (medicines == null || medicines.isEmpty) {
+      return [const Text('No medicines specified')];
+    }
+    return medicines.map((medicine) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            const Icon(Icons.medical_services, size: 16, color: Colors.grey),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '${medicine['name']} (x${medicine['quantity']})',
+                style: const TextStyle(fontSize: 14),
               ),
             ),
-          );
-        },
+            Text(
+              'PKR ${medicine['price'].toStringAsFixed(2)}',
+              style: const TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+      );
+    }).toList();
+  }
+
+  Widget _buildPriceDetailRow(String label, dynamic value, {bool isTotal = false}) {
+    final amount = value is num ? value : 0.0;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          Text(
+            'PKR ${amount.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFullScreenPrescription(BuildContext context, Uint8List imageBytes) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(0),
+        child: Stack(
+          children: [
+            PhotoView(
+              imageProvider: MemoryImage(imageBytes),
+              minScale: PhotoViewComputedScale.contained,
+              maxScale: PhotoViewComputedScale.covered * 2,
+            ),
+            Positioned(
+              top: 40,
+              right: 20,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -862,22 +756,21 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
   void _showInfoDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (_) =>
-          AlertDialog(
-            title: const Text('Bidding Information'),
-            content: const Text(
-              'You can bid on medicine requests. Patients will choose the best offer.\n\n'
-                  '• Use +/- buttons to adjust price in PKR 50 increments\n'
-                  '• Minimum bid is the medicine base price\n'
-                  '• You can update your bid anytime before acceptance',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('GOT IT'),
-              ),
-            ],
+      builder: (_) => AlertDialog(
+        title: const Text('Bidding Information'),
+        content: const Text(
+          'You can bid on medicine requests. Patients will choose the best offer.\n\n'
+              '• Use +/- buttons to adjust price in PKR 50 increments\n'
+              '• Minimum bid is the medicine base price\n'
+              '• You can update your bid anytime before acceptance',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('GOT IT'),
           ),
+        ],
+      ),
     );
   }
 
@@ -899,8 +792,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
   String _formatDate(dynamic date) {
     if (date == null) return 'Unknown date';
     try {
-      final dateTime = date is DateTime ? date : DateTime.parse(
-          date.toString());
+      final dateTime = date is DateTime ? date : DateTime.parse(date.toString());
       return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
     } catch (e) {
       return 'Unknown date';
@@ -912,21 +804,6 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
     if (locationData is String) return locationData;
     if (locationData is Map) return locationData['address']?.toString();
     return null;
-  }
-
-  double _getMedicinePrice(String? medicineType) {
-    switch (medicineType?.toLowerCase()) {
-      case 'antibiotics':
-        return 500;
-      case 'painkillers':
-        return 300;
-      case 'chronic medication':
-        return 800;
-      case 'specialty drugs':
-        return 1500;
-      default:
-        return 400;
-    }
   }
 
   String _extractObjectId(String objectIdString) {

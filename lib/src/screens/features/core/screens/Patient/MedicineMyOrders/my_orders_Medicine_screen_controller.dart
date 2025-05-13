@@ -162,16 +162,14 @@ class MyOrdersScreenMedicineController extends GetxController {
 
   Future<List<Map<String, dynamic>>> getPastOrders(String patientEmail) async {
     try {
-      final bookings = await MongoDatabase.medicalOrdersCollection?.find(
+      final bookings = await MongoDatabase.completedOrdersCollection?.find(
         where.eq('patientEmail', patientEmail.trim().toLowerCase())
-            .or([
-          where.eq('status', 'Completed'),
-          where.eq('status', 'Cancelled'),
-        ] as SelectorBuilder),
+            .ne('status', 'completed')
+            .ne('status', 'Cancelled'),
       ).toList();
       return bookings?.map((booking) => _sanitizeBookingData(booking)).toList() ?? [];
     } catch (e, stackTrace) {
-      _logger.e('Error fetching past orders', error: e, stackTrace: stackTrace);
+      _logger.e('Error fetching upcoming orders', error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -206,6 +204,7 @@ class MyOrdersScreenMedicineController extends GetxController {
       'createdAt': _parseDate(booking['createdAt']),
       'expectedDeliveryTime': _parseDate(booking['expectedDeliveryTime']),
       'deliveryTime': booking['deliveryTime'] ?? '',
+      'medicines': booking['medicines'],
     };
   }
 
