@@ -3,13 +3,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:path/path.dart';
 import 'Nurse_Booking_Controller.dart';
 
 class NurseBookingsScreen extends StatelessWidget {
   const NurseBookingsScreen({super.key});
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -261,7 +259,6 @@ class NurseBookingsScreen extends StatelessWidget {
       String? serviceName,
       double servicePrice,
       String? distance,
-
       ) {
     final priceController = TextEditingController(
       text: currentPrice.toStringAsFixed(0),
@@ -281,7 +278,7 @@ class NurseBookingsScreen extends StatelessWidget {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                color: const Color(0xFF2C2C2C), // greyish black
+                color: Theme.of(context).dialogBackgroundColor,
               ),
               child: SingleChildScrollView(
                 child: Column(
@@ -290,13 +287,13 @@ class NurseBookingsScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.gavel, color: Colors.white),
+                        Icon(Icons.gavel, color: Theme.of(context).colorScheme.primary),
                         const SizedBox(width: 8),
                         Text(
                           '${hasBid ? 'Update' : 'Place'} Bid',
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ],
@@ -305,16 +302,16 @@ class NurseBookingsScreen extends StatelessWidget {
                     Text(
                       serviceName ?? 'Service Request',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                       ),
                     ),
                     const SizedBox(height: 24),
-                    const Text(
+                    Text(
                       'Enter your bid amount',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -328,26 +325,25 @@ class NurseBookingsScreen extends StatelessWidget {
                               currentBid = (currentBid - 100).clamp(servicePrice, servicePrice + 1000);
                               priceController.text = currentBid.toStringAsFixed(0);
                             });
-                          },
-
+                          }, context: context,
                         ),
                         const SizedBox(width: 16),
                         Container(
                           width: 140,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey[300]!),
+                            border: Border.all(color: Theme.of(context).dividerColor),
                           ),
                           child: TextField(
                             controller: priceController,
                             keyboardType: TextInputType.number,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black, // price text color
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                             decoration: const InputDecoration(
                               border: InputBorder.none,
@@ -367,8 +363,7 @@ class NurseBookingsScreen extends StatelessWidget {
                               currentBid = (currentBid + 100).clamp(servicePrice, servicePrice + 1000);
                               priceController.text = currentBid.toStringAsFixed(0);
                             });
-                          },
-
+                          }, context: context,
                         ),
                       ],
                     ),
@@ -377,9 +372,9 @@ class NurseBookingsScreen extends StatelessWidget {
                       alignment: Alignment.center,
                       child: Text(
                         'Minimum: PKR ${servicePrice.toStringAsFixed(0)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                         ),
                       ),
                     ),
@@ -390,13 +385,14 @@ class NurseBookingsScreen extends StatelessWidget {
                         TextButton(
                           onPressed: () => Navigator.pop(context),
                           style: TextButton.styleFrom(
-                            foregroundColor: Colors.white,
+                            foregroundColor: Theme.of(context).colorScheme.onSurface,
                           ),
                           child: const Text('CANCEL'),
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).colorScheme.primary,
                             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -420,10 +416,10 @@ class NurseBookingsScreen extends StatelessWidget {
                                 .getNurseUserName(email.toString());
 
                             controller.submitBid(
-                              cleanRequestId,
-                              price,
-                              name ?? "Unknown Nurse",
-                              serviceName!,
+                                cleanRequestId,
+                                price,
+                                name ?? "Unknown Nurse",
+                                serviceName!,
                                 distance!
                             );
 
@@ -431,9 +427,9 @@ class NurseBookingsScreen extends StatelessWidget {
                           },
                           child: Text(
                             hasBid ? 'UPDATE BID' : 'SUBMIT BID',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onPrimary,
                             ),
                           ),
                         ),
@@ -450,16 +446,32 @@ class NurseBookingsScreen extends StatelessWidget {
   }
 
   Widget _buildPriceAdjustButton({
+    required BuildContext context,
     required IconData icon,
     required VoidCallback onPressed,
   }) {
-    return Material(
-      shape: const CircleBorder(),
-      color: Colors.grey[100],
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Theme.of(context).colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: IconButton(
-        icon: Icon(icon, color: Colors.grey[800]),
+        icon: Icon(icon),
+        color: Theme.of(context).colorScheme.onSurface,
         onPressed: onPressed,
         splashRadius: 24,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(
+          minWidth: 48,
+          minHeight: 48,
+        ),
       ),
     );
   }
