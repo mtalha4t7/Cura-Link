@@ -141,12 +141,16 @@ class MyBookingsController extends GetxController {
     }
   }
 
-
+  Future<bool> completeLabBooking(dynamic bookingId,String paymentMethod) async {
+    return await updateBookingStatus(bookingId, 'Completed');
+  }
   // Update the status of a booking
-  Future<void> updateBookingStatus(
-      String bookingId,
+  Future<bool> updateBookingStatus(
+      dynamic bookingId,
       String newStatus, {
         String? lastModifiedBy,
+        String? paymentMethod,
+
       }) async {
     try {
       final updateDoc = {
@@ -167,6 +171,7 @@ class MyBookingsController extends GetxController {
         {'bookingId': ObjectId.parse(bookingId).toHexString()},
         updateDoc,
       );
+      return true;
     } catch (e) {
       print('Error updating booking status: $e');
       rethrow;

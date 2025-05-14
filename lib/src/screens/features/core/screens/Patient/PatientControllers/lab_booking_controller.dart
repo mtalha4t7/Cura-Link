@@ -8,7 +8,7 @@ import '../../../../../../shared prefrences/shared_prefrence.dart';
 import '../../../../../../utils/helper/helper_controller.dart';
 import '../../../../authentication/models/user_model.dart';
 
-class NurseBookingController {
+class LabBookingController {
   // Fetch user bookings from the MongoDB collection
   final _userRepo = UserRepository();
 
@@ -128,6 +128,7 @@ class NurseBookingController {
   Future<void> updateBookingStatus(String bookingId, String newStatus) async {
     try {
       // Update the status field for the specified booking
+
       await MongoDatabase.bookingsCollection?.updateOne(
         {'_id': bookingId}, // Filter by booking ID
         {'\$set': {'status': newStatus}}, // Update the status

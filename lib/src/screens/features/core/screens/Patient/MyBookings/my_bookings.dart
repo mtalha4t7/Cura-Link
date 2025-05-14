@@ -2,13 +2,16 @@ import 'package:bson/bson.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/MyBookings/rating_controller.dart';
 import 'package:cura_link/src/screens/features/core/screens/Patient/patientWidgets/patient_bookings_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import '../../../../../../mongodb/mongodb.dart';
 import '../../../../../../repository/user_repository/user_repository.dart';
+import '../../../../../../stripe/stripe_services.dart';
 import '../../../../authentication/models/chat_user_model.dart';
 import '../PatientChat/chat_screen.dart';
 import '../PatientControllers/my_bookings_controller.dart';
+import 'MyBooking_widgets/labPaymentSummaryCard.dart';
 
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});
@@ -154,6 +157,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                       onReject: () => _handleReject(booking),
                       onModify: () => _handleModify(booking),
                       onMessage: () => _handleMessage(booking),
+                      onComplete: ()=> _handleComplete(booking),
                       hasRating: hasRating,
                       onRate: canRate
                           ? () => _showRatingDialog(
@@ -164,7 +168,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                       )
                           : null,
                       showAcceptButton: booking['status'] == 'Modified' &&
-                          booking['lastModifiedBy'] == 'lab',
+                          booking['lastModifiedBy'] == 'lab', bookingId: '',
                     );
                   },
                 ),
@@ -238,6 +242,233 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       _showSnackBar('Booking is accepted, you cannot modify this booking');
     }
   }
+
+  Future<void> _handleComplete(Map<String, dynamic> booking) async {
+
+    final confirmed = await _showConfirmationDialog(
+      context,
+      'Complete Booking',
+      'Are you sure you want to complete the booking?',
+      Icons.edit_calendar,
+    );
+    if (confirmed) {
+      if (booking['status'] == "Accepted") {
+        final totalAmount=booking['price'];
+        double price= double.parse(totalAmount);
+
+        final paymentMethod = await _showMedicinePaymentMethodDialog(price);
+        if (paymentMethod == null) return;
+
+        bool paymentSuccess = true;
+
+        if (paymentMethod == 'online') {
+          paymentSuccess = await _processStripePayment(price);
+          if (!paymentSuccess) return;
+        }
+        final bookingId= booking['bookingId'];
+        final success = await _controller.completeLabBooking(bookingId, 'Completed');
+        if (success && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Medicine order completed successfully')),
+          );
+    }
+  } else {
+  _showSnackBar('Booking is accepted, you cannot modify this booking');
+  }
+
+
+
+  }
+    }
+
+  Future<bool> _processStripePayment(double amount) async {
+    try {
+      // Initialize Stripe if not already done
+      await StripeService.instance.initialize();
+
+      // Show processing dialog
+      _showPaymentProcessing();
+
+      // Process payment
+      final success = await StripeService.instance.makePayment(amount.toInt());
+
+      if (mounted) Navigator.pop(context); // Close processing dialog
+
+      if (!success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Payment failed. Please try again.')),
+          );
+        }
+        return false;
+      }
+      return true;
+    } on StripeException catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Stripe Error: ${e.error.localizedMessage}')),
+        );
+      }
+      return false;
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Payment Error: ${e.toString()}')),
+        );
+      }
+      return false;
+    }
+  }
+
+  Future<String?> _showMedicinePaymentMethodDialog(double amount) async {
+    return await showDialog<String>(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Pay for Medicine Order',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColorLight,
+                ),
+              ),
+              const SizedBox(height: 16),
+              LabPaymentSummaryCard(amount: amount),
+              const SizedBox(height: 20),
+              _buildPaymentOption(
+                context,
+                icon: Icons.credit_card,
+                color: Colors.blue,
+                title: 'Credit/Debit Card',
+                subtitle: 'Secure online payment',
+                value: 'online',
+              ),
+              const SizedBox(height: 12),
+              _buildPaymentOption(
+                context,
+                icon: Icons.local_pharmacy,
+                color: Colors.green,
+                title: 'Cash payment',
+                subtitle: 'Pay at hand',
+                value: 'cash',
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('CANCEL'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentOption(
+      BuildContext context, {
+        required IconData icon,
+        required Color color,
+        required String title,
+        required String subtitle,
+        required String value,
+      }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => Navigator.pop(context, value),
+      splashColor: Colors.deepPurple.withOpacity(0.1),
+      highlightColor: Colors.deepPurple.withOpacity(0.05),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[300]!),
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: Colors.grey[400],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPaymentProcessing() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => WillPopScope(
+        onWillPop: () async => false,
+        child: AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(
+                'Processing payment...',
+                style: TextStyle(
+                  color: Theme.of(context).primaryColorLight,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+
+
 
   Future<void> _handleMessage(Map<String, dynamic> booking) async {
     final userEmail = booking['labUserEmail']?.toString();

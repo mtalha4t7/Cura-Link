@@ -21,7 +21,7 @@ class LabBookingScreen extends StatefulWidget {
 }
 
 class _LabBookingScreenState extends State<LabBookingScreen> {
-  final NurseBookingController _controller = NurseBookingController();
+  final LabBookingController _controller = LabBookingController();
   late GoogleMapController _mapController;
   final Set<Marker> _markers = {};
   LatLng? _currentLocation;

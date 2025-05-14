@@ -20,7 +20,7 @@ class ShowLabServices extends StatefulWidget {
 
 class _ShowLabServicesState extends State<ShowLabServices> {
   late ShowTestServiceController _controller;
-  late NurseBookingController _addBookingController;
+  late LabBookingController _addBookingController;
   late Future<List<Map<String, dynamic>>> _services;
   late String? email; // to Make email nullable
   late String _patientName;
@@ -29,7 +29,7 @@ class _ShowLabServicesState extends State<ShowLabServices> {
   void initState() {
     super.initState();
     _controller = ShowTestServiceController();
-    _addBookingController = NurseBookingController();
+    _addBookingController = LabBookingController();
     email = FirebaseAuth.instance.currentUser ?.email; // Get email from Firebase
     _services = _loadEmailAndFetchServices();
     _initializePatientName(); // Call a separate function for async operations

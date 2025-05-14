@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../LabBooking/complete_booking_button_widget.dart';
 import '../MyBookings/MyBooking_widgets/RatingButton.dart';
 
 class MessageButton extends StatelessWidget {
@@ -106,8 +106,10 @@ class PatientBookingsCard extends StatelessWidget {
   final VoidCallback onModify;
   final VoidCallback onMessage;
   final VoidCallback? onRate;
+  final VoidCallback? onComplete;
   final bool hasRating;
   final bool showAcceptButton;
+  final String bookingId;
 
   const PatientBookingsCard({
     super.key,
@@ -121,12 +123,15 @@ class PatientBookingsCard extends StatelessWidget {
     required this.onReject,
     required this.onModify,
     required this.onMessage,
-    required this.onRate,
+    this.onRate,
+    this.onComplete,
     required this.hasRating,
     required this.showAcceptButton,
+    required this.bookingId,
   });
 
   bool get isAccepted => status.toLowerCase() == 'accepted';
+  bool get isCompleted => status.toLowerCase() == 'completed';
 
   @override
   Widget build(BuildContext context) {
@@ -184,6 +189,11 @@ class PatientBookingsCard extends StatelessWidget {
             const SizedBox(height: 12),
             MessageButton(onPressed: onMessage),
             const SizedBox(height: 12),
+            if (isAccepted && !isCompleted)
+              CompleteBookingButton(
+                onPressed: onComplete,
+              ),
+            if (isAccepted && !isCompleted) const SizedBox(height: 12),
             if (isAccepted)
               RateButton(
                 enabled: !hasRating && onRate != null,

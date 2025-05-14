@@ -324,7 +324,7 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
               Text(
                 'Processing payment...',
                 style: TextStyle(
-                  color: Theme.of(context).primaryColor,
+                  color: Theme.of(context).primaryColorLight,
                 ),
               ),
             ],
