@@ -24,8 +24,7 @@ class BookingControllerNurse extends GetxController {
   void onInit() {
     super.onInit();
     fetchNurseData();
-    fetchActiveRequests();
-    fetchActiveRequests();
+    startPolling();
   }
   @override
   void onClose() {
@@ -33,6 +32,7 @@ class BookingControllerNurse extends GetxController {
     super.onClose();
   }
   void startPolling() {
+    fetchActiveRequests();
     pollingTimer = Timer.periodic(Duration(seconds: 10), (_) {
       fetchActiveRequests(); // Call your MongoDB fetch logic
     });
