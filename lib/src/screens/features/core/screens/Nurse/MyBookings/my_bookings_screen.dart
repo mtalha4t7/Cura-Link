@@ -144,15 +144,34 @@ class _MyBookingsNurseScreenState extends State<MyBookingsNurseScreen> {
   }
 
   Future<void> _completeBooking(String bookingId) async {
-    final success = await _controller.completeBooking(bookingId);
-    if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Booking marked as completed')),
-      );
-      _loadBookings();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Completion'),
+        content: const Text('Are you sure you want to mark this booking as completed?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Yes'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      final success = await _controller.completeBooking(bookingId);
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Booking marked as completed')),
+        );
+        _loadBookings();
+      }
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

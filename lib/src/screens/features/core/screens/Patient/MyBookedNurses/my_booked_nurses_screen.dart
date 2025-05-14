@@ -101,16 +101,34 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
   }
 
   Future<void> _completeBooking(String bookingId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Completion'),
+        content: const Text('Are you sure you want to complete this booking?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Yes'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
     try {
       final totalAmount = await _calculateBookingAmount(bookingId);
       debugPrint('Booking amount: $totalAmount');
 
       if (totalAmount <= 0) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invalid booking amount')),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invalid booking amount')),
+        );
         return;
       }
 
@@ -133,11 +151,9 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
       }
     } catch (e) {
       debugPrint('Error in completeBooking: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
     }
   }
 

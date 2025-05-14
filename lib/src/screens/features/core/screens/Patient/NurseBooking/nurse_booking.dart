@@ -498,7 +498,7 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                     children: [
                       Text('Price: \Rs ${bid.price.toStringAsFixed(2)}'),
                       Text('Service: ${bid.serviceName}'),
-                      Text('distance: ${bid.distance}'),
+                      Text('distance: ${bid.distance} kms'),
 
                       const SizedBox(height: 4),
                       Row(

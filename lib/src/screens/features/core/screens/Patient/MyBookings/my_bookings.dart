@@ -41,6 +41,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 
       setState(() {
         _bookings = bookings;
+        _hasRatingCache.clear(); // Clear old data
         for (int i = 0; i < bookings.length; i++) {
           _hasRatingCache[bookings[i]['_id']] = ratingStatuses[i];
         }
