@@ -1,10 +1,13 @@
 import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabChat/chat_screen.dart';
+import 'package:cura_link/src/screens/features/core/screens/Patient/MedicineMyOrders/payment_summary_card2.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../../../stripe/stripe_services.dart';
+import '../MyBookedNurses/payment_summary_card.dart';
 import 'ordered_medicines_card.dart';
 import 'my_orders_Medicine_screen_controller.dart';
 
@@ -89,65 +92,219 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
     }
   }
 
-  Future<void> _completeOrder(String orderId,double totalAmount) async {
-    // Show payment method selection
-    final paymentMethod = await _showPaymentMethodDialog();
-    if (paymentMethod == null) return;
+  Future<void> _completeOrder(String orderId, order) async {
+    try {
+      final totalAmount = await _calculateOrderAmount(orderId);
+      debugPrint('Medicine order amount: $totalAmount');
 
-    setState(() => _selectedPaymentMethod = paymentMethod);
-
-    bool paymentSuccess = true;
-
-    if (paymentMethod == 'online') {
-      _showPaymentProcessing();
-      try {
-        paymentSuccess =
-        await StripeService.instance.makePayment(totalAmount.toInt());
-        if (mounted) Navigator.pop(context);
-
-        if (!paymentSuccess) {
-          throw Exception('Payment failed');
+      if (totalAmount <= 0) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Invalid order amount - please contact support')),
+          );
         }
-      } catch (e) {
-        if (mounted) Navigator.pop(context);
-        rethrow;
+        return;
       }
-    }
-    final success = await _controller.completeOrder(orderId,paymentMethod);
-    if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Order marked as completed')),
-      );
-      _loadOrders();
+
+      final paymentMethod = await _showMedicinePaymentMethodDialog(totalAmount);
+      if (paymentMethod == null) return;
+
+      bool paymentSuccess = true;
+
+      if (paymentMethod == 'online') {
+        paymentSuccess = await _processStripePayment(totalAmount);
+        if (!paymentSuccess) return;
+      }
+
+      final success = await _controller.completeOrder(orderId, paymentMethod);
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Medicine order completed successfully')),
+        );
+        _loadOrders();
+      }
+    } catch (e) {
+      debugPrint('Error completing medicine order: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
     }
   }
 
-  Future<String?> _showPaymentMethodDialog() async {
+
+  Future<double> _calculateOrderAmount(String orderId) async {
+    try {
+      final order = await _controller.getOrderDetails(orderId);
+      if (order != null && order['finalAmount'] != null) {
+        return order['finalAmount'].toDouble();
+      }
+      debugPrint('Order amount not found in: ${order?.keys}');
+      return 0.0;
+    } catch (e) {
+      debugPrint('Error calculating order amount: $e');
+      return 0.0;
+    }
+  }
+
+  Future<bool> _processStripePayment(double amount) async {
+    try {
+      // Initialize Stripe if not already done
+      await StripeService.instance.initialize();
+
+      // Show processing dialog
+      _showPaymentProcessing();
+
+      // Process payment
+      final success = await StripeService.instance.makePayment(amount.toInt());
+
+      if (mounted) Navigator.pop(context); // Close processing dialog
+
+      if (!success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Payment failed. Please try again.')),
+          );
+        }
+        return false;
+      }
+      return true;
+    } on StripeException catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Stripe Error: ${e.error.localizedMessage}')),
+        );
+      }
+      return false;
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Payment Error: ${e.toString()}')),
+        );
+      }
+      return false;
+    }
+  }
+
+  Future<String?> _showMedicinePaymentMethodDialog(double amount) async {
     return await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select Payment Method'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Pay for Medicine Order',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColorLight,
+                ),
+              ),
+              const SizedBox(height: 16),
+              MedicinePaymentSummaryCard(amount: amount),
+              const SizedBox(height: 20),
+              _buildPaymentOption(
+                context,
+                icon: Icons.credit_card,
+                color: Colors.blue,
+                title: 'Credit/Debit Card',
+                subtitle: 'Secure online payment',
+                value: 'online',
+              ),
+              const SizedBox(height: 12),
+              _buildPaymentOption(
+                context,
+                icon: Icons.local_pharmacy,
+                color: Colors.green,
+                title: 'Cash on Delivery',
+                subtitle: 'Pay when collecting medicines',
+                value: 'cash',
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('CANCEL'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentOption(
+      BuildContext context, {
+        required IconData icon,
+        required Color color,
+        required String title,
+        required String subtitle,
+        required String value,
+      }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => Navigator.pop(context, value),
+      splashColor: Colors.deepPurple.withOpacity(0.1),
+      highlightColor: Colors.deepPurple.withOpacity(0.05),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[300]!),
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+        ),
+        child: Row(
           children: [
-            ListTile(
-              leading: const Icon(Icons.credit_card, color: Colors.blue),
-              title: const Text('Online Payment'),
-              onTap: () => Navigator.pop(context, 'online'),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 24),
             ),
-            ListTile(
-              leading: const Icon(Icons.money, color: Colors.green),
-              title: const Text('Cash Payment'),
-              onTap: () => Navigator.pop(context, 'cash'),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: Colors.grey[400],
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
       ),
     );
   }
@@ -156,14 +313,22 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Processing payment...'),
-          ],
+      builder: (context) => WillPopScope(
+        onWillPop: () async => false,
+        child: AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(
+                'Processing payment...',
+                style: TextStyle(
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
