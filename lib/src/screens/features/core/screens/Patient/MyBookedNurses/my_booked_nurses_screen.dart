@@ -1,11 +1,15 @@
 import 'package:cura_link/src/screens/features/core/screens/MedicalLaboratory/MedicalLabChat/chat_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../../../stripe/stripe_services.dart';
 import 'my_booked_nurses_card.dart';
 import 'my_booked_nurses_screen_controller.dart';
+import 'payment_summary_card.dart';
+
 
 class MyBookedNursesScreen extends StatefulWidget {
   final String patientEmail;
@@ -97,14 +101,210 @@ class _MyBookedNursesScreenState extends State<MyBookedNursesScreen> {
   }
 
   Future<void> _completeBooking(String bookingId) async {
-    final success = await _controller.completeBooking(bookingId);
-    if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Booking marked as completed')),
-      );
-      _loadBookings();
+    try {
+      final totalAmount = await _calculateBookingAmount(bookingId);
+      debugPrint('Booking amount: $totalAmount');
+
+      if (totalAmount <= 0) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Invalid booking amount')),
+          );
+        }
+        return;
+      }
+
+      final paymentMethod = await _showPaymentMethodDialog(totalAmount);
+      if (paymentMethod == null) return;
+
+      bool paymentSuccess = true;
+
+      if (paymentMethod == 'online') {
+        paymentSuccess = await _processStripePayment(totalAmount);
+        if (!paymentSuccess) return;
+      }
+
+      final success = await _controller.completeBooking(bookingId, paymentMethod);
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Booking marked as completed')),
+        );
+        _loadBookings();
+      }
+    } catch (e) {
+      debugPrint('Error in completeBooking: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
     }
   }
+
+  Future<bool> _processStripePayment(double amount) async {
+    try {
+      // Initialize Stripe if not already done
+      await StripeService.instance.initialize();
+
+      // Show processing dialog
+      PaymentSummaryCard(amount: amount);
+
+      // Process payment
+      final success = await StripeService.instance.makePayment(amount.toInt());
+
+      if (mounted) Navigator.pop(context); // Close processing dialog
+
+      if (!success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Payment failed. Please try again.')),
+          );
+        }
+        return false;
+      }
+      return true;
+    } on StripeException catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Stripe Error: ${e.error.localizedMessage}')),
+        );
+      }
+      return false;
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Payment Error: ${e.toString()}')),
+        );
+      }
+      return false;
+    }
+  }
+  Future<double> _calculateBookingAmount(String bookingId) async {
+    try {
+      final booking = await _controller.getBookingDetails(bookingId);
+      if (booking != null && booking['price'] != null) {
+        return booking['price'].toDouble();
+      }
+      return 0.0; // Default value if price not found
+    } catch (e) {
+      return 0.0; // Fallback value
+    }
+  }
+
+  Future<String?> _showPaymentMethodDialog(double amount) async {
+    return await showDialog<String>(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Select Payment Method',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColorLight,
+                ),
+              ),
+              const SizedBox(height: 16),
+              PaymentSummaryCard(amount: amount),
+              const SizedBox(height: 20),
+              _buildPaymentOption(
+                context,
+                icon: Icons.credit_card,
+                color: Colors.blue,
+                title: 'Credit/Debit Card',
+                subtitle: 'Secure online payment',
+                value: 'online',
+              ),
+              const SizedBox(height: 12),
+              _buildPaymentOption(
+                context,
+                icon: Icons.money,
+                color: Colors.green,
+                title: 'Cash Payment',
+                subtitle: 'Pay in person',
+                value: 'cash',
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('CANCEL'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentOption(
+      BuildContext context, {
+        required IconData icon,
+        required Color color,
+        required String title,
+        required String subtitle,
+        required String value,
+      }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => Navigator.pop(context, value),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: Colors.grey.shade400,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+
+
 
   Future<void> _showRatingDialog(Map<String, dynamic> booking) async {
     final bookingId = booking['_id'].toString();

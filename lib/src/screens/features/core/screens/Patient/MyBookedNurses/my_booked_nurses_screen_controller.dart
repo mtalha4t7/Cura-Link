@@ -65,14 +65,35 @@ class MyBookedNursesController extends GetxController {
     }
   }
 
-  Future<bool> updateBookingStatus(dynamic bookingId, String newStatus) async {
+  Future<bool> updateBookingStatus(dynamic bookingId, String newStatus, String paymentMethod) async {
     try {
       final id = _parseObjectId(bookingId);
-      final result = await MongoDatabase.patientNurseBookingsCollection?.updateOne(
+
+      // First get the current booking data
+      final booking = await MongoDatabase.patientNurseBookingsCollection?.findOne(where.id(id));
+      if (booking == null) {
+        _logger.e('Booking not found with ID: $bookingId');
+        return false;
+      }
+
+      // Prepare update modifications
+      final modifications = modify
+          .set('status', newStatus)
+          .set('updatedAt', DateTime.now().toUtc().add(Duration(hours: 5)));
+
+      // Only add payment method if it's being marked as completed
+      if (newStatus.toLowerCase() == 'completed') {
+        modifications.set('paymentMethod', paymentMethod)
+            .set('completionDate', DateTime.now().toUtc().add(Duration(hours: 5)));
+      }
+
+      // Update the booking
+      final updateResult = await MongoDatabase.patientNurseBookingsCollection?.updateOne(
         where.id(id),
-        modify.set('status', newStatus).set('updatedAt',  DateTime.now().toUtc().add(Duration(hours:5))),
+        modifications,
       );
-      return result?.isSuccess ?? false;
+
+      return updateResult?.isSuccess ?? false;
     } catch (e, stackTrace) {
       _logger.e('Error updating booking status', error: e, stackTrace: stackTrace);
       return false;
@@ -143,7 +164,9 @@ class MyBookedNursesController extends GetxController {
   }
 
   Future<bool> cancelBooking(dynamic bookingId) async => await deleteBooking(bookingId);
-  Future<bool> completeBooking(dynamic bookingId) async => await updateBookingStatus(bookingId, 'Completed');
+  Future<bool> completeBooking(dynamic bookingId, String paymentMethod) async {
+    return await updateBookingStatus(bookingId, 'Completed', paymentMethod);
+  }
 
   Future<Map<String, dynamic>?> getBookingDetails(dynamic bookingId) async {
     try {
