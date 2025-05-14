@@ -143,7 +143,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                     final price = booking['price']?.toString() ?? '0.0';
                     final bookingId = booking['_id'];
                     final hasRating = _hasRatingCache[bookingId] ?? false;
-                    final canRate = booking['status'] == 'Accepted' && !hasRating;
+                    final canRate = booking['status'] == 'Completed' && !hasRating;
 
                     return PatientBookingsCard(
                       labUserName: booking['labUserName'] ?? 'Unknown Lab',

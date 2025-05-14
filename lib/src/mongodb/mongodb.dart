@@ -550,6 +550,7 @@ static DbCollection? get  medicalStoreRatingCollection =>  _medicalStoreRatingCo
     required String nurseEmail,
     required double price,
     required String serviceName,
+    required String distance,
   }) async {
     try {
       final bid = {
@@ -559,7 +560,8 @@ static DbCollection? get  medicalStoreRatingCollection =>  _medicalStoreRatingCo
         'userName':nurseName,
         'status': 'pending',
         'createdAt': DateTime.now(),
-        'serviceName':serviceName
+        'serviceName':serviceName,
+        'distance':distance
       };
 
       final result = await _nurseBidsCollection?.insertOne(bid);

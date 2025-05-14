@@ -16,7 +16,6 @@ class NurseBookingsScreen extends StatelessWidget {
     final controller = Get.find<BookingControllerNurse>();
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Service Requests'),
@@ -51,58 +50,79 @@ class NurseBookingsScreen extends StatelessWidget {
                 : null;
             final servicePrice = _getServicePrice(booking['serviceType']);
 
-            return Card(
-              margin: const EdgeInsets.only(bottom: 16),
-              elevation: 1,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () {},
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            final patientLocation = booking['location'] as Map<String, dynamic>? ?? {};
+            final Future<double> distanceFuture =
+            controller.calculateDistanceBetweenLocations(patientLocation);
+
+            return FutureBuilder<double>(
+              future: distanceFuture,
+              builder: (context, snapshot) {
+                final distance = snapshot.data;
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  elevation: 1,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {},
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Text(
-                              booking['serviceType'] ?? 'Service Request',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  booking['serviceType'] ?? 'Service Request',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
-                            ),
+                              _buildStatusBadge(booking['status']),
+                            ],
                           ),
-                          _buildStatusBadge(booking['status']),
+                          const SizedBox(height: 12),
+                          _buildDetailRow(
+                            Icons.person_outline,
+                            'Patient: ${booking['patientEmail'] ?? 'Unknown'}',
+                          ),
+                          _buildDetailRow(
+                            Icons.calendar_today,
+                            'Posted: ${_formatDate(booking['createdAt'])}',
+                          ),
+                          if (location != null)
+                            _buildDetailRow(Icons.location_on_outlined, location),
+                          if (snapshot.connectionState == ConnectionState.waiting)
+                            _buildDetailRow(Icons.directions_walk, 'Calculating distance...'),
+                          if (distance != null)
+                            _buildDetailRow(Icons.directions_walk,
+                                '${distance.toStringAsFixed(2)} km away'),
+                          const SizedBox(height: 16),
+                          if (hasBid && currentBid != null)
+                            _buildCurrentBidCard(currentBid['price']),
+                          const SizedBox(height: 12),
+                          _buildActionButton(
+                            context: context,
+                            requestId: booking['_id'].toString(),
+                            controller: controller,
+                            hasBid: hasBid,
+                            currentPrice: currentBid?['price'] ?? servicePrice,
+                            serviceName: booking['serviceType'],
+                            servicePrice: servicePrice,
+                            distance:distance?.toStringAsFixed(2),
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      _buildDetailRow(Icons.person_outline,
-                          'Patient: ${booking['patientEmail'] ?? 'Unknown'}'),
-                      _buildDetailRow(Icons.calendar_today,
-                          'Posted: ${_formatDate(booking['createdAt'])}'),
-                      if (location != null)
-                        _buildDetailRow(Icons.location_on_outlined, location),
-                      const SizedBox(height: 16),
-                      if (hasBid && currentBid != null)
-                        _buildCurrentBidCard(currentBid['price']),
-                      const SizedBox(height: 12),
-                      _buildActionButton(
-                        context: context,
-                        requestId: booking['_id'].toString(),
-                        controller: controller,
-                        hasBid: hasBid,
-                        currentPrice: currentBid?['price'] ?? servicePrice,
-                        serviceName: booking['serviceType'],
-                        servicePrice: servicePrice,
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
+                );
+              },
             );
           },
         );
@@ -198,6 +218,7 @@ class NurseBookingsScreen extends StatelessWidget {
     required double currentPrice,
     required String? serviceName,
     required double servicePrice,
+    required String? distance
   }) {
     return SizedBox(
       width: double.infinity,
@@ -218,6 +239,7 @@ class NurseBookingsScreen extends StatelessWidget {
           currentPrice,
           serviceName,
           servicePrice,
+          distance,
         ),
         child: Text(
           hasBid ? 'UPDATE BID' : 'PLACE BID',
@@ -238,6 +260,8 @@ class NurseBookingsScreen extends StatelessWidget {
       double currentPrice,
       String? serviceName,
       double servicePrice,
+      String? distance,
+
       ) {
     final priceController = TextEditingController(
       text: currentPrice.toStringAsFixed(0),
@@ -400,6 +424,7 @@ class NurseBookingsScreen extends StatelessWidget {
                               price,
                               name ?? "Unknown Nurse",
                               serviceName!,
+                                distance!
                             );
 
                             Navigator.pop(context);

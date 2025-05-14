@@ -178,31 +178,7 @@ class CheckForRequestsController extends GetxController {
 
 
 
-  Future<double> calculateDistanceBetweenLocations(Map<String, dynamic> patientLocation) async {
-    try {
-      if (_storeLocation == null || patientLocation.isEmpty) return 0.0;
 
-      final patientCoords = extractCoordinates(patientLocation);
-      print('storeee $_storeLocation');
-      print('patient $patientLocation');
-      final storeCoords = extractCoordinates(_storeLocation!);
-
-      if (patientCoords == null || storeCoords == null) return 0.0;
-       final distance=calculateDistance(
-         storeCoords[1],
-         storeCoords[0],
-         patientCoords[1],
-         patientCoords[0],
-       );
-       print(distance);
-
-      return distance;
-
-    } catch (e) {
-      print('Distance calculation error: $e');
-      return 0.0;
-    }
-  }
 
   Future<Map<String, double>> getDeliveryDetails(Map<String, dynamic> patientLocation) async {
     try {
@@ -235,6 +211,31 @@ class CheckForRequestsController extends GetxController {
     } catch (e) {
       print("Error calculating delivery fee: $e");
       return MIN_DELIVERY_FEE;
+    }
+  }
+  Future<double> calculateDistanceBetweenLocations(Map<String, dynamic> patientLocation) async {
+    try {
+      if (_storeLocation == null || patientLocation.isEmpty) return 0.0;
+
+      final patientCoords = extractCoordinates(patientLocation);
+      print('storeee $_storeLocation');
+      print('patient $patientLocation');
+      final storeCoords = extractCoordinates(_storeLocation!);
+
+      if (patientCoords == null || storeCoords == null) return 0.0;
+      final distance=calculateDistance(
+        storeCoords[1],
+        storeCoords[0],
+        patientCoords[1],
+        patientCoords[0],
+      );
+      print(distance);
+
+      return distance;
+
+    } catch (e) {
+      print('Distance calculation error: $e');
+      return 0.0;
     }
   }
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
@@ -16,6 +17,8 @@ class BookingControllerNurse extends GetxController {
   var isVerified = false.obs;
   var activeRequests = <Map<String, dynamic>>[].obs;
   Timer? pollingTimer;
+  var _nurseLocation;
+
 
   @override
   void onInit() {
@@ -44,6 +47,8 @@ class BookingControllerNurse extends GetxController {
       if (currentUser?.email == null) {
         throw Exception('No authenticated user');
       }
+      final email=currentUser?.email;
+      _nurseLocation = await MongoDatabase.getUserLocationByEmail(email!);
 
       final data = await _userRepository.getNurseUserByEmail(currentUser!.email!);
       nurse.value = NurseModelMongoDB.fromDataMap(data ?? {});
@@ -83,8 +88,60 @@ class BookingControllerNurse extends GetxController {
       print('🏁 Finished fetching active requests');
     }
   }
+  Future<double> calculateDistanceBetweenLocations(Map<String, dynamic> patientLocation) async {
+    try {
+      if (_nurseLocation == null || patientLocation.isEmpty) return 0.0;
 
-  Future<void> submitBid(String requestId, double price, String nurseName, String serviceType) async {
+      final patientCoords = extractCoordinates(patientLocation);
+      print('storeee $_nurseLocation');
+      print('patient $patientLocation');
+      final storeCoords = extractCoordinates(_nurseLocation!);
+
+      if (patientCoords == null || storeCoords == null) return 0.0;
+      final distance=calculateDistance(
+        storeCoords[1],
+        storeCoords[0],
+        patientCoords[1],
+        patientCoords[0],
+      );
+      print(distance);
+
+      return distance;
+
+    } catch (e) {
+      print('Distance calculation error: $e');
+      return 0.0;
+    }
+  }
+  double calculateDistance(
+      double lat1, double lon1, double lat2, double lon2) {
+    const double R = 6371.0; // Radius of Earth in km
+    double dLat = _degToRad(lat2 - lat1);
+    double dLon = _degToRad(lon2 - lon1);
+    double a =
+        (sin(dLat / 2) * sin(dLat / 2)) +
+            cos(_degToRad(lat1)) * cos(_degToRad(lat2)) *
+                sin(dLon / 2) * sin(dLon / 2);
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    return R * c;
+  }
+  double _degToRad(double deg) => deg * (pi / 180);
+
+  /// Extracts [longitude, latitude] coordinates from GeoJSON-style location
+  List<double>? extractCoordinates(Map<String, dynamic> location) {
+    try {
+      if (location['type'] == 'Point' && location['coordinates'] is List) {
+        final coords = location['coordinates'];
+        if (coords.length >= 2) {
+          return [coords[0].toDouble(), coords[1].toDouble()];
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+  Future<void> submitBid(String requestId, double price, String nurseName, String serviceType,String distance) async {
     try {
       isLoading(true);
 
@@ -109,6 +166,7 @@ class BookingControllerNurse extends GetxController {
         nurseEmail: email,
         price: price,
         serviceName: serviceType,
+        distance: distance
       );
 
       Get.snackbar('Success', 'Bid submitted successfully');

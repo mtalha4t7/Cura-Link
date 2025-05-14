@@ -483,7 +483,7 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
                       child: Text('Error: ${snapshot.error}'),
                     );
                   } else if (snapshot.hasData) {
-                    final orders = snapshot.data!;
+                    final orders = snapshot.data!..sort((a, b) => DateTime.parse(b['createdAt']).compareTo(DateTime.parse(a['createdAt'])));
                     if (orders.isEmpty) {
                       return Center(
                         child: Text(
