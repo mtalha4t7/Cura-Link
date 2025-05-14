@@ -193,8 +193,8 @@ class PatientBookingsCard extends StatelessWidget {
               CompleteBookingButton(
                 onPressed: onComplete,
               ),
-            if (isAccepted && !isCompleted) const SizedBox(height: 12),
-            if (isAccepted)
+            if (isCompleted && !isAccepted) const SizedBox(height: 12),
+            if (isCompleted)
               RateButton(
                 enabled: !hasRating && onRate != null,
                 onPressed: hasRating ? null : onRate,
