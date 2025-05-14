@@ -237,6 +237,33 @@ static DbCollection? get  medicalStoreRatingCollection =>  _medicalStoreRatingCo
     }
   }
 
+
+  static Future<Map<String, dynamic>?> getPatientDetailsByBookingId(dynamic bookingId) async {
+    try {
+      final collection = db?.collection('bookings');
+      final booking = await collection?.findOne(where.eq('_id', ObjectId.parse(bookingId)));
+
+      if (booking != null && booking.containsKey('patientId')) {
+        final patientCollection = db?.collection('users');
+        final patient = await patientCollection?.findOne(where.eq('_id', booking['patientId']));
+
+        if (patient != null) {
+          return {
+            'deviceToken': patient['deviceToken'] ?? patient['userDeviceToken'],
+            'userName': patient['name'] ?? patient['userName'] ?? 'Patient'
+          };
+        }
+      }
+      return null;
+    } catch (e) {
+      print('Error fetching patient details: $e');
+      return null;
+    }
+  }
+
+
+
+
   static Future<bool> deleteMedicalRequestById(String requestId) async {
     try {
       final objectId = ObjectId.parse(requestId);// Ensure you have a helper for ObjectId

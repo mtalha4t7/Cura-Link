@@ -3,6 +3,7 @@ import 'package:mongo_dart/mongo_dart.dart';
 import 'package:logger/logger.dart';
 
 import '../../../../../../mongodb/mongodb.dart';
+import '../../../../../../notification_handler/send_notification.dart';
 import '../../../../../../repository/user_repository/user_repository.dart';
 import '../../../../authentication/models/chat_user_model.dart';
 
@@ -72,11 +73,57 @@ class MyBookingsNurseController {
 
   /// Cancel a booking
   Future<bool> cancelBooking(dynamic bookingId) async {
-    return await deleteBooking(bookingId);
+    final result = await deleteBooking(bookingId);
+
+    if (result) {
+      final patientDetails = await MongoDatabase.getPatientDetailsByBookingId(bookingId);
+
+      if (patientDetails != null && patientDetails['deviceToken'] != null) {
+        final token = patientDetails['deviceToken'].toString();
+        final name = patientDetails['userName'] ?? 'Patient';
+
+        await SendNotificationService.sendNotificationUsingApi(
+          token: token,
+          title: 'Booking Cancelled',
+          body: 'Your booking has been cancelled by the nurse.',
+          data: {
+            'screen': 'PatientBookingsScreen',
+          },
+        );
+
+        print("Notification sent to $name about cancellation.");
+      }
+    }
+
+    return result;
   }
+
   Future<bool> completeBooking(String bookingId) async {
-    return await updateBookingStatus(bookingId, 'Completed');
+    final result = await updateBookingStatus(bookingId, 'Completed');
+
+    if (result) {
+      final patientDetails = await MongoDatabase.getPatientDetailsByBookingId(bookingId);
+
+      if (patientDetails != null && patientDetails['deviceToken'] != null) {
+        final token = patientDetails['deviceToken'].toString();
+        final name = patientDetails['userName'] ?? 'Patient';
+
+        await SendNotificationService.sendNotificationUsingApi(
+          token: token,
+          title: 'Booking Completed',
+          body: 'Your service booking has been marked completed by the nurse.',
+          data: {
+            'screen': 'PatientBookingsScreen',
+          },
+        );
+
+        print("Notification sent to $name about completion.");
+      }
+    }
+
+    return result;
   }
+
 
   Future<Map<String, dynamic>?> getBookingDetails(String bookingId) async {
     try {

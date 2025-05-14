@@ -162,15 +162,57 @@ class NurseBookingController extends GetxController {
      }
    }
 
-  Future<void> cancelServiceRequest(String requestId) async {
-    await mongoDatabase.deleteServiceRequestById(requestId);
-  }
+   Future<void> cancelServiceRequest(String requestId) async {
+     try {
+       // Step 1: Delete the service request
+       await mongoDatabase.deleteServiceRequestById(requestId);
+       print("Service request $requestId deleted successfully");
+
+       // Step 2: Notify available nurses
+       final availableNurses = await MongoDatabase.getAvailableNurses();
+       print("Found ${availableNurses?.length ?? 0} available nurses");
+
+       if (availableNurses != null && availableNurses.isNotEmpty) {
+         for (var nurse in availableNurses) {
+           try {
+             final deviceToken = nurse['userDeviceToken']?.toString();
+             final userName = nurse['userName']?.toString();
+
+             print("Processing nurse: $userName with token: $deviceToken");
+
+             if (deviceToken != null && deviceToken.isNotEmpty) {
+               print("Attempting to send notification to $userName");
+
+               final response = await SendNotificationService.sendNotificationUsingApi(
+                 token: deviceToken,
+                 title: "Service Request Cancelled",
+                 body: "$userName has cancelled their service request.",
+                 data: {
+                   "screen": "NurseBookingsScreen",
+                 },
+               );
+
+               print("Notification sent successfully to $userName");
+             } else {
+               print("Skipping nurse $userName - no device token");
+             }
+           } catch (e) {
+             print("Error sending notification to nurse: $e");
+           }
+         }
+       } else {
+         print("No available nurses found to notify about cancellation.");
+       }
+     } catch (e) {
+       print("Error in cancelServiceRequest: $e");
+     }
+   }
 
 
 
 
 
-  Future<List<Nurse>> getNurseDetails(List<String> nurseEmails) async {
+   Future<List<Nurse>> getNurseDetails(List<String> nurseEmails) async {
     try {
       final nurses = await MongoDatabase.getNursesByEmails(nurseEmails);
       return nurses;
