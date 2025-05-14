@@ -642,7 +642,7 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
             const Icon(Icons.hourglass_empty, size: 60, color: Colors.grey),
             const SizedBox(height: 20),
             Text(
-              'No bids received yet',
+              'No offers received yet',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 10),
@@ -688,7 +688,7 @@ class _MedicalStoreRequestScreenState extends State<MedicalStoreRequestScreen> {
                       Text('Store: ${bid.storeName ?? 'Unknown Store'}'),
                       Text('Bid Total: PKR ${bid.totalPrice.toStringAsFixed(2)}'),
                       Text('Store Distance:  ${bid.distance}'),
-                      Text('Delivery Fee:  ${bid.deliveryFee}'),
+                      Text('Delivery Fee:  ${bid.deliveryFee.ceilToDouble()}'),
                       const SizedBox(height: 4),
                     ],
                   ),

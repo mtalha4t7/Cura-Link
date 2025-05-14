@@ -515,8 +515,17 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
                               showActions: _currentFilter == 'upcoming',
                               onCancel: () => _cancelOrder(order['_id'].toString()),
                               onComplete: () async {
-                                if (order['status'] == 'delivered') {
+                                if (order['status'].toLowerCase() == 'delivered') {
                                   await _completeOrder(order['_id'].toString(), order['finalAmount']);
+                                } else {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Please wait for the store to deliver the order first'),
+                                        duration: Duration(seconds: 3),
+                                      ),
+                                    );
+                                  }
                                 }
                               },
                               showRating: _currentFilter == 'past' && isCompleted && !hasRated,

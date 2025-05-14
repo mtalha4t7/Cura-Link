@@ -175,7 +175,7 @@ class _CheckForRequestsScreenState extends State<CheckForRequestsScreen> {
       future: controller.getDeliveryDetails(patientLocation ?? {}),
       builder: (context, snapshot) {
         final deliveryFee = snapshot.data?['fee'] ?? CheckForRequestsController.MIN_DELIVERY_FEE;
-        final totalPrice = subtotal + deliveryFee;
+        final double totalPrice = subtotal + deliveryFee;
 
         return Padding(
           padding: const EdgeInsets.all(16),

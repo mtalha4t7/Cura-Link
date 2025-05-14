@@ -152,7 +152,7 @@ class OrderedMedicinesCard extends StatelessWidget {
               _buildDetailRow(
                 icon: Icons.attach_money_outlined,
                 title: 'Total Amount',
-                value: '\$${booking['finalAmount']?.toStringAsFixed(2) ?? '0.00'}',
+                value: '\Rs: ${booking['finalAmount']?.toStringAsFixed(2) ?? '0.00'}',
               ),
 
               const SizedBox(height: 16),
