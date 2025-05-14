@@ -37,6 +37,8 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
   bool _isSearching = true;
   Timer? _bidTimer;
   bool _isResuming = false;
+ final  isAccepting = false.obs;
+
 
 
   @override
@@ -505,14 +507,24 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                       ),
                     ],
                   ),
-                  trailing: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: () => _acceptBid(bid),
-                    child: const Text('Accept'),
-                  ),
+                  trailing: Obx(() => ElevatedButton(
+                    onPressed: isAccepting.value ? null : () async {
+                      isAccepting(true);
+                      try {
+                        await _acceptBid(bid);  // Your accept logic
+                      } finally {
+                        isAccepting(false);
+                      }
+                    },
+                    child: isAccepting.value
+                        ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                        : const Text('Accept'),
+                  ))
+
                 ),
               );
             },

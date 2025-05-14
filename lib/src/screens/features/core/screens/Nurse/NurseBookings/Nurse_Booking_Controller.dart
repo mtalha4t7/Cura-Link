@@ -86,16 +86,31 @@ class BookingControllerNurse extends GetxController {
 
   Future<void> submitBid(String requestId, double price, String nurseName, String serviceType) async {
     try {
-
       isLoading(true);
-       print("===================="+nurseName);
+
+      final email = nurse.value?.userEmail ?? '';
+      print("==================== Nurse Name: $nurseName");
+
+      // Check if a bid already exists for this nurse and request
+      final hasAlreadyBid = await MongoDatabase.hasExistingBid(
+        requestId: requestId,
+        nurseEmail: email,
+      );
+
+      if (hasAlreadyBid) {
+        Get.snackbar('Notice', 'You have already submitted a bid for this request.');
+        return;
+      }
+
+      // Proceed with bid submission if not already submitted
       await MongoDatabase.submitBid(
         nurseName: nurseName,
         requestId: requestId,
-        nurseEmail: nurse.value?.userEmail ?? '',
+        nurseEmail: email,
         price: price,
-          serviceName:serviceType
+        serviceName: serviceType,
       );
+
       Get.snackbar('Success', 'Bid submitted successfully');
       await fetchActiveRequests();
     } catch (e) {
@@ -104,6 +119,7 @@ class BookingControllerNurse extends GetxController {
       isLoading(false);
     }
   }
+
 
 
 

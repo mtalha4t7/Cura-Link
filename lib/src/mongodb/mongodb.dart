@@ -177,6 +177,20 @@ static DbCollection? get  medicalStoreRatingCollection =>  _medicalStoreRatingCo
   }
 
 
+  static Future<bool> hasExistingBid({required String requestId, required String nurseEmail}) async {
+    final collection = _nurseBidsCollection; // Use your actual bids collection
+    final existingBid = await collection?.findOne({
+      'requestId': requestId,
+      'nurseEmail': nurseEmail,
+    });
+
+    return existingBid != null;
+  }
+
+
+
+
+
 
   static Future<void> submitStoreBid({
     required String requestId,
