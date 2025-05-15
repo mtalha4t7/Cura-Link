@@ -25,24 +25,6 @@ class OrderedMedicinesCard extends StatelessWidget {
      this.onCancel,
   });
 
-  double _calculateDeliveryProgress() {
-    try {
-      final createdAt = DateTime.parse(order['createdAt']);
-      final deliveryTime = order['deliveryTime'] ?? '15 mins';
-      final minutes = int.tryParse(deliveryTime.replaceAll(RegExp(r'[^0-9]'), '')) ?? 15;
-      final expectedDeliveryTime = createdAt.add(Duration(minutes: minutes));
-      final now = DateTime.now().toUtc().add(Duration(hours:5));
-
-      if (now.isAfter(expectedDeliveryTime)) return 1.0;
-
-      final totalDuration = expectedDeliveryTime.difference(createdAt).inMinutes;
-      final elapsedDuration = now.difference(createdAt).inMinutes;
-
-      return (elapsedDuration / totalDuration).clamp(0.0, 1.0);
-    } catch (e) {
-      return 0.0;
-    }
-  }
 
   Future<void> _launchMaps() async {
     try {
@@ -72,7 +54,7 @@ class OrderedMedicinesCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDelivered = order['status']?.toLowerCase() == 'delivered';
-    final progress = isDelivered ? _calculateDeliveryProgress() : 0.0;
+
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -163,30 +145,6 @@ class OrderedMedicinesCard extends StatelessWidget {
                 title: 'Total Amount',
                 value: '\$${order['finalAmount']?.toStringAsFixed(2) ?? '0.00'}',
               ),
-
-              // Delivery progress for delivered orders
-              if (isDelivered) ...[
-                const SizedBox(height: 12),
-                LinearProgressIndicator(
-                  value: progress,
-                  backgroundColor: Colors.grey[300],
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    progress == 1.0 ? Colors.green : Colors.blue,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    progress == 1.0
-                        ? 'Delivery completed successfully'
-                        : 'Delivery in progress (${(progress * 100).toStringAsFixed(0)}%)',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? Colors.white70 : Colors.black54,
-                    ),
-                  ),
-                ),
-              ],
 
               const SizedBox(height: 16),
 
