@@ -120,6 +120,7 @@ static DbCollection? get  medicalRequestsCollection =>  _medicalRequestsCollecti
 static DbCollection? get  medicalOrdersCollection =>  _medicalOrdersCollection;
 static DbCollection? get  completedOrdersCollection =>  _completedOrdersCollection;
 static DbCollection? get  medicalStoreRatingCollection =>  _medicalStoreRatingCollection;
+static DbCollection? get  completedOrdersForAdmin =>  _completedOrdersForAdmin;
 
 
 

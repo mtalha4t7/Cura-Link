@@ -167,13 +167,13 @@ class MyOrdersScreenMedicineController extends GetxController {
         final adminData={
         'by':order['patientEmail'],
         'to':order['storeEmail'],
-        'totalAmount':order['bidAmount'],
+        'totalAmount':order['finalAmount'],
         'payment':"Medicine Order Payment",
         'status':"Completed",
         'createdAt':DateTime.now().toUtc().add(Duration(hours:5)),
         };
 
-        final insertForAdmin = await MongoDatabase.medicalOrdersCollection?.insertOne(adminData);
+        final insertForAdmin = await MongoDatabase.completedOrdersForAdmin?.insertOne(adminData);
          print(insertForAdmin);
 
         if (insertResult?.isSuccess ?? false) {

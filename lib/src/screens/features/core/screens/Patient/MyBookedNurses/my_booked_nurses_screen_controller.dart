@@ -87,6 +87,19 @@ class MyBookedNursesController extends GetxController {
             .set('completionDate', DateTime.now().toUtc().add(Duration(hours: 5)));
       }
 
+      final adminData={
+        'by':booking['patientEmail'],
+        'to':booking['nurseEmail'],
+        'totalAmount':booking['price'],
+        'payment':"Nurse Booking Payment",
+        'status':"Completed",
+        'createdAt':DateTime.now().toUtc().add(Duration(hours:5)),
+      };
+
+      final insertForAdmin = await MongoDatabase.completedOrdersForAdmin?.insertOne(adminData);
+      print(insertForAdmin);
+
+
       // Update the booking
       final updateResult = await MongoDatabase.patientNurseBookingsCollection?.updateOne(
         where.id(id),

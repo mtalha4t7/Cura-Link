@@ -268,10 +268,24 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         }
         final bookingId= booking['bookingId'];
         final success = await _controller.completeLabBooking(bookingId, 'Completed');
+
+        final adminData={
+          'by':booking['patientUserEmail'],
+          'to':booking['labUserEmail'],
+          'totalAmount':price,
+          'payment':"Lab Booking Payment",
+          'status':"Completed",
+          'createdAt':DateTime.now().toUtc().add(Duration(hours:5)),
+        };
+
+        final insertForAdmin = await MongoDatabase.completedOrdersForAdmin?.insertOne(adminData);
+        print(insertForAdmin);
+
         if (success && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Medicine order completed successfully')),
           );
+
     }
   } else {
   _showSnackBar('Booking is accepted, you cannot modify this booking');
@@ -336,7 +350,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Pay for Medicine Order',
+                'Pay for Lab Booking',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
