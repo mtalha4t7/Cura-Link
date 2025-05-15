@@ -1,3 +1,4 @@
+import 'package:cura_link/src/repository/authentication_repository/authentication_repository.dart';
 import 'package:cura_link/src/screens/features/core/screens/MedicalStore/CheckForRequests/check_for_requests.dart';
 import 'package:cura_link/src/screens/features/core/screens/MedicalStore/MedicalStoreProfile/MedicalStore_Profile_Screen.dart';
 import 'package:cura_link/src/screens/features/core/screens/MedicalStore/MyPendingAndCompletedOrders/completed_orders_screen.dart';
@@ -24,19 +25,38 @@ class MedicalStoreDashboard extends StatefulWidget {
 class _MedicalStoreDashboardState extends State<MedicalStoreDashboard> {
   final MedicalStoreDashboardController controller = Get.find();
   bool isVerified = false;
-  final storeEmail=FirebaseAuth.instance.currentUser?.email;
+  bool isBlocked = false;
+  bool isCheckingBlockStatus = true;
+  final storeEmail = FirebaseAuth.instance.currentUser?.email;
 
   @override
   void initState() {
     super.initState();
     _checkUserVerification();
+
+    // Check block status
+    controller.checkUserBlockedStatus((status) {
+      if (mounted) {
+        setState(() {
+          isBlocked = status;
+          isCheckingBlockStatus = false; // Finished checking
+        });
+
+        // Only check verification if not blocked
+        if (!status) {
+          _checkUserVerification();
+        }
+      }
+    });
   }
 
   void _checkUserVerification() async {
     controller.checkUserVerification((status) {
-      setState(() {
-        isVerified = status;
-      });
+      if (mounted) {
+        setState(() {
+          isVerified = status;
+        });
+      }
     });
   }
 
@@ -44,6 +64,58 @@ class _MedicalStoreDashboardState extends State<MedicalStoreDashboard> {
   Widget build(BuildContext context) {
     final txtTheme = Theme.of(context).textTheme;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+
+    if (isCheckingBlockStatus) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (isBlocked) {
+      return Scaffold(
+        backgroundColor: isDark ? Colors.black : Colors.white,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.block, color: Colors.red, size: 60),
+                const SizedBox(height: 20),
+                Text(
+                  "Access Denied",
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  "Your account has been blocked.\nPlease contact support(usaamaajaved@gmail.com) for further assistance.",
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 30),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    await AuthenticationRepository.instance.logout();
+                    // Replace with your login route
+                  },
+                  icon: const Icon(Icons.logout),
+                  label: const Text("Logout"),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    backgroundColor: Colors.redAccent,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
 
     return SafeArea(
       child: Scaffold(
@@ -100,7 +172,6 @@ class _MedicalStoreDashboardState extends State<MedicalStoreDashboard> {
                       Text("Manage your store effectively.", style: txtTheme.displayMedium),
                       const SizedBox(height: tDashboardPadding),
 
-                      // Enhanced Availability Toggle
                       Obx(() => AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
                         margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -121,7 +192,6 @@ class _MedicalStoreDashboardState extends State<MedicalStoreDashboard> {
                           onTap: () => controller.toggleAvailability(),
                           child: Stack(
                             children: [
-                              // Background Animation
                               AnimatedContainer(
                                 duration: const Duration(milliseconds: 300),
                                 width: double.infinity,
@@ -147,7 +217,6 @@ class _MedicalStoreDashboardState extends State<MedicalStoreDashboard> {
                                   ),
                                 ),
                               ),
-                              // Content
                               Center(
                                 child: Padding(
                                   padding: const EdgeInsets.all(16),
@@ -196,7 +265,6 @@ class _MedicalStoreDashboardState extends State<MedicalStoreDashboard> {
                                   ),
                                 ),
                               ),
-                              // Toggle Switch
                               Positioned(
                                 right: 20,
                                 top: 0,
@@ -230,8 +298,8 @@ class _MedicalStoreDashboardState extends State<MedicalStoreDashboard> {
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           QuickAccessButton(
-                            icon: Icons.medical_services_rounded,
-                            label: 'View Order Requests',
+                              icon: Icons.medical_services_rounded,
+                              label: 'View Order Requests',
                               onTap: () async {
                                 final userEmail = FirebaseAuth.instance.currentUser?.email;
 
@@ -261,7 +329,6 @@ class _MedicalStoreDashboardState extends State<MedicalStoreDashboard> {
                         ],
                       ),
                       const SizedBox(height: tDashboardPadding),
-
                       const Text(
                         "Medical Store Services",
                         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
