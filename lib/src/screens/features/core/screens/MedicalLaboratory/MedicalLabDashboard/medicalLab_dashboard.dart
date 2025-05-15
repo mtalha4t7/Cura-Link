@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../../../../notification_handler/notification_server.dart';
+import '../../../../../../repository/authentication_repository/authentication_repository.dart';
 import '../../MedicalLaboratory/MedicalLabChat/chat_home.dart';
 import '../ManageBooking/ManageBooking.dart';
 import '../ManageLabTests/manage_test_screen.dart';
@@ -22,40 +23,37 @@ class MedicalLabDashboard extends StatefulWidget {
   @override
   _MedicalLabDashboardState createState() => _MedicalLabDashboardState();
 }
+
 class _MedicalLabDashboardState extends State<MedicalLabDashboard> {
   late DashboardController _controller;
   bool isVerified = false;
-NotificationService notificationService = NotificationService();
-MongoDatabase mongoDatabase= MongoDatabase();
+  bool isBlocked = false; // ✅ Track block status
+  NotificationService notificationService = NotificationService();
+  MongoDatabase mongoDatabase = MongoDatabase();
 
   String? _userDeviceToken;
   late String _mail;
-
-
 
   @override
   void initState() {
     super.initState();
     _controller = DashboardController();
+    _mail = FirebaseAuth.instance.currentUser?.email ?? '';
 
-    _mail= (FirebaseAuth.instance.currentUser?.email)!;
     _initializeDeviceToken();
     notificationService.requestNotificationPermission();
     notificationService.firebaseInit(context);
     notificationService.setupInteractMessage(context);
-    _checkUserVerification();
-  }
 
+    _checkUserVerification();
+    _checkUserBlockedStatus(); // ✅ Check block status
+  }
 
   Future<void> _initializeDeviceToken() async {
     _userDeviceToken = await notificationService.getDeviceToken();
     await mongoDatabase.updateDeviceTokenForUser(_mail, _userDeviceToken!);
   }
 
-
-
-
-  /// Dynamically check user verification status
   void _checkUserVerification() async {
     _controller.checkUserVerification((status) {
       setState(() {
@@ -64,7 +62,30 @@ MongoDatabase mongoDatabase= MongoDatabase();
     });
   }
 
-  /// Verify the user and update status
+  void _checkUserBlockedStatus() async {
+    _controller.checkUserBlockedStatus((blocked) {
+      setState(() {
+        isBlocked = blocked;
+      });
+
+      if (blocked) {
+        // ✅ Show dialog and logout option
+        Get.defaultDialog(
+          title: "Access Denied",
+          middleText: "Your account has been blocked by the admin. Kindly reach out to us at usaamaajaved@gmail.com",
+          confirm: ElevatedButton(
+            onPressed: () async {
+              await AuthenticationRepository.instance.logout();
+               // or replace with your login screen
+            },
+            child: const Text("Logout"),
+          ),
+          barrierDismissible: false,
+        );
+      }
+    });
+  }
+
   void _verifyUser(String nic, String license) {
     _controller.verifyUser(nic, license, context, (verificationSuccess) {
       if (verificationSuccess) {
@@ -76,7 +97,6 @@ MongoDatabase mongoDatabase= MongoDatabase();
           const SnackBar(content: Text("User verified successfully!")),
         );
       } else {
-        // Add additional checks for different failure reasons
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("NIC and License verification failed.")),
         );
@@ -84,8 +104,6 @@ MongoDatabase mongoDatabase= MongoDatabase();
     });
   }
 
-
-  /// Show verification dialog
   void _showVerificationDialog() {
     final nicController = TextEditingController();
     final licenseController = TextEditingController();
@@ -93,13 +111,8 @@ MongoDatabase mongoDatabase= MongoDatabase();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16), // Rounded corners
-        ),
-        title: const Text(
-          "Verify Your Account",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text("Verify Your Account", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -108,20 +121,16 @@ MongoDatabase mongoDatabase= MongoDatabase();
                 controller: nicController,
                 decoration: InputDecoration(
                   labelText: "ID Card (NIC)",
-                  labelStyle: TextStyle(fontSize: 15),
                   hintText: "e.g., 15201-2808169-3",
-                  hintStyle: TextStyle(fontSize: 14),
                   prefixIcon: const Icon(Icons.credit_card),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   filled: true,
                   fillColor: Colors.grey[200],
                 ),
                 keyboardType: TextInputType.number,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
-                  NICInputFormatter(), // Custom formatter retained
+                  NICInputFormatter(),
                 ],
               ),
               const SizedBox(height: 16),
@@ -129,13 +138,9 @@ MongoDatabase mongoDatabase= MongoDatabase();
                 controller: licenseController,
                 decoration: InputDecoration(
                   labelText: "License Number",
-                  labelStyle: TextStyle(fontSize: 15),
                   hintText: "Enter your license number",
-                  hintStyle: TextStyle(fontSize: 14),
                   prefixIcon: const Icon(Icons.badge),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   filled: true,
                   fillColor: Colors.grey[200],
                 ),
@@ -144,7 +149,6 @@ MongoDatabase mongoDatabase= MongoDatabase();
                   FilteringTextInputFormatter.digitsOnly,
                 ],
                 maxLength: 10,
-
               ),
             ],
           ),
@@ -152,24 +156,15 @@ MongoDatabase mongoDatabase= MongoDatabase();
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text(
-              "Cancel",
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text("Cancel", style: TextStyle(color: Colors.red)),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
             onPressed: () {
               final nic = nicController.text.trim();
               final license = licenseController.text.trim();
-              String cleanNic = nic.replaceAll('-', '');
               Navigator.of(context).pop();
-              _verifyUser(cleanNic, license);
+              _verifyUser(nic.replaceAll('-', ''), license);
             },
             child: const Text("Verify"),
           ),
@@ -187,9 +182,23 @@ MongoDatabase mongoDatabase= MongoDatabase();
       child: Scaffold(
         appBar: MedicalLabDashboardAppBar(isDark: isDark),
         drawer: MedicalLabDashboardSidebar(isDark: isDark),
-        body: Column(
+        body: isBlocked
+            ? Center( // ✅ If blocked, show nothing except this
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(Icons.block, size: 64, color: Colors.red),
+              SizedBox(height: 20),
+              Text(
+                "You have been blocked from using the app.",
+                style: TextStyle(fontSize: 18, color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        )
+            : Column(
           children: [
-            // Verification alert
             if (!isVerified)
               GestureDetector(
                 onTap: _showVerificationDialog,
@@ -214,10 +223,7 @@ MongoDatabase mongoDatabase= MongoDatabase();
                       Text("Welcome to Cura Link Lab", style: txtTheme.bodyMedium),
                       Text("How can we assist you today?", style: txtTheme.displayMedium),
                       const SizedBox(height: 16),
-                      const Text(
-                        "Recent Bookings",
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
+                      const Text("Recent Bookings", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                       SizedBox(
                         height: 120,
                         child: FutureBuilder<List<Map<String, dynamic>>>(
@@ -234,8 +240,7 @@ MongoDatabase mongoDatabase= MongoDatabase();
                                 itemCount: bookings.length,
                                 itemBuilder: (context, index) {
                                   final booking = bookings[index];
-                                  final title =
-                                      '${booking['patientName']} - ${booking['testName']} - ${booking['bookingDate']}';
+                                  final title = '${booking['patientName']} - ${booking['testName']} - ${booking['bookingDate']}';
                                   return HealthTipCard(title: title);
                                 },
                               );
@@ -246,10 +251,7 @@ MongoDatabase mongoDatabase= MongoDatabase();
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const Text(
-                        "Lab Services",
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
+                      const Text("Lab Services", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                       GridView.count(
                         crossAxisCount: 2,
                         shrinkWrap: true,
@@ -263,9 +265,7 @@ MongoDatabase mongoDatabase= MongoDatabase();
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (context) => const ManageTestServicesScreen(),
-                                ),
+                                MaterialPageRoute(builder: (context) => const ManageTestServicesScreen()),
                               );
                             },
                           ),
@@ -275,16 +275,13 @@ MongoDatabase mongoDatabase= MongoDatabase();
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (context) => const ManageBookingScreen(),
-                                ),
+                                MaterialPageRoute(builder: (context) => const ManageBookingScreen()),
                               );
                             },
                           ),
-
                           ServiceCard(
                             icon: Icons.delivery_dining,
-                            title: 'Sample Collection (Coming Soon) ',
+                            title: 'Sample Collection (Coming Soon)',
                             onTap: () {},
                           ),
                         ],
@@ -296,7 +293,9 @@ MongoDatabase mongoDatabase= MongoDatabase();
             ),
           ],
         ),
-        bottomNavigationBar: BottomNavigationBar(
+        bottomNavigationBar: isBlocked
+            ? null
+            : BottomNavigationBar(
           backgroundColor: isDark ? Colors.grey[900] : Colors.white,
           selectedItemColor: isDark ? Colors.blue[300] : Colors.blue,
           unselectedItemColor: isDark ? Colors.white70 : Colors.black54,
@@ -304,18 +303,17 @@ MongoDatabase mongoDatabase= MongoDatabase();
             BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: "Dashboard"),
             BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Chat"),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-
           ],
           onTap: (index) {
             switch (index) {
               case 0:
-                Get.to(() => MedicalLabDashboard());
+                Get.to(() => const MedicalLabDashboard());
                 break;
               case 1:
-                Get.to(() => ChatHomeScreen());
+                Get.to(() => const ChatHomeScreen());
                 break;
               case 2:
-                Get.to(() => MedicalLabProfileScreen());
+                Get.to(() => const MedicalLabProfileScreen());
                 break;
             }
           },

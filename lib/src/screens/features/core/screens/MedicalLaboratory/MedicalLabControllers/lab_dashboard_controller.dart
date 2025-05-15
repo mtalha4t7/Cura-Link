@@ -57,6 +57,32 @@ class DashboardController {
   }
 
 
+
+  Future<void> checkUserBlockedStatus(Function(bool) onBlockedStatusChecked) async {
+    try {
+      // Fetch user document from the database
+      final userDoc = await MongoDatabase.findUserLab(userEmail!);
+
+      if (userDoc != null) {
+        // Check if the user status is set to 'blocked'
+        final String? userStatus = userDoc['status'] as String?;
+        final bool isBlocked = userStatus?.toLowerCase() == 'blocked';
+
+        // Debug log
+        print("User block status fetched: $isBlocked");
+
+        onBlockedStatusChecked(isBlocked); // Pass true if blocked
+      } else {
+        print("User not found in the database");
+        onBlockedStatusChecked(false); // Default to not blocked if not found
+      }
+    } catch (e) {
+      print("Error fetching user block status: $e");
+      onBlockedStatusChecked(false); // Fail-safe: allow access if error occurs
+    }
+  }
+
+
   // Method to verify the user based on NIC and License
   Future<void> verifyUser(
       String nic, String license, BuildContext context, Function(bool) onVerificationResult) async {
