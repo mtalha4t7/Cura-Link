@@ -159,8 +159,22 @@ class MyOrdersScreenMedicineController extends GetxController {
           'updatedAt': DateTime.now().toUtc().add(Duration(hours:5)),
         };
 
+
+
         // Insert into completed orders collection
         final insertResult = await MongoDatabase.completedOrdersCollection?.insertOne(completedOrder);
+
+        final adminData={
+        'by':order['patientEmail'],
+        'to':order['storeEmail'],
+        'totalAmount':order['bidAmount'],
+        'payment':"Medicine Order Payment",
+        'status':"Completed",
+        'createdAt':DateTime.now().toUtc().add(Duration(hours:5)),
+        };
+
+        final insertForAdmin = await MongoDatabase.medicalOrdersCollection?.insertOne(adminData);
+         print(insertForAdmin);
 
         if (insertResult?.isSuccess ?? false) {
           // Only delete from original collection if insert was successful

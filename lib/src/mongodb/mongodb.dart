@@ -34,6 +34,7 @@ class MongoDatabase {
   static DbCollection? _medicalOrdersCollection;
   static DbCollection? _completedOrdersCollection;
   static DbCollection? _medicalStoreRatingCollection;
+  static DbCollection? _completedOrdersForAdmin;
 
 
 
@@ -68,16 +69,13 @@ class MongoDatabase {
       _nurseRatingCollection = _db!.collection('nurseRating');
       _completedOrdersCollection = _db!.collection('completedOrders');
       _medicalStoreRatingCollection = db!.collection('medicalStoreRating');
+      _completedOrdersForAdmin = db!.collection('completedOrdersForAdmin');
 
 
 
 
-      // Create geospatial index for nurses
-      await _userNurseCollection?.createIndex(
-        keys: {'location': '2dsphere'},
-        name: 'location_2dsphere',
-        background: true,
-      );
+
+
       logger.i('Created geospatial index for nurses');
       // Optional: Use inspect to debug the database connection
       inspect(_db);
@@ -146,6 +144,7 @@ static DbCollection? get  medicalStoreRatingCollection =>  _medicalStoreRatingCo
       _medicalOrdersCollection=null;
       _completedOrdersCollection=null;
       _medicalStoreRatingCollection=null;
+      _completedOrdersForAdmin=null;
 
       logger.i('MongoDB connection closed');
     }

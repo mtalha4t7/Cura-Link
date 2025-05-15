@@ -190,61 +190,75 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
   }
 
   Future<String?> _showMedicinePaymentMethodDialog(double amount) async {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final primaryTextColor = isDarkMode ? Colors.white : Colors.black87;
+    final dialogBackgroundColor = isDarkMode ? const Color(0xFF2C2C2E) : Colors.white;
+
     return await showDialog<String>(
       context: context,
       builder: (context) => Dialog(
+        backgroundColor: dialogBackgroundColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Pay for Medicine Order',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColorLight,
-                ),
-              ),
-              const SizedBox(height: 16),
-              MedicinePaymentSummaryCard(amount: amount),
-              const SizedBox(height: 20),
-              _buildPaymentOption(
-                context,
-                icon: Icons.credit_card,
-                color: Colors.blue,
-                title: 'Credit/Debit Card',
-                subtitle: 'Secure online payment',
-                value: 'online',
-              ),
-              const SizedBox(height: 12),
-              _buildPaymentOption(
-                context,
-                icon: Icons.local_pharmacy,
-                color: Colors.green,
-                title: 'Cash on Delivery',
-                subtitle: 'Pay when collecting medicines',
-                value: 'cash',
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('CANCEL'),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Pay for Medicine Order',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                    color: primaryTextColor,
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(height: 16),
+                MedicinePaymentSummaryCard(amount: amount),
+                const SizedBox(height: 24),
+                _buildPaymentOption(
+                  context,
+                  icon: Icons.credit_card,
+                  color: Colors.blue,
+                  title: 'Credit/Debit Card',
+                  subtitle: 'Secure online payment',
+                  value: 'online',
+                ),
+                const SizedBox(height: 16),
+                _buildPaymentOption(
+                  context,
+                  icon: Icons.local_pharmacy,
+                  color: Colors.green,
+                  title: 'Cash on Delivery',
+                  subtitle: 'Pay when collecting medicines',
+                  value: 'cash',
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'CANCEL',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
 
   Widget _buildPaymentOption(
       BuildContext context, {
@@ -254,17 +268,24 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
         required String subtitle,
         required String value,
       }) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDarkMode ? const Color(0xFF3A3A3C) : Colors.white;
+    final borderColor = isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
+    final titleColor = isDarkMode ? Colors.white : Colors.grey[800]!;
+    final subtitleColor = isDarkMode ? Colors.grey[300]! : Colors.grey[600]!;
+    final chevronColor = isDarkMode ? Colors.grey[400] : Colors.grey[400];
+
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: () => Navigator.pop(context, value),
-      splashColor: Colors.deepPurple.withOpacity(0.1),
-      highlightColor: Colors.deepPurple.withOpacity(0.05),
+      splashColor: color.withOpacity(0.08),
+      highlightColor: color.withOpacity(0.05),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(color: borderColor),
           borderRadius: BorderRadius.circular(12),
-          color: Colors.white,
+          color: cardColor,
         ),
         child: Row(
           children: [
@@ -286,14 +307,14 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
-                      color: Colors.grey[800],
+                      color: titleColor,
                     ),
                   ),
                   Text(
                     subtitle,
                     style: TextStyle(
-                      color: Colors.grey[600],
                       fontSize: 14,
+                      color: subtitleColor,
                     ),
                   ),
                 ],
@@ -301,13 +322,14 @@ class _MyOrdersScreenMedicineState extends State<MyOrdersScreenMedicine> {
             ),
             Icon(
               Icons.chevron_right,
-              color: Colors.grey[400],
+              color: chevronColor,
             ),
           ],
         ),
       ),
     );
   }
+
 
   void _showPaymentProcessing() {
     showDialog(

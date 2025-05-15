@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class OrderedMedicinesCard extends StatelessWidget {
   final Map<String, dynamic> booking;
@@ -26,12 +27,32 @@ class OrderedMedicinesCard extends StatelessWidget {
     required this.hasRated,
   });
 
+  double _calculateDeliveryProgress() {
+    try {
+      final expectedDeliveryTime = DateTime.parse(booking['expectedDeliveryTime']);
+      final createdAt = DateTime.parse(booking['createdAt']);
+      final now = DateTime.now().toUtc().add(const Duration(hours: 5));
+
+      if (now.isAfter(expectedDeliveryTime)) return 1.0;
+
+      final totalDuration = expectedDeliveryTime.difference(createdAt).inSeconds;
+      final elapsedDuration = now.difference(createdAt).inSeconds;
+
+      return (elapsedDuration / totalDuration).clamp(0.0, 1.0);
+    } catch (e) {
+      return 0.0;
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final medicines = booking['medicines'] as List<dynamic>? ?? [];
     final prescriptionDetails = booking['prescriptionDetails']?.toString() ?? '';
+    final isDelivered = booking['status']?.toLowerCase() == 'delivered';
+    final progress = isDelivered ? _calculateDeliveryProgress() : 0.0;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -154,6 +175,30 @@ class OrderedMedicinesCard extends StatelessWidget {
                 title: 'Total Amount',
                 value: '\Rs: ${booking['finalAmount']?.toStringAsFixed(2) ?? '0.00'}',
               ),
+
+              // Delivery progress for delivered orders
+              if (isDelivered) ...[
+                const SizedBox(height: 12),
+                LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: Colors.grey[300],
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    progress == 1.0 ? Colors.green : Colors.blue,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    progress == 1.0
+                        ? 'Delivery completed successfully'
+                        : 'Delivery in progress (${(progress * 100).toStringAsFixed(0)}%)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+                ),
+              ],
 
               const SizedBox(height: 16),
 

@@ -242,6 +242,8 @@ class MedicalStoreController extends GetxController {
         'expectedDeliveryTime': expectedDeliveryTime,
         'deliveryTime': deliveryTimeString,
       };
+
+
       print('[8] Order data constructed');
 
       // 9. Insert new order

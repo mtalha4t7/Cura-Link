@@ -86,7 +86,7 @@ class PendingAndCompletedOrdersController extends GetxController {
       final id = _parseObjectId(orderId);
       final now =  DateTime.now().toUtc().add(Duration(hours:5));
 
-      final modifications = modify.set('status', newStatus).set('updatedAt', now);
+      final modifications = modify.set('status', newStatus).set('createdAt', now).set('createdAt', now);
 
       if (newStatus == 'delivered') {
         final order = await MongoDatabase.medicalOrdersCollection?.findOne(where.id(id));
